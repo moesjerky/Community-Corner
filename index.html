@@ -504,8 +504,9 @@ $('cform').addEventListener('submit',async e=>{
   try{const fd=new FormData(f);fd.append('_subject','Website message: '+fd.get('topic'));fd.append('_template','table');fd.append('_captcha','false');fd.append('_replyto',fd.get('email'));
     const r=await fetch(FORM_ENDPOINT,{method:'POST',headers:{Accept:'application/json'},body:fd});
     const d=await r.json().catch(()=>({}));
+    if(/activat/i.test(d.message||'')){n.classList.add('err');n.textContent="Our contact form is almost ready. Please try again later, or email submissions@ourcommunitycorner.com.";return}
     if(!r.ok||String(d.success)!=='true')throw 0;f.reset();track('contact','');n.textContent="Thanks! Your message was sent. We'll get back to you soon.";}
-  catch{n.classList.add('err');n.textContent="That didn't go through. Check your internet and try again.";}
+  catch{n.classList.add('err');n.textContent="That didn't go through. Please try again, or email submissions@ourcommunitycorner.com.";}
   finally{btn.disabled=false}
 });
 $('lb-prev').onclick=()=>stepAd(-1);$('lb-next').onclick=()=>stepAd(1);$('lb-x').onclick=closeAd;
