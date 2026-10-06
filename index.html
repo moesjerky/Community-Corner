@@ -397,7 +397,10 @@ $('subform').addEventListener('submit',async e=>{
   if(!DB){m.textContent="Signups aren't open yet. Check back soon.";return}
   btn.disabled=true;m.textContent='Signing you up…';
   try{
-    const r=await fetch(`${CFG.supabaseUrl}/rest/v1/subscribers`,{method:'POST',headers:{apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({email:em.value.trim().toLowerCase(),name:$('s-name').value.trim(),phone:$('s-phone').value.trim(),address:$('s-address').value.trim(),shul:$('s-shul').value.trim(),heard:$('s-heard').value})});
+    const row={email:em.value.trim().toLowerCase(),name:$('s-name').value.trim(),phone:$('s-phone').value.trim(),address:$('s-address').value.trim(),shul:$('s-shul').value.trim(),heard:$('s-heard').value};
+    const send=body=>fetch(`${CFG.supabaseUrl}/rest/v1/subscribers`,{method:'POST',headers:{apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(body)});
+    let r=await send(row);
+    if(r.status===400){const {heard,...rest}=row;r=await send(rest)}
     if(r.ok){m.textContent="You're in! Look for the paper in your inbox every week.";e.target.reset();track('subscribe','')}
     else if(r.status===409){m.textContent="You're already subscribed. 👍"}
     else throw 0;
