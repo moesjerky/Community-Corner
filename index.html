@@ -29,7 +29,8 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 img{max-width:100%}
-body{background:var(--paper);color:var(--ink);font:16px/1.55 var(--body);margin:0}
+body{background-color:var(--paper);color:var(--ink);font:16px/1.55 var(--body);margin:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45  0 0 0 0 .33  0 0 0 0 .16  0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E")}
 .wrap{max-width:1140px;margin:0 auto;padding-inline:16px}
 h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.1;text-wrap:balance;margin:0}
 
@@ -45,13 +46,30 @@ h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.1;text-wrap:ba
 .logo{display:block;text-decoration:none;font:400 30px/.86 var(--display);color:var(--plum);letter-spacing:.02em;
   -webkit-text-stroke:0;text-shadow:2px 2px 0 #fff,-2px -2px 0 #fff,2px -2px 0 #fff,-2px 2px 0 #fff,0 2px 0 #fff,2px 0 0 #fff,0 -2px 0 #fff,-2px 0 0 #fff,4px 4px 0 var(--red-dk)}
 .logo span{display:block;font-size:1.22em}
-.logo img{display:block;height:62px;width:auto}
+.logo img{display:block;height:62px;width:auto;transition:opacity .2s,transform .2s}
+.head.attop .logo{pointer-events:none}
+.head.attop .logo img{opacity:0;transform:translateY(-6px)}
+.head.attop .wrap{justify-content:center}
+.head.attop .logo{position:absolute}
+.head .wrap{position:relative}
 .menu{display:flex;gap:4px;overflow-x:auto;min-width:0}
 .menu a{font:700 15px var(--body);color:#fff;text-decoration:none;padding:9px 14px;border-radius:999px;white-space:nowrap}
 .menu a:hover,.menu a:focus-visible{background:var(--red-dk);outline:none}
 .menu a.subnav{background:var(--gold);color:var(--red-dk)}
 .menu a.subnav:hover,.menu a.subnav:focus-visible{background:#fff}
 .menu a.on{background:var(--gold);color:var(--red-dk)}
+
+/* hero ribbon (like the printed cover) */
+.hero{position:relative;padding-block:26px 74px}
+.ribbon{position:absolute;inset:0;width:100%;height:100%}
+.ribbon .r1{fill:var(--red)} .ribbon .r2{fill:var(--red-dk)}
+.hero-in{position:relative;display:flex;align-items:center;gap:clamp(14px,3vw,34px)}
+.hero-logo{width:clamp(150px,26vw,300px);height:auto;flex:none;transform:rotate(-2deg);filter:drop-shadow(4px 5px 0 rgba(0,0,0,.18))}
+.hero-txt{min-width:0}
+.hero-kick{display:inline-block;font:700 12px var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:4px}
+.hero h1{font-size:clamp(30px,6.4vw,76px);color:#fff;text-shadow:3px 3px 0 var(--red-dk),5px 6px 0 rgba(0,0,0,.18);letter-spacing:.01em;text-transform:uppercase;line-height:1}
+.tagline{text-align:center;font-weight:600;color:var(--muted);margin-block:2px 22px;max-width:60ch}
+@media (max-width:560px){.hero{padding-block:18px 52px}}
 
 /* banner */
 .banner{padding-block:44px 34px;text-align:center}
@@ -68,7 +86,7 @@ h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.1;text-wrap:ba
 
 section.view{padding-block:40px 20px}
 #v-issue{scroll-margin-top:70px;padding-top:24px}
-.eyebrow{display:inline-block;font-family:var(--display);color:#fff;background:var(--schach);padding:4px 10px;letter-spacing:.05em}
+.eyebrow{clip-path:polygon(0 0,100% 0,calc(100% - 12px) 100%,0 100%);padding-right:22px!important;display:inline-block;font-family:var(--display);color:#fff;background:var(--schach);padding:4px 10px;letter-spacing:.05em}
 .eyebrow.red{background:var(--red)} .eyebrow.plum{background:var(--plum)}
 .sec-h{font-size:clamp(30px,5vw,44px);margin:10px 0 4px}
 .meta{color:var(--muted);font-variant-numeric:tabular-nums}
@@ -87,8 +105,18 @@ section.view{padding-block:40px 20px}
 .shabbos small{display:block;font-size:11px;color:var(--muted)}
 
 /* home */
-.latest{display:grid;grid-template-columns:minmax(0,340px) 1fr;gap:36px;align-items:center}
-.cover{display:block;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--plum);background:var(--card);cursor:pointer;padding:0}
+.latest{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:clamp(28px,5vw,60px);align-items:center;padding-top:6px}
+.coverwrap{position:relative;transform:rotate(-2deg);transition:transform .2s}
+.coverwrap:hover{transform:rotate(0deg) scale(1.01)}
+.stamp{position:absolute;top:-16px;right:-14px;z-index:1;transform:rotate(8deg);font:400 clamp(20px,3vw,30px) var(--display);color:var(--red);background:#fff;border:3px solid var(--red);padding:4px 12px;box-shadow:3px 3px 0 var(--ink);pointer-events:none}
+.cover{display:block;width:100%;border:3px solid var(--ink);box-shadow:10px 10px 0 var(--plum),0 18px 30px rgba(36,25,46,.22);background:var(--card);cursor:pointer;padding:0}
+.recent{margin-top:44px;border-top:3px solid var(--ink);padding-top:16px}
+.recent-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.recent-h h3{font-size:28px}
+.recent-h a{font-weight:700;color:var(--red-dk)}
+.recent-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+@media (max-width:700px){.recent-grid{grid-template-columns:repeat(2,1fr);gap:14px}.stamp{right:-6px}}
+@media (prefers-reduced-motion:reduce){.coverwrap{transition:none}}
 .cover img{display:block;width:100%}
 .latest h2{font-size:clamp(32px,5vw,52px);margin:12px 0 6px}
 .times{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
@@ -284,16 +312,27 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
 </div></header>
 <a class="subbar" id="subbar" href="#subscribe"><span>Get the Community Corner in your inbox every week</span><b>Subscribe</b></a>
 
-<div class="banner wrap">
-  <h1 data-t="bannerTitle">The Community Corner</h1>
-  <p data-t="tagline">The weekly paper for Pomona, Monsey, Wesley Hills and Montebello. Every issue, online.</p>
+<div class="hero">
+  <svg class="ribbon" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
+    <path class="r2" d="M0,0H1200V150C1040,235 820,105 610,172C400,238 190,118 0,186Z"/>
+    <path class="r1" d="M0,0H1200V118C1050,205 850,82 620,148C410,208 210,88 0,150Z"/>
+  </svg>
+  <div class="wrap hero-in">
+    <img class="hero-logo" src="img/cc-logo.png" alt="The Community Corner" width="688" height="286">
+    <div class="hero-txt"><span class="hero-kick" id="hero-kick" hidden>This week's issue</span><h1 id="hero-title" data-t="bannerTitle">The Community Corner</h1></div>
+  </div>
 </div>
+<p class="tagline wrap" data-t="tagline">The weekly paper for Pomona, Monsey, Wesley Hills and Montebello. Every issue, online.</p>
 <div class="ticker" aria-hidden="true"><div class="track" id="ticker"></div></div>
 
 <main class="wrap">
   <section class="view" id="v-home">
     <div class="shabbos" id="shabbos" hidden></div>
     <div class="latest" id="latest"></div>
+    <div class="recent" id="recent" hidden>
+      <div class="recent-h"><h3>Recent issues</h3><a href="#past" id="recent-all">See all issues</a></div>
+      <div class="recent-grid" id="recent-grid"></div>
+    </div>
   </section>
 
   <section class="view" id="v-past" hidden>
@@ -473,12 +512,15 @@ function card(i,isNew){
 function renderHome(){
   const L=issues[0];if(!L)return;
   $('latest').innerHTML=`
-    <button class="cover" aria-label="Read issue ${L.num}"><img src="${F(L,'cover.jpg')}" alt="Cover of issue ${L.num}"></button>
+    <div class="coverwrap"><span class="stamp">This issue!</span><button class="cover" aria-label="Read issue ${L.num}"><img src="${F(L,'cover.jpg')}" alt="Cover of issue ${L.num}"></button></div>
     <div><span class="eyebrow">This week</span><h2>Issue #${L.num}${L.title?': '+L.title:''}</h2>
     <div class="meta">${fmt(L.date)}${L.hebrew?' · '+L.hebrew:''}</div>
     ${L.yomtov?`<div class="times"><div>Candle lighting<b>${L.yomtov}</b></div><div>Tzais<b>${L.tzais}</b></div></div>`:''}
     <button class="btn">Read this issue</button> ${dl(L)} ${shareBtn(L)} <a class="btn" href="#past" style="background:none;color:var(--ink);text-decoration:underline">See past issues</a></div>`;
   $('latest').querySelectorAll('button:not([data-pdf]):not([data-share])').forEach(b=>b.onclick=()=>location.hash=L.num);
+  if(L.title){$('hero-title').textContent=L.title;$('hero-kick').hidden=false}
+  const rec=issues.slice(1,5),rg=$('recent-grid');rg.innerHTML='';rec.forEach(i=>rg.append(card(i,false)));
+  $('recent').hidden=!rec.length;$('recent-all').textContent=`See all ${issues.length} issues`;
 }
 let YEAR='all';
 function renderPast(){
@@ -508,6 +550,9 @@ function route(){
 }
 $('q').oninput=renderPast;
 addEventListener('hashchange',route);
+/* small header logo only shows once the big ribbon logo has scrolled away */
+if('IntersectionObserver' in window){const hd=document.querySelector('.head');hd.classList.add('attop');
+  new IntersectionObserver(es=>hd.classList.toggle('attop',es[0].isIntersecting),{rootMargin:'-80px 0px 0px 0px'}).observe(document.querySelector('.hero-logo'))}
 /* ---------- printing ---------- */
 function doPrint(html,landscape){
   const pa=$('printarea');pa.innerHTML=html;
