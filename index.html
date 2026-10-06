@@ -67,6 +67,7 @@ h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.1;text-wrap:ba
 @keyframes roll{to{transform:translateX(-50%)}}
 
 section.view{padding-block:40px 20px}
+#v-issue{scroll-margin-top:70px;padding-top:24px}
 .eyebrow{display:inline-block;font-family:var(--display);color:#fff;background:var(--schach);padding:4px 10px;letter-spacing:.05em}
 .eyebrow.red{background:var(--red)} .eyebrow.plum{background:var(--plum)}
 .sec-h{font-size:clamp(30px,5vw,44px);margin:10px 0 4px}
@@ -108,7 +109,46 @@ section.view{padding-block:40px 20px}
 .share:hover,.share:focus-visible{background:#16603C} .issue-wrap .dl{margin-top:8px;padding:7px 12px;font-size:13px}
 .new{display:inline-block;background:var(--red);color:#fff;font:700 11px var(--body);padding:2px 6px;margin-left:6px;vertical-align:middle;letter-spacing:.06em}
 
+/* printing */
+.row-between{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
+#printarea{display:none}
+@media print{
+  body.printing>*:not(#printarea){display:none!important}
+  body.printing{background:#fff!important}
+  body.printing #printarea{display:block;color:#000;font:14px/1.45 Arial,Helvetica,sans-serif}
+  #printarea .sheet{page-break-after:always;break-after:page;display:flex;align-items:center;justify-content:center;height:100vh}
+  #printarea .sheet:last-child{page-break-after:auto;break-after:auto}
+  #printarea .sheet img{max-width:100%;max-height:100vh;display:block}
+  #printarea h1{font:bold 24px Arial,sans-serif;margin:0 0 4px}
+  #printarea .sub{margin:0 0 14px;color:#444}
+  #printarea table{border-collapse:collapse;margin:0 0 16px}
+  #printarea td{border:1px solid #000;width:30px;height:30px;text-align:center;font:bold 16px "Courier New",monospace;padding:0}
+  #printarea .wl{columns:3;padding:0;margin:0 0 16px;list-style:none;font:bold 14px "Courier New",monospace}
+  #printarea .wl li{padding:2px 0}
+  #printarea .wl li::before{content:"\25A1  "}
+  #printarea .pbox{border:1px solid #000;padding:10px 12px;margin:0 0 10px;break-inside:avoid}
+  #printarea .pbox b{display:block;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+  #printarea .foot{margin-top:14px;font-size:11px;color:#444}
+}
+
 /* reader */
+.pager{border:2px solid var(--ink);background:var(--ink)}
+.pbar{display:flex;align-items:center;gap:8px;padding:8px;background:var(--ink);color:var(--paper);position:sticky;top:0;z-index:2}
+.pbar button{white-space:nowrap;font:700 14px var(--body);background:var(--gold);color:var(--ink);border:0;padding:8px 12px;cursor:pointer;min-height:38px}
+.pbar button:hover,.pbar button:focus-visible{background:#fff;outline:none}
+.pbar button:disabled{opacity:.35;cursor:default}
+#pg-prev,#pg-next{font:400 24px var(--display);padding:2px 16px}
+#pg-count{font:700 14px var(--body);min-width:92px;text-align:center;font-variant-numeric:tabular-nums}
+.pgap{flex:1}
+.stage{overflow:auto;background:#3a2f44;max-height:86vh;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y pinch-zoom}
+.frame{position:relative;overflow:hidden;margin:0 auto;background:#fff}
+.frame img{position:absolute;top:0;height:100%;max-width:none;user-select:none;-webkit-user-drag:none}
+.pghint{margin:0;padding:6px 10px;font-size:12px;color:var(--gold);background:var(--ink);text-align:center}
+.pager.full{position:fixed;inset:0;z-index:60;border:0;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.pager.full .stage{flex:1;max-height:none;display:flex}
+.pager.full .frame{margin:auto;flex:none}
+@media (max-width:520px){.pbar{gap:5px;padding:6px}.pbar button{padding:8px 9px;font-size:13px}#pg-count{min-width:70px;font-size:13px}}
+
 .rtop{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;margin-bottom:18px}
 .pages{display:flex;flex-direction:column;gap:22px}
 .pages img{width:100%;border:2px solid var(--ink);background:var(--card)}
@@ -269,14 +309,25 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
   <section class="view" id="v-issue" hidden>
     <div class="rtop">
       <div><h2 class="sec-h" id="r-title"></h2><div class="meta" id="r-meta"></div></div>
-      <span id="r-dl"></span> <span id="r-share"></span> <a class="btn" href="#past">← All issues</a>
+      <span id="r-dl"></span> <button class="btn" type="button" id="r-print">Print</button> <span id="r-share"></span> <a class="btn" href="#past">← All issues</a>
     </div>
-    <div class="pages" id="r-pages"></div>
+    <div class="pager" id="pager">
+      <div class="pbar">
+        <button type="button" id="pg-prev" aria-label="Previous page">‹</button>
+        <span id="pg-count" aria-live="polite"></span>
+        <button type="button" id="pg-next" aria-label="Next page">›</button>
+        <span class="pgap"></span>
+        <button type="button" id="pg-zoom">Zoom +</button>
+        <button type="button" id="pg-full">Full screen</button>
+      </div>
+      <div class="stage" id="pg-stage"><div class="frame" id="pg-frame"><img id="pg-img" alt="" draggable="false"></div></div>
+      <p class="pghint" id="pg-hint"></p>
+    </div>
   </section>
 
   <section class="view" id="v-fun" hidden>
     <span class="eyebrow red" id="f-from">This week</span>
-    <h2 class="sec-h" id="f-title">Word Search</h2>
+    <div class="row-between"><h2 class="sec-h" id="f-title">Word Search</h2><button class="btn" type="button" id="f-print" style="margin:0">Print this page</button></div>
     <p class="meta">Tap the first letter of a word, then the last letter.</p>
     <div class="fun">
       <div><div class="board" id="board" role="grid" aria-label="Word search"></div><div class="msg" id="msg"></div></div>
@@ -338,7 +389,7 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
         <label for="s-phone">Phone<input id="s-phone" name="phone" type="tel" autocomplete="tel"></label>
         <label for="s-address">Address / town<input id="s-address" name="address" autocomplete="street-address"></label>
         <label for="s-shul">Shul<input id="s-shul" name="shul"></label>
-        <label for="s-heard">How did you hear about us?<select id="s-heard" name="heard"><option value="">Choose one</option><option>Shul</option><option>Evergreen</option><option>Uptown</option><option>Friends</option><option>Other</option></select></label>
+        <label for="s-heard">How did you hear about us?<select id="s-heard" name="heard"><option value="">Choose one</option><option>Shul</option><option>Evergreen Uptown</option><option>Friends</option><option>Other</option></select></label>
         <input id="s-web" name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true">
         <button class="btn" type="submit">Subscribe</button>
       </div>
@@ -379,6 +430,7 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
   </div>
 
 </main>
+<div id="printarea" aria-hidden="true"></div>
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Sponsor ad">
   <button class="x" id="lb-x" aria-label="Close">✕</button>
   <button class="arr" id="lb-prev" aria-label="Previous sponsor">‹</button>
@@ -445,16 +497,101 @@ function route(){
   ['home','past','issue','fun','sponsors','contact','subscribe','about','advertise'].forEach(x=>$('v-'+x).hidden=x!==v);
   $('subpromo').hidden=v==='subscribe';$('subbar').hidden=v==='subscribe';
   i?track('read',String(i.num)):track('view',v);
+  if(!i&&$('pager').classList.contains('full'))setFull(false);
   document.querySelectorAll('.menu a').forEach(a=>a.classList.toggle('on',a.dataset.v===(v==='issue'?'past':v)));
   if(i){
     $('r-title').textContent=`Issue #${i.num}${i.title?': '+i.title:''}`;
     $('r-dl').innerHTML=dl(i);$('r-share').innerHTML=shareBtn(i);$('r-meta').textContent=fmt(i.date)+(i.hebrew?' · '+i.hebrew:'');
-    $('r-pages').innerHTML=Array.from({length:i.pages},(_,k)=>`<img loading="lazy" src="${F(i,'p'+(k+1)+'.jpg')}" alt="Issue ${i.num}, spread ${k+1}"><div class="pnum">Spread ${k+1} of ${i.pages}</div>`).join('');
+    openPager(i);
   }
-  if(location.hash)scrollTo({top:0});
+  if(i)$('v-issue').scrollIntoView();else if(location.hash)scrollTo({top:0});
 }
 $('q').oninput=renderPast;
 addEventListener('hashchange',route);
+/* ---------- printing ---------- */
+function doPrint(html,landscape){
+  const pa=$('printarea');pa.innerHTML=html;
+  let st=$('printpage');if(!st){st=document.createElement('style');st.id='printpage';document.head.append(st)}
+  st.textContent=`@page{size:${landscape?'landscape':'portrait'};margin:${landscape?'6mm':'14mm'}}`;
+  const imgs=[...pa.querySelectorAll('img')];
+  Promise.all(imgs.map(im=>im.complete?1:new Promise(r=>{im.onload=im.onerror=r}))).then(()=>{document.body.classList.add('printing');setTimeout(()=>window.print(),80)});
+}
+addEventListener('afterprint',()=>{document.body.classList.remove('printing');$('printarea').innerHTML=''});
+$('r-print').onclick=()=>{
+  const i=PG.issue;if(!i)return;
+  const land=PG.spreads&&PG.spreads[0]?PG.spreads[0].wide:true;
+  doPrint(Array.from({length:i.pages},(_,k)=>`<div class="sheet"><img src="${F(i,'p'+(k+1)+'.jpg')}" alt=""></div>`).join(''),land);
+};
+$('f-print').onclick=()=>{
+  if(!FUNDATA)return;const {f,num}=FUNDATA,e=t=>String(t??'').replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+  let h=`<h1>${e(f.wordsearch?f.wordsearch.title:'Fun Stuff')}</h1><p class="sub">The Community Corner · Issue #${num} · community-corner.org</p>`;
+  if(f.wordsearch){h+='<table>'+f.wordsearch.grid.map(r=>'<tr>'+[...r].map(c=>`<td>${e(c)}</td>`).join('')+'</tr>').join('')+'</table>';
+    h+='<ul class="wl">'+f.wordsearch.words.map(w=>`<li>${e(w)}</li>`).join('')+'</ul>'}
+  if(f.parsha)h+=`<div class="pbox"><b>Parsha Question</b>${e(f.parsha.question)}</div>`;
+  if(f.word)h+=`<div class="pbox"><b>Word of the Week</b><strong>${e(f.word.word)}</strong>${f.word.say?` (${e(f.word.say)})`:''}: ${e(f.word.meaning)}${f.word.example?` “${e(f.word.example)}”`:''}</div>`;
+  if(f.fact)h+=`<div class="pbox"><b>Cool Fact</b>${e(f.fact)}</div>`;
+  doPrint(h,false);
+};
+/* ---------- page reader: one page at a time on phones, spreads on computers ---------- */
+const PG={issue:null,pages:[],at:0,zoom:1,ratio:1,token:0};
+const narrow=()=>matchMedia('(max-width:760px)').matches;
+const dims=src=>new Promise(r=>{const im=new Image();im.onload=()=>r([im.naturalWidth,im.naturalHeight]);im.onerror=()=>r([2,1]);im.src=src});
+async function openPager(i){
+  const token=++PG.token;PG.issue=i;PG.at=0;PG.zoom=1;PG.pages=[];$('pg-count').textContent='Loading…';$('pg-img').removeAttribute('src');
+  const srcs=Array.from({length:i.pages},(_,k)=>F(i,'p'+(k+1)+'.jpg'));
+  const d=await Promise.all(srcs.map(dims));if(token!==PG.token)return;
+  PG.spreads=srcs.map((src,k)=>({src,w:d[k][0],h:d[k][1],wide:d[k][0]>d[k][1]*1.15}));
+  buildPages();showPage();
+}
+function buildPages(){
+  const sp=PG.spreads,keep=PG.pages[PG.at];
+  if(!narrow()){PG.pages=sp.map(x=>({src:x.src,half:null,ratio:x.w/x.h}))}
+  else{
+    // printed order: spread 1 is back page (left) + front cover (right)
+    const out=[],half=(x,side)=>({src:x.src,half:side,ratio:x.w/2/x.h}),whole=x=>({src:x.src,half:null,ratio:x.w/x.h});
+    sp.forEach((x,k)=>{if(!x.wide)out.push(whole(x));else if(k===0)out.push(half(x,'R'));else out.push(half(x,'L'),half(x,'R'))});
+    if(sp[0]&&sp[0].wide)out.push(half(sp[0],'L'));
+    PG.pages=out;
+  }
+  if(keep){const j=PG.pages.findIndex(p=>p.src===keep.src);PG.at=j<0?0:j}
+}
+function fitPage(){
+  const st=$('pg-stage'),fr=$('pg-frame'),p=PG.pages[PG.at];if(!p)return;
+  const full=$('pager').classList.contains('full');
+  let w=st.clientWidth;if(full)w=Math.min(w,st.clientHeight*p.ratio);
+  w=Math.max(50,w)*PG.zoom;
+  fr.style.width=w+'px';fr.style.height=(w/p.ratio)+'px';
+  const im=$('pg-img');im.style.width=p.half?'200%':'100%';im.style.left=p.half==='R'?'-100%':'0';
+}
+function showPage(){
+  const p=PG.pages[PG.at];if(!p)return;const im=$('pg-img');
+  if(im.getAttribute('src')!==p.src)im.src=p.src;
+  im.alt=`Issue ${PG.issue.num}, page ${PG.at+1}`;
+  $('pg-count').textContent=`${narrow()?'Page':'Spread'} ${PG.at+1} of ${PG.pages.length}`;
+  $('pg-prev').disabled=PG.at===0;$('pg-next').disabled=PG.at===PG.pages.length-1;
+  $('pg-zoom').textContent=PG.zoom>1?'Zoom −':'Zoom +';
+  $('pg-hint').textContent=PG.zoom>1?'Drag to move around. Double-tap to zoom out.':(narrow()?'Swipe to turn the page. Double-tap to zoom.':'Use the arrows or ← → keys. Double-click to zoom.');
+  fitPage();$('pg-stage').scrollTo(0,0);
+  const nx=PG.pages[PG.at+1];if(nx&&nx.src!==p.src){const pre=new Image();pre.src=nx.src}
+}
+function turn(d){const n=PG.at+d;if(n<0||n>=PG.pages.length)return;PG.at=n;PG.zoom=1;showPage()}
+function zoomAt(e){
+  const st=$('pg-stage'),was=PG.zoom;PG.zoom=was>1?1:2.5;showPage();
+  if(PG.zoom>1&&e){const r=st.getBoundingClientRect(),fx=(e.clientX-r.left)/r.width,fy=(e.clientY-r.top)/Math.max(1,r.height);
+    st.scrollTo(fx*st.scrollWidth-st.clientWidth/2,fy*st.scrollHeight-st.clientHeight/2)}
+}
+function setFull(on){$('pager').classList.toggle('full',on);document.body.style.overflow=on?'hidden':'';$('pg-full').textContent=on?'Close ✕':'Full screen';PG.zoom=1;showPage()}
+$('pg-prev').onclick=()=>turn(-1);$('pg-next').onclick=()=>turn(1);
+$('pg-zoom').onclick=()=>zoomAt(null);
+$('pg-full').onclick=()=>setFull(!$('pager').classList.contains('full'));
+$('pg-stage').addEventListener('dblclick',zoomAt);
+{let sx=null,sy=0,st=0,lastTap=0;const S=$('pg-stage');
+ S.addEventListener('touchstart',e=>{if(e.touches.length!==1){sx=null;return}sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now()},{passive:true});
+ S.addEventListener('touchend',e=>{if(sx===null)return;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;sx=null;
+   if(Math.abs(dx)<12&&Math.abs(dy)<12&&Date.now()-st<300){const now=Date.now();if(now-lastTap<350){lastTap=0;e.preventDefault();zoomAt(t)}else lastTap=now;return}
+   if(PG.zoom===1&&Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.5)turn(dx<0?1:-1)});}
+addEventListener('keydown',e=>{if($('v-issue').hidden||!$('lb').hidden)return;if(e.key==='ArrowLeft')turn(-1);else if(e.key==='ArrowRight')turn(1);else if(e.key==='Escape'&&$('pager').classList.contains('full'))setFull(false)});
+{let wasNarrow=narrow(),t;addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>{if(!PG.spreads)return;if(narrow()!==wasNarrow){wasNarrow=narrow();buildPages();showPage()}else fitPage()},120)})}
 /* This Shabbos: parsha + Monsey times, from Hebcal (updates by itself) */
 fetch('https://www.hebcal.com/shabbat?cfg=json&zip=10952&M=off&m=50&b=18&lg=a').then(r=>r.json()).then(d=>{
   const it=d.items||[],by=c=>it.find(x=>x.category===c);
@@ -589,11 +726,13 @@ function renderSponsors(L){
   }).catch(()=>{$('ads').innerHTML='<p class="meta">Sponsor list coming soon.</p>';$('print').hidden=true});
 }
 /* Fun Stuff: loads issues/<latest>/fun.json */
+let FUNDATA=null;
 let G=[],C=0,cells=[],items=[],start=null;const cell=(r,c)=>cells[r*C+c];
 const esc=t=>String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 function renderFun(L){
   $('f-from').textContent=`From Issue #${L.num}`;
   (typeof L.fun==='object'?Promise.resolve(L.fun):fetch(F(L,'fun.json')).then(r=>r.json())).then(f=>{
+    FUNDATA={f,num:L.num};
     const ws=f.wordsearch;
     if(ws){
       $('f-title').textContent=ws.title||'Word Search';
