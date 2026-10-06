@@ -643,6 +643,13 @@ function renderHome(){
     <button class="btn">Read this issue</button> ${dl(L)} ${shareBtn(L)} <a class="btn" href="#past" style="background:none;color:var(--ink);text-decoration:underline">See past issues</a></div>`;
   $('latest').querySelectorAll('button:not([data-pdf]):not([data-share])').forEach(b=>b.onclick=()=>location.hash=L.num);
   if(L.title){$('hero-title').textContent=L.title;$('hero-kick').hidden=false}
+  else if(L.date){ // no title typed: use the parsha (or Yom Tov) of the Shabbos that issue came out for
+    const [gy,gm,gd]=L.date.split('-').map(Number);
+    fetch(`https://www.hebcal.com/shabbat?cfg=json&zip=10952&M=on&lg=a&gy=${gy}&gm=${gm}&gd=${gd}`).then(r=>r.json()).then(d=>{
+      const it=d.items||[],par=it.find(x=>x.category==='parashat'),hol=it.find(x=>x.category==='holiday'&&x.subcat==='major'),name=par?par.title:(hol?hol.title.replace(/^Erev /,'').replace(/ [IVX]+( \(.*\))?$/,''):'');
+      if(name&&issues[0]===L&&!L.title){$('hero-title').textContent=name;$('hero-kick').hidden=false}
+    }).catch(()=>{});
+  }
   const rec=issues.slice(1,5),rg=$('recent-grid');rg.innerHTML='';rec.forEach(i=>rg.append(card(i,false)));
   $('recent').hidden=!rec.length;$('recent-all').textContent=`See all ${issues.length} issues`;
 }
