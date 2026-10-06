@@ -642,7 +642,6 @@ function renderHome(){
     <div class="coverwrap"><span class="stamp">This issue!</span><button class="cover" aria-label="Read issue ${L.num}"><img src="${F(L,'cover.jpg')}" alt="Cover of issue ${L.num}"></button></div>
     <div><span class="eyebrow">This week</span><h2>Issue #${L.num}${L.title?': '+L.title:''}</h2>
     <div class="meta">${fmt(L.date)}${L.hebrew?' · '+L.hebrew:''}</div>
-    ${L.yomtov?`<div class="times"><div>Candle lighting<b>${L.yomtov}</b></div><div>Tzais<b>${L.tzais}</b></div></div>`:''}
     <button class="btn">Read this issue</button> ${dl(L)} ${shareBtn(L)} <a class="btn" href="#past" style="background:none;color:var(--ink);text-decoration:underline">See past issues</a></div>`;
   $('latest').querySelectorAll('button:not([data-pdf]):not([data-share])').forEach(b=>b.onclick=()=>location.hash=L.num);
   if(L.title){$('hero-title').textContent=L.title;$('hero-kick').hidden=false}
