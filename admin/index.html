@@ -67,6 +67,21 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 .ad .tools button{font:700 12px var(--body);border:1px solid var(--ink);background:var(--card);padding:4px 8px;cursor:pointer}
 .sticky{position:sticky;bottom:0;background:var(--paper);border-top:2px solid var(--ink);padding-block:12px;margin-top:10px;z-index:2}
 .login{max-width:400px;margin:40px auto}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.tile{background:var(--card);border:2px solid var(--ink);padding:14px 16px}
+.tile b{display:block;font:400 34px var(--display);color:var(--red);font-variant-numeric:tabular-nums;line-height:1.1}
+.tile span{font-size:13px;color:var(--muted);font-weight:700}
+.chart{display:flex;align-items:flex-end;gap:3px;height:160px;border-bottom:2px solid var(--ink);padding-top:10px}
+.chart div{flex:1;background:var(--plum);min-height:2px;position:relative}
+.chart div:hover{background:var(--red)}
+.chart div:hover::after{content:attr(data-tip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:12px;padding:3px 6px;white-space:nowrap;margin-bottom:4px;z-index:3}
+.axis{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bars .r{display:grid;grid-template-columns:minmax(90px,170px) 1fr 44px;gap:10px;align-items:center;font-size:14px}
+.bars .r i{display:block;height:14px;background:var(--schach)}
+.bars .r em{font-style:normal;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media (max-width:700px){.tiles{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (max-width:700px){.grid,.grid2{grid-template-columns:1fr}.ad{grid-template-columns:70px 1fr}.ad img,.ad .ph{width:70px;height:80px}.ad .tools{flex-direction:row;grid-column:1/-1}}
 </style>
@@ -76,6 +91,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
   <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN</small></a>
   <nav id="nav" hidden>
     <button data-go="list" class="on">Issues</button>
+    <button data-go="stats">Analytics</button>
     <button data-go="subs">Subscribers</button>
     <button data-go="settings">Settings</button>
     <a class="lnk" href="../" target="_blank" rel="noopener">View site ↗</a>
@@ -222,6 +238,23 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
     </div>
   </section>
 
+  <!-- ANALYTICS -->
+  <section id="v-stats" hidden>
+    <div class="row" style="justify-content:space-between;margin-bottom:14px">
+      <div><h2 style="font-size:30px">Analytics</h2><p class="hint" style="margin:0">Private visit counts. No cookies, names or IP addresses are saved.</p></div>
+      <select id="st-range" style="width:auto"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option></select>
+    </div>
+    <p class="msg" id="st-msg" role="status"></p>
+    <div class="tiles" id="st-tiles"></div>
+    <div class="card"><h3>Visitors per day</h3><div class="chart" id="st-chart"></div><div class="axis" id="st-axis"></div></div>
+    <div class="two">
+      <div class="card"><h3>Most-read issues</h3><div class="bars" id="st-issues"></div></div>
+      <div class="card"><h3>Pages people visit</h3><div class="bars" id="st-pages"></div></div>
+      <div class="card"><h3>Where visitors come from</h3><div class="bars" id="st-refs"></div></div>
+      <div class="card"><h3>Phone or computer</h3><div class="bars" id="st-dev"></div></div>
+    </div>
+  </section>
+
   <!-- SUBSCRIBERS -->
   <section id="v-subs" hidden>
     <div class="card">
@@ -263,7 +296,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 <script>
 const $=id=>document.getElementById(id);
 const CFG=window.CC_CONFIG||{};
-const views=['login','reset','list','edit','settings','bulk','subs'];
+const views=['login','reset','list','edit','settings','bulk','subs','stats'];
 function show(v){views.forEach(x=>$('v-'+x).hidden=x!==v);document.querySelectorAll('[data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===v||(v==='edit'&&b.dataset.go==='list')));scrollTo(0,0)}
 function say(id,text,kind){const m=$(id);m.textContent=text||'';m.className='msg'+(kind?' '+kind:'')}
 const esc=t=>String(t??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
@@ -304,7 +337,7 @@ $('v-reset').onsubmit=async e=>{
   say('r-msg','Password saved.','ok');setTimeout(start,800);
 };
 $('logout').onclick=async()=>{await sb.auth.signOut();location.reload()};
-document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>({list:loadList,settings:openSettings,subs:loadSubs})[b.dataset.go]());
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>({list:loadList,settings:openSettings,subs:loadSubs,stats:loadStats})[b.dataset.go]());
 
 /* ---------- list ---------- */
 async function loadList(){
@@ -677,6 +710,48 @@ $('sub-add').onsubmit=async e=>{
   if(error){say('sub-add-msg',error.message,'err');return}
   $('sub-paste').value='';say('sub-add-msg',`Added ${emails.length} email${emails.length>1?'s':''} (duplicates skipped).`,'ok');loadSubs();
 };
+
+/* ---------- analytics ---------- */
+const PAGE_NAMES={home:'Home',past:'Past Issues',fun:'Fun Stuff',sponsors:'Sponsors',contact:'Contact'};
+function barsHtml(rows,label){
+  if(!rows.length)return '<p class="hint">Nothing yet.</p>';
+  const max=Math.max(...rows.map(r=>r[1]));
+  return rows.map(([k,n])=>`<div class="r"><span>${esc(label?label(k):k)}</span><i style="width:${Math.max(2,n/max*100)}%"></i><em>${n}</em></div>`).join('');
+}
+const countBy=(arr,f)=>{const m=new Map();arr.forEach(x=>{const k=f(x);if(k!==null)m.set(k,(m.get(k)||0)+1)});return [...m].sort((a,b)=>b[1]-a[1])};
+async function loadStats(){
+  show('stats');say('st-msg','Loading…');
+  const days=+$('st-range').value,since=new Date(Date.now()-days*864e5);
+  const {data,error}=await sb.from('visits').select('at,event,path,ref,vid,mobile').gte('at',since.toISOString()).order('at',{ascending:false}).limit(50000);
+  if(error){say('st-msg',/does not exist/.test(error.message)?'Analytics is not set up yet. Run analytics.sql in Supabase.':error.message,'err');return}
+  say('st-msg',data.length?'':'No visits recorded yet. Numbers show up as people use the site.');
+  const uniq=a=>new Set(a.map(x=>x.vid)).size;
+  const dayKey=d=>new Date(d).toLocaleDateString('en-CA');
+  const today=dayKey(Date.now()),week=Date.now()-7*864e5;
+  const {count:subs}=await sb.from('subscribers').select('*',{count:'exact',head:true}).eq('unsubscribed',false);
+  const tiles=[
+    [uniq(data.filter(x=>dayKey(x.at)===today)),'Visitors today'],
+    [uniq(data.filter(x=>new Date(x.at)>=week)),'Visitors this week'],
+    [uniq(data),`Visitors, last ${days} days`],
+    [data.filter(x=>x.event==='pdf').length,'PDF downloads'],
+    [data.filter(x=>x.event==='read').length,'Issues opened'],
+    [data.filter(x=>x.event==='subscribe').length,'New signups'],
+    [subs??'–','Subscribers now'],
+    [data.filter(x=>x.event==='contact').length,'Contact messages'],
+  ];
+  $('st-tiles').innerHTML=tiles.map(([n,l])=>`<div class="tile"><b>${n}</b><span>${l}</span></div>`).join('');
+  const per=new Map();for(let i=days-1;i>=0;i--)per.set(dayKey(Date.now()-i*864e5),new Set());
+  data.forEach(x=>{const k=dayKey(x.at);if(per.has(k))per.get(k).add(x.vid)});
+  const vals=[...per].map(([d,set])=>[d,set.size]),max=Math.max(1,...vals.map(v=>v[1]));
+  $('st-chart').innerHTML=vals.map(([d,n])=>`<div style="height:${n/max*100}%" data-tip="${fmt(d)}: ${n}"></div>`).join('');
+  $('st-axis').innerHTML=`<span>${fmt(vals[0][0])}</span><span>Today</span>`;
+  $('st-issues').innerHTML=barsHtml(countBy(data,x=>x.event==='read'||x.event==='pdf'?x.path:null).slice(0,8),k=>'Issue #'+k);
+  $('st-pages').innerHTML=barsHtml(countBy(data,x=>x.event==='view'?x.path:null),k=>PAGE_NAMES[k]||k);
+  const firsts=[...new Map(data.slice().reverse().map(x=>[x.vid,x])).values()];
+  $('st-refs').innerHTML=barsHtml(countBy(firsts,x=>x.ref||'Typed the address / bookmark').slice(0,8));
+  $('st-dev').innerHTML=barsHtml(countBy(firsts,x=>x.mobile?'Phone':'Computer'));
+}
+$('st-range').onchange=loadStats;
 
 start();
 </script>

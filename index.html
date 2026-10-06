@@ -286,6 +286,15 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
 const dl=i=>`<button class="btn dl" data-pdf="${i.num}">Download PDF</button>`;
 const CFG=window.CC_CONFIG||{},DB=!!(CFG.supabaseUrl&&CFG.supabaseKey);
 const F=(i,f)=>i.base+f;
+/* private visit counter: no cookies, no names, no IPs */
+const VID=(()=>{try{let v=localStorage.getItem('cc_vid');if(!v){v=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('cc_vid',v)}return v}catch{return ''}})();
+const REF=(()=>{const q=new URLSearchParams(location.search).get('ref');if(q)return q.slice(0,40);try{const h=new URL(document.referrer).hostname;return h&&h!==location.hostname?h.replace(/^www\./,'').slice(0,100):''}catch{return ''}})();
+let lastTrack='';
+function track(event,path){
+  if(!DB)return;const key=event+path;if(event==='view'&&key===lastTrack)return;lastTrack=key;
+  fetch(`${CFG.supabaseUrl}/rest/v1/visits`,{method:'POST',keepalive:true,headers:{apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey,'Content-Type':'application/json',Prefer:'return=minimal'},
+    body:JSON.stringify({event,path:String(path).slice(0,100),ref:REF,vid:VID,mobile:/Mobi|Android|iPhone/i.test(navigator.userAgent)})}).catch(()=>{});
+}
 const $=id=>document.getElementById(id);
 const fmt=d=>new Date(d+'T12:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
 let issues=[];
@@ -320,6 +329,7 @@ function route(){
   const h=location.hash.slice(1)||'home',n=+h,i=issues.find(x=>x.num===n);
   const v=i?'issue':(['home','past','fun','sponsors','contact'].includes(h)?h:'home');
   ['home','past','issue','fun','sponsors','contact'].forEach(x=>$('v-'+x).hidden=x!==v);
+  i?track('read',String(i.num)):track('view',v);
   document.querySelectorAll('.menu a').forEach(a=>a.classList.toggle('on',a.dataset.v===(v==='issue'?'past':v)));
   if(i){
     $('r-title').textContent=`Issue #${i.num}${i.title?': '+i.title:''}`;
@@ -340,7 +350,7 @@ $('subform').addEventListener('submit',async e=>{
   btn.disabled=true;m.textContent='Signing you up…';
   try{
     const r=await fetch(`${CFG.supabaseUrl}/rest/v1/subscribers`,{method:'POST',headers:{apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({email:em.value.trim().toLowerCase(),name:$('s-name').value.trim(),phone:$('s-phone').value.trim(),address:$('s-address').value.trim(),shul:$('s-shul').value.trim()})});
-    if(r.ok){m.textContent="You're in! Look for the paper in your inbox every week.";e.target.reset()}
+    if(r.ok){m.textContent="You're in! Look for the paper in your inbox every week.";e.target.reset();track('subscribe','')}
     else if(r.status===409){m.textContent="You're already subscribed. 👍"}
     else throw 0;
   }catch{m.textContent="That didn't go through. Try again in a minute."}
@@ -356,7 +366,7 @@ $('cform').addEventListener('submit',async e=>{
   try{const fd=new FormData(f);fd.append('_subject','Website message: '+fd.get('topic'));fd.append('_template','table');fd.append('_captcha','false');fd.append('_replyto',fd.get('email'));
     const r=await fetch(FORM_ENDPOINT,{method:'POST',headers:{Accept:'application/json'},body:fd});
     const d=await r.json().catch(()=>({}));
-    if(!r.ok||String(d.success)!=='true')throw 0;f.reset();n.textContent="Thanks! Your message was sent. We'll get back to you soon.";}
+    if(!r.ok||String(d.success)!=='true')throw 0;f.reset();track('contact','');n.textContent="Thanks! Your message was sent. We'll get back to you soon.";}
   catch{n.classList.add('err');n.textContent="That didn't go through. Check your internet and try again.";}
   finally{btn.disabled=false}
 });
@@ -368,7 +378,7 @@ $('lb').addEventListener('touchend',e=>{if(tx===null)return;const d=e.changedTou
 const dlNS=window.claude?.use?window.claude.use('downloads').catch(()=>null):Promise.resolve(null);
 document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-pdf]');if(!b)return;e.stopPropagation();
-  const n=b.dataset.pdf,url=F(issues.find(x=>x.num==n),'issue.pdf'),name=`Community-Corner-${n}.pdf`,old=b.textContent;
+  track('pdf',String(b.dataset.pdf));const n=b.dataset.pdf,url=F(issues.find(x=>x.num==n),'issue.pdf'),name=`Community-Corner-${n}.pdf`,old=b.textContent;
   const ns=await dlNS;
   if(!ns){const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();return}
   try{b.textContent='Getting PDF…';b.disabled=true;
