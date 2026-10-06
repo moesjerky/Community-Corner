@@ -231,7 +231,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
         <button class="btn alt small" id="sub-copy" type="button">Copy all emails</button>
       </div>
       <div style="overflow-x:auto;margin-top:14px"><table>
-        <thead><tr><th>Email</th><th>Signed up</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Address</th><th>Shul</th><th>Signed up</th><th>Status</th><th></th></tr></thead>
         <tbody id="sub-list"></tbody>
       </table></div>
       <p class="msg" id="sub-msg" role="status"></p>
@@ -653,11 +653,11 @@ $('bgo').onclick=async()=>{
 let SUBS=[];
 async function loadSubs(){
   show('subs');say('sub-msg','Loading…');
-  const {data,error}=await sb.from('subscribers').select('email,created_at,unsubscribed').order('created_at',{ascending:false});
+  const {data,error}=await sb.from('subscribers').select('*').order('created_at',{ascending:false});
   if(error){say('sub-msg',error.message.includes('does not exist')?'The subscribers table is not set up yet. Run subscribers.sql in Supabase.':error.message,'err');return}
   SUBS=data;const active=data.filter(x=>!x.unsubscribed).length;
   $('sub-count').textContent=`· ${active} active`;say('sub-msg',data.length?'':'No subscribers yet.');
-  $('sub-list').innerHTML=data.map(x=>`<tr><td>${esc(x.email)}</td><td>${fmt((x.created_at||'').slice(0,10))}</td>
+  $('sub-list').innerHTML=data.map(x=>`<tr><td>${esc(x.name||'')}</td><td>${esc(x.email)}</td><td>${esc(x.phone||'')}</td><td>${esc(x.address||'')}</td><td>${esc(x.shul||'')}</td><td>${fmt((x.created_at||'').slice(0,10))}</td>
     <td><span class="pill ${x.unsubscribed?'draft':'live'}">${x.unsubscribed?'UNSUBSCRIBED':'ACTIVE'}</span></td>
     <td style="text-align:right"><button class="btn alt small" data-sdel="${esc(x.email)}" type="button">Remove</button></td></tr>`).join('');
   $('sub-list').querySelectorAll('[data-sdel]').forEach(b=>b.onclick=async()=>{

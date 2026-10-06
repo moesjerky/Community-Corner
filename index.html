@@ -110,9 +110,14 @@ section.view{padding-block:40px 20px}
 .print{margin-top:24px;padding:14px 16px;background:var(--card);border:2px dashed var(--line)}
 
 /* subscribe */
-.subbox{margin-top:10px;margin-bottom:24px;background:var(--blue);color:#fff;padding:24px;display:grid;grid-template-columns:1fr minmax(0,420px);gap:12px 28px;align-items:center;border:3px solid var(--ink);box-shadow:6px 6px 0 var(--gold)}
+.subbox{margin-top:10px;margin-bottom:24px;background:var(--blue);color:#fff;padding:24px;display:grid;grid-template-columns:minmax(0,300px) 1fr;gap:12px 28px;align-items:center;border:3px solid var(--ink);box-shadow:6px 6px 0 var(--gold)}
 .subbox h3{font-size:28px;color:var(--gold)}
 .subbox p{margin:6px 0 0}
+.subgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;align-items:end}
+.subgrid label{display:flex;flex-direction:column;gap:4px;font:700 13px var(--body);color:var(--gold)}
+.subgrid input{min-width:0;font:16px var(--body);padding:10px 12px;border:2px solid var(--ink);background:#fff;color:var(--ink);border-radius:0}
+.subgrid .btn{margin:0;background:var(--gold);color:var(--ink);height:44px}
+.subgrid .btn:hover,.subgrid .btn:focus-visible{background:#fff}
 .subrow{display:flex;gap:8px}
 .subrow input{flex:1;min-width:0;font:16px var(--body);padding:11px 12px;border:2px solid var(--ink);background:#fff;color:var(--ink);border-radius:0}
 .subrow .btn{margin:0;background:var(--gold);color:var(--ink)}
@@ -120,7 +125,7 @@ section.view{padding-block:40px 20px}
 .submsg{grid-column:1/-1;min-height:1.4em;font-weight:700;margin:0}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-@media (max-width:700px){.subbox{grid-template-columns:1fr}.subrow{flex-direction:column}}
+@media (max-width:700px){.subbox{grid-template-columns:1fr}.subrow{flex-direction:column}.subgrid{grid-template-columns:1fr}}
 
 /* contact */
 .cform{display:flex;flex-direction:column;gap:16px;max-width:640px;margin-top:20px}
@@ -248,9 +253,12 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
     <form class="subbox" id="subform" novalidate>
       <div><h3>Get the paper in your inbox</h3>
       <p>Every Friday we'll email you the new issue. Free, and you can unsubscribe anytime.</p></div>
-      <div class="subrow">
-        <label class="sr" for="s-email">Email</label>
-        <input id="s-email" name="email" type="email" placeholder="your@email.com" autocomplete="email" required>
+      <div class="subgrid">
+        <label for="s-name">Full name *<input id="s-name" name="name" autocomplete="name" required></label>
+        <label for="s-email">Email *<input id="s-email" name="email" type="email" autocomplete="email" required></label>
+        <label for="s-phone">Phone<input id="s-phone" name="phone" type="tel" autocomplete="tel"></label>
+        <label for="s-address">Address / town<input id="s-address" name="address" autocomplete="street-address"></label>
+        <label for="s-shul" class="wide">Shul<input id="s-shul" name="shul"></label>
         <input id="s-web" name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true">
         <button class="btn" type="submit">Subscribe</button>
       </div>
@@ -326,11 +334,12 @@ document.querySelector('.subnav').addEventListener('click',e=>{e.preventDefault(
 $('subform').addEventListener('submit',async e=>{
   e.preventDefault();const em=$('s-email'),m=$('s-msg'),btn=e.target.querySelector('button');
   if($('s-web').value)return;
+  if(!$('s-name').value.trim()){m.textContent='Type your full name.';$('s-name').focus();return}
   if(!em.checkValidity()||!em.value.trim()){m.textContent='Type a real email address, like name@gmail.com.';em.focus();return}
   if(!DB){m.textContent="Signups aren't open yet. Check back soon.";return}
   btn.disabled=true;m.textContent='Signing you up…';
   try{
-    const r=await fetch(`${CFG.supabaseUrl}/rest/v1/subscribers`,{method:'POST',headers:{apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({email:em.value.trim().toLowerCase()})});
+    const r=await fetch(`${CFG.supabaseUrl}/rest/v1/subscribers`,{method:'POST',headers:{apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({email:em.value.trim().toLowerCase(),name:$('s-name').value.trim(),phone:$('s-phone').value.trim(),address:$('s-address').value.trim(),shul:$('s-shul').value.trim()})});
     if(r.ok){m.textContent="You're in! Look for the paper in your inbox every week.";e.target.reset()}
     else if(r.status===409){m.textContent="You're already subscribed. 👍"}
     else throw 0;
