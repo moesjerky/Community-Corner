@@ -67,6 +67,16 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 .ad .tools button{font:700 12px var(--body);border:1px solid var(--ink);background:var(--card);padding:4px 8px;cursor:pointer}
 .sticky{position:sticky;bottom:0;background:var(--paper);border-top:2px solid var(--ink);padding-block:12px;margin-top:10px;z-index:2}
 .login{max-width:400px;margin:40px auto}
+.colors{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:14px}
+.colors label{flex-direction:row;align-items:center;gap:10px;border:1px solid var(--line);background:#fff;padding:8px;font-size:13px}
+.colors input[type=color]{width:44px;height:36px;padding:0;border:2px solid var(--ink);cursor:pointer;flex:none}
+.cprev{border:2px solid var(--ink);max-width:520px;font:700 13px var(--body);margin-bottom:10px}
+.cprev>div{padding:8px 12px}
+.cp-head{display:flex;justify-content:space-between;align-items:center}
+.cp-head b{padding:3px 10px;border-radius:999px}
+.cp-body{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cp-title{width:100%;font:400 26px var(--display)}
+.cp-tag,.cp-btn,.cp-btn2{padding:4px 10px;color:#fff}
 .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
 .tile{background:var(--card);border:2px solid var(--ink);padding:14px 16px}
 .tile b{display:block;font:400 34px var(--display);color:var(--red);font-variant-numeric:tabular-nums;line-height:1.1}
@@ -285,6 +295,12 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
     <h3 style="margin-top:14px">Z'chus bar (top of every page)</h3>
     <label for="z-text">Text<input id="z-text"></label>
     <label for="z-names" style="margin-top:12px">Names (one per line, leave empty to hide the bar)<textarea id="z-names" rows="4" dir="auto"></textarea></label>
+    <h3 style="margin-top:28px">Colors</h3>
+    <p class="hint">Click a color to change it. The little preview shows how it looks. Save to put it on the website.</p>
+    <div class="colors" id="colors"></div>
+    <div class="cprev" id="cprev"><div class="cp-bar">Z'chus bar</div><div class="cp-head"><span>Header</span><b>Home</b></div><div class="cp-body"><b class="cp-title">The Community Corner</b><span class="cp-tag">This week</span><span class="cp-btn">Read this issue</span><span class="cp-btn2">Download PDF</span></div><div class="cp-cta">Advertise box</div></div>
+    <p><button class="btn alt small" type="button" id="colors-reset">Reset to original colors</button></p>
+
     <h3 style="margin-top:28px">Website text</h3>
     <p class="hint">Change any of these and click Save. The website updates right away.</p>
     <div style="display:flex;flex-direction:column;gap:12px" id="site-fields"></div>
@@ -588,12 +604,12 @@ async function openSettings(){
   show('settings');say('z-msg','');
   const {data}=await sb.from('settings').select('key,value').in('key',['zchus','site']);
   const v=data?.find(x=>x.key==='zchus')?.value||{};$('z-text').value=v.text||'';$('z-names').value=(v.names||[]).join('\n');
-  SITE_SAVED=data?.find(x=>x.key==='site')?.value||{};drawSiteFields(SITE_SAVED);
+  SITE_SAVED=data?.find(x=>x.key==='site')?.value||{};drawSiteFields(SITE_SAVED);drawColors(SITE_SAVED.colors||{});
 }
 $('v-settings').onsubmit=async e=>{
   e.preventDefault();
   const value={text:$('z-text').value.trim(),names:$('z-names').value.split('\n').map(s=>s.trim()).filter(Boolean)};
-  const site=readSiteFields();
+  const site={...readSiteFields(),colors:readColors()};
   const {error}=await sb.from('settings').upsert([{key:'zchus',value},{key:'site',value:site}]);
   if(!error)SITE_SAVED=site;
   say('z-msg',error?error.message:'Saved. The website shows it now.',error?'err':'ok');
@@ -786,7 +802,25 @@ function drawSiteFields(v){
 function readSiteFields(){
   const v={};SITE_FIELDS.forEach(([k,,,type])=>{const x=$('st-'+k).value.trim();v[k]=type==='list'?x.split('\n').map(t=>t.trim()).filter(Boolean):x});return v;
 }
-$('site-reset').onclick=()=>drawSiteFields(SITE_SAVED);
+$('site-reset').onclick=()=>{drawSiteFields(SITE_SAVED);drawColors(SITE_SAVED.colors||{})};
+
+/* ---------- colors ---------- */
+const COLOR_FIELDS=[['red','Main red (header, title)','#C3262E'],['red-dk','Dark red (shadows, hover)','#8E1B22'],['plum','Purple (title shadow, boxes)','#4A2770'],['blue','Blue (z\'chus bar, ticker)','#0E4C8A'],['schach','Green (labels)','#3F6B34'],['gold','Gold (highlights)','#FFE7B8'],['paper','Page background','#F5EEDC'],['card','Card background','#FFFDF7'],['ink','Text and borders','#24192E']];
+function drawColors(c){
+  $('colors').innerHTML=COLOR_FIELDS.map(([k,l,d])=>`<label for="col-${k}"><input type="color" id="col-${k}" value="${(c&&c[k])||d}">${esc(l)}</label>`).join('');
+  $('colors').querySelectorAll('input').forEach(i=>i.oninput=previewColors);previewColors();
+}
+function readColors(){const o={};COLOR_FIELDS.forEach(([k,,d])=>{const v=$('col-'+k).value.toUpperCase();if(v!==d.toUpperCase())o[k]=v});return o}
+function previewColors(){
+  const g=k=>$('col-'+k).value,q=x=>$('cprev').querySelector(x);
+  q('.cp-bar').style.cssText=`background:${g('blue')};color:#fff`;
+  q('.cp-head').style.cssText=`background:${g('red')};color:#fff`;q('.cp-head b').style.cssText=`background:${g('gold')};color:${g('red-dk')}`;
+  q('.cp-body').style.cssText=`background:${g('paper')};color:${g('ink')}`;
+  q('.cp-title').style.cssText=`color:${g('red')};text-shadow:2px 2px 0 ${g('plum')}`;
+  q('.cp-tag').style.background=g('schach');q('.cp-btn').style.background=g('ink');q('.cp-btn2').style.background=g('red');
+  q('.cp-cta').style.cssText=`background:${g('plum')};color:${g('gold')}`;
+}
+$('colors-reset').onclick=()=>drawColors({});
 
 start();
 </script>

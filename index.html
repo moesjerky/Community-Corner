@@ -172,6 +172,7 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}.ticker .track{animation:none}}
 </style>
+<script>try{const c=JSON.parse(localStorage.getItem('cc_colors')||'{}');for(const k in c)document.documentElement.style.setProperty('--'+k,c[k])}catch{}</script>
 </head>
 <body>
 
@@ -410,6 +411,10 @@ function applySite(v){
   document.querySelectorAll('[data-t]').forEach(el=>{const t=SITE[el.dataset.t];if(typeof t==='string'&&t.trim())el.textContent=t});
   if(SITE.topics&&SITE.topics.length)$('c-topic').innerHTML=SITE.topics.map(t=>`<option>${esc(t)}</option>`).join('');
   if(SITE.bannerTitle)document.title=SITE.bannerTitle;
+  const c=SITE.colors||{},root=document.documentElement.style;
+  ['red','red-dk','plum','blue','schach','gold','paper','card','ink'].forEach(k=>root.removeProperty('--'+k));
+  for(const k in c)if(/^#[0-9a-f]{6}$/i.test(c[k]))root.setProperty('--'+k,c[k]);
+  try{localStorage.setItem('cc_colors',JSON.stringify(c))}catch{}
 }
 function renderZchus(v){
   if(!v||!v.names||!v.names.length){document.querySelector('.zchus').hidden=true;return}
