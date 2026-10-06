@@ -186,8 +186,8 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
 </div></header>
 
 <div class="banner wrap">
-  <h1>The Community Corner</h1>
-  <p>The weekly paper for Pomona, Monsey, Wesley Hills and Montebello. Every issue, online.</p>
+  <h1 data-t="bannerTitle">The Community Corner</h1>
+  <p data-t="tagline">The weekly paper for Pomona, Monsey, Wesley Hills and Montebello. Every issue, online.</p>
 </div>
 <div class="ticker" aria-hidden="true"><div class="track" id="ticker"></div></div>
 
@@ -233,7 +233,7 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
   <section class="view" id="v-contact" hidden>
     <span class="eyebrow plum">Contact</span>
     <h2 class="sec-h">Contact Us</h2>
-    <p class="meta">Want to advertise, send in a submission, or just say hi? Fill this out and we'll get back to you.</p>
+    <p class="meta" data-t="contactIntro">Want to advertise, send in a submission, or just say hi? Fill this out and we'll get back to you.</p>
     <form class="cform" id="cform" novalidate>
       <div class="row">
         <label for="c-name">Your name<input id="c-name" name="name" required autocomplete="name"></label>
@@ -251,8 +251,8 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
 
   <div id="subscribe">
     <form class="subbox" id="subform" novalidate>
-      <div><h3>Get the paper in your inbox</h3>
-      <p>Every Friday we'll email you the new issue. Free, and you can unsubscribe anytime.</p></div>
+      <div><h3 data-t="subTitle">Get the paper in your inbox</h3>
+      <p data-t="subText">Every Friday we'll email you the new issue. Free, and you can unsubscribe anytime.</p></div>
       <div class="subgrid">
         <label for="s-name">Full name *<input id="s-name" name="name" autocomplete="name" required></label>
         <label for="s-email">Email *<input id="s-email" name="email" type="email" autocomplete="email" required></label>
@@ -267,8 +267,8 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
   </div>
 
   <div class="cta">
-    <div><h3>Advertise with Community Corner</h3>
-    <p>Reach 1,000+ families every week. Ad deadline is Monday, end of day.</p></div>
+    <div><h3 data-t="adTitle">Advertise with Community Corner</h3>
+    <p data-t="adText">Reach 1,000+ families every week. Ad deadline is Monday, end of day.</p></div>
     <a class="btn ctab" href="#contact">Contact us</a>
   </div>
 
@@ -279,7 +279,7 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
   <figure><img id="lb-img" alt=""><figcaption><b id="lb-name"></b><span id="lb-info"></span><br><small id="lb-count"></small></figcaption></figure>
   <button class="arr" id="lb-next" aria-label="Next sponsor">›</button>
 </div>
-<footer><span class="wrap" style="display:block;margin:0 auto;padding-right:110px">© 2026 The Community Corner is an imprint of The Community Corner. All rights reserved.</span><div class="credit-mark" title="Admin"><a href="admin/" aria-label="Admin"><img src="img/credit-mark.png" alt="Admin"></a></div></footer>
+<footer><span class="wrap" data-t="footer" style="display:block;margin:0 auto;padding-right:110px">© 2026 The Community Corner is an imprint of The Community Corner. All rights reserved.</span><div class="credit-mark" title="Admin"><a href="admin/" aria-label="Admin"><img src="img/credit-mark.png" alt="Admin"></a></div></footer>
 
 <script src="config.js"></script>
 <script>
@@ -299,9 +299,11 @@ const $=id=>document.getElementById(id);
 const fmt=d=>new Date(d+'T12:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
 let issues=[];
 
+let SITE={};
 function ticker(L){
-  const items=[L?`Issue #${L.num} is out now`:'New issue every Friday','Ad deadline: Monday end of day','Over 1,000 readers every week','Chag Sameach from the Community Corner'];
-  const one=items.map(t=>`<span>${t}<b>★</b></span>`).join('');
+  const extra=SITE.ticker&&SITE.ticker.length?SITE.ticker:['Ad deadline: Monday end of day','Over 1,000 readers every week','Chag Sameach from the Community Corner'];
+  const items=[L?`Issue #${L.num} is out now`:'New issue every Friday',...extra];
+  const one=items.map(t=>`<span>${String(t).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))}<b>★</b></span>`).join('');
   $('ticker').innerHTML=one+one;
 }
 function card(i,isNew){
@@ -396,11 +398,18 @@ async function loadIssues(){
   try{
     const rows=await fetch(`${CFG.supabaseUrl}/rest/v1/issues?select=*&published=eq.true&order=num.desc`,{headers:h}).then(r=>r.ok?r.json():[]);
     rows.forEach(i=>i.base=`${CFG.supabaseUrl}/storage/v1/object/public/issues/${i.num}/`);
-    const z=await fetch(`${CFG.supabaseUrl}/rest/v1/settings?key=eq.zchus&select=value`,{headers:h}).then(r=>r.ok?r.json():[]);
-    if(z[0])renderZchus(z[0].value);
+    const st=await fetch(`${CFG.supabaseUrl}/rest/v1/settings?key=in.(zchus,site)&select=key,value`,{headers:h}).then(r=>r.ok?r.json():[]);
+    const zz=st.find(x=>x.key==='zchus');if(zz)renderZchus(zz.value);
+    const ss=st.find(x=>x.key==='site');if(ss)applySite(ss.value);
     const nums=new Set(rows.map(r=>r.num));
     return rows.concat(st.filter(i=>!nums.has(i.num)));
   }catch{return st}
+}
+function applySite(v){
+  SITE=v||{};
+  document.querySelectorAll('[data-t]').forEach(el=>{const t=SITE[el.dataset.t];if(typeof t==='string'&&t.trim())el.textContent=t});
+  if(SITE.topics&&SITE.topics.length)$('c-topic').innerHTML=SITE.topics.map(t=>`<option>${esc(t)}</option>`).join('');
+  if(SITE.bannerTitle)document.title=SITE.bannerTitle;
 }
 function renderZchus(v){
   if(!v||!v.names||!v.names.length){document.querySelector('.zchus').hidden=true;return}

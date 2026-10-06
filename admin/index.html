@@ -285,7 +285,13 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
     <h3 style="margin-top:14px">Z'chus bar (top of every page)</h3>
     <label for="z-text">Text<input id="z-text"></label>
     <label for="z-names" style="margin-top:12px">Names (one per line, leave empty to hide the bar)<textarea id="z-names" rows="4" dir="auto"></textarea></label>
-    <p><button class="btn" type="submit">Save settings</button></p>
+    <h3 style="margin-top:28px">Website text</h3>
+    <p class="hint">Change any of these and click Save. The website updates right away.</p>
+    <div style="display:flex;flex-direction:column;gap:12px" id="site-fields"></div>
+    <div class="sticky"><div class="row" style="justify-content:space-between">
+      <button class="btn alt" type="button" id="site-reset">Undo changes</button>
+      <button class="btn red" type="submit">Save settings</button>
+    </div></div>
     <p class="msg" id="z-msg" role="status"></p>
   </form>
 </main>
@@ -580,13 +586,16 @@ $('v-edit').onsubmit=async e=>{
 /* ---------- settings ---------- */
 async function openSettings(){
   show('settings');say('z-msg','');
-  const {data}=await sb.from('settings').select('value').eq('key','zchus').maybeSingle();
-  const v=data?.value||{};$('z-text').value=v.text||'';$('z-names').value=(v.names||[]).join('\n');
+  const {data}=await sb.from('settings').select('key,value').in('key',['zchus','site']);
+  const v=data?.find(x=>x.key==='zchus')?.value||{};$('z-text').value=v.text||'';$('z-names').value=(v.names||[]).join('\n');
+  SITE_SAVED=data?.find(x=>x.key==='site')?.value||{};drawSiteFields(SITE_SAVED);
 }
 $('v-settings').onsubmit=async e=>{
   e.preventDefault();
   const value={text:$('z-text').value.trim(),names:$('z-names').value.split('\n').map(s=>s.trim()).filter(Boolean)};
-  const {error}=await sb.from('settings').upsert({key:'zchus',value});
+  const site=readSiteFields();
+  const {error}=await sb.from('settings').upsert([{key:'zchus',value},{key:'site',value:site}]);
+  if(!error)SITE_SAVED=site;
   say('z-msg',error?error.message:'Saved. The website shows it now.',error?'err':'ok');
 };
 
@@ -752,6 +761,32 @@ async function loadStats(){
   $('st-dev').innerHTML=barsHtml(countBy(firsts,x=>x.mobile?'Phone':'Computer'));
 }
 $('st-range').onchange=loadStats;
+
+/* ---------- website text ---------- */
+const SITE_FIELDS=[
+  ['bannerTitle','Big title at the top','The Community Corner'],
+  ['tagline','Line under the title','The weekly paper for Pomona, Monsey, Wesley Hills and Montebello. Every issue, online.'],
+  ['ticker','Scrolling bar (one message per line). "Issue # is out now" is added by itself.',"Ad deadline: Monday end of day\nOver 1,000 readers every week\nChag Sameach from the Community Corner",'list'],
+  ['subTitle','Subscribe box title','Get the paper in your inbox'],
+  ['subText','Subscribe box text',"Every Friday we'll email you the new issue. Free, and you can unsubscribe anytime."],
+  ['adTitle','Advertise box title','Advertise with Community Corner'],
+  ['adText','Advertise box text','Reach 1,000+ families every week. Ad deadline is Monday, end of day.'],
+  ['contactIntro','Contact page intro',"Want to advertise, send in a submission, or just say hi? Fill this out and we'll get back to you."],
+  ['topics','Contact form choices (one per line)','Advertising\nSubmit an article or photo\nSubscribe\nSomething else','list'],
+  ['footer','Footer line','© 2026 The Community Corner is an imprint of The Community Corner. All rights reserved.'],
+];
+let SITE_SAVED={};
+function drawSiteFields(v){
+  $('site-fields').innerHTML=SITE_FIELDS.map(([k,label,def,type])=>{
+    const val=v[k]!==undefined?(type==='list'?v[k].join('\n'):v[k]):def;
+    const big=type==='list'||def.length>60;
+    return `<label for="st-${k}">${esc(label)}${big?`<textarea id="st-${k}" rows="${type==='list'?4:2}">${esc(val)}</textarea>`:`<input id="st-${k}" value="${esc(val)}">`}</label>`;
+  }).join('');
+}
+function readSiteFields(){
+  const v={};SITE_FIELDS.forEach(([k,,,type])=>{const x=$('st-'+k).value.trim();v[k]=type==='list'?x.split('\n').map(t=>t.trim()).filter(Boolean):x});return v;
+}
+$('site-reset').onclick=()=>drawSiteFields(SITE_SAVED);
 
 start();
 </script>
