@@ -74,6 +74,17 @@ section.view{padding-block:40px 20px}
 .btn{display:inline-block;margin-top:18px;font:700 16px var(--body);background:var(--ink);color:var(--paper);border:0;padding:12px 20px;cursor:pointer;text-decoration:none}
 .btn:hover,.btn:focus-visible{background:var(--red);outline:none}
 
+/* this shabbos strip */
+.shabbos{display:flex;flex-wrap:wrap;align-items:stretch;border:2px solid var(--ink);background:var(--card);margin-bottom:30px}
+.shabbos>div{padding:10px 16px;border-right:1px solid var(--line);flex:1 1 150px}
+.shabbos>div:last-child{border-right:0}
+.shabbos .lbl{display:block;font:700 12px var(--body);text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.shabbos b{font:400 22px var(--display);color:var(--red)}
+.shabbos .par{background:var(--plum);flex:2 1 220px}
+.shabbos .par .lbl{color:var(--gold)}
+.shabbos .par b{color:#fff;font-size:26px}
+.shabbos small{display:block;font-size:11px;color:var(--muted)}
+
 /* home */
 .latest{display:grid;grid-template-columns:minmax(0,340px) 1fr;gap:36px;align-items:center}
 .cover{display:block;border:3px solid var(--ink);box-shadow:8px 8px 0 var(--plum);background:var(--card);cursor:pointer;padding:0}
@@ -220,6 +231,7 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
 
 <main class="wrap">
   <section class="view" id="v-home">
+    <div class="shabbos" id="shabbos" hidden></div>
     <div class="latest" id="latest"></div>
   </section>
 
@@ -381,6 +393,19 @@ function route(){
 }
 $('q').oninput=renderPast;
 addEventListener('hashchange',route);
+/* This Shabbos: parsha + Monsey times, from Hebcal (updates by itself) */
+fetch('https://www.hebcal.com/shabbat?cfg=json&zip=10952&M=off&m=50&b=18&lg=a').then(r=>r.json()).then(d=>{
+  const it=d.items||[],by=c=>it.find(x=>x.category===c);
+  const par=by('parashat'),hol=it.find(x=>x.category==='holiday'&&x.subcat==='major'),c=by('candles'),h=by('havdalah');
+  const time=x=>x?new Date(x.date).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/New_York'}):'';
+  const name=par?par.title:(hol?hol.title:'');
+  if(!name&&!c)return;
+  const e=t=>String(t).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+  $('shabbos').innerHTML=(name?`<div class="par"><span class="lbl">${par?'This Shabbos':'This week'}</span><b>${e(name)}</b></div>`:'')
+    +(c?`<div><span class="lbl">Candle lighting</span><b>${time(c)}</b><small>18 minutes</small></div>`:'')
+    +(h?`<div><span class="lbl">Shabbos ends</span><b>${time(h)}</b><small>50 minutes · Monsey times</small></div>`:'');
+  $('shabbos').hidden=false;
+}).catch(()=>{});
 document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-share]');if(!b)return;e.stopPropagation();
   const i=issues.find(x=>x.num==b.dataset.share);if(!i)return;
