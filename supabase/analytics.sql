@@ -4,7 +4,7 @@
 create table if not exists visits (
   id      bigint generated always as identity primary key,
   at      timestamptz not null default now(),
-  event   text not null default 'view' check (event in ('view','read','pdf','subscribe','contact')),
+  event   text not null default 'view' check (event in ('view','read','pdf','subscribe','contact','share')),
   path    text not null default '' check (length(path) <= 100),
   ref     text not null default '' check (length(ref) <= 100),
   vid     text not null default '' check (length(vid) <= 40),
@@ -17,3 +17,7 @@ drop policy if exists "anyone logs a visit" on visits;
 create policy "anyone logs a visit" on visits for insert with check (at > now() - interval '1 minute');
 drop policy if exists "admins read visits" on visits;
 create policy "admins read visits" on visits for select using (public.is_admin());
+
+-- If the table already existed before 'share' was added, this updates the allowed events:
+alter table visits drop constraint if exists visits_event_check;
+alter table visits add constraint visits_event_check check (event in ('view','read','pdf','subscribe','contact','share'));

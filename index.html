@@ -4,6 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Community Corner</title>
+<meta name="description" content="The Community Corner: the weekly paper for Pomona, Monsey, Wesley Hills and Montebello. Read every issue online, play the games, and get it by email.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The Community Corner">
+<meta property="og:title" content="The Community Corner">
+<meta property="og:description" content="The weekly paper for Pomona, Monsey, Wesley Hills and Montebello. Read every issue online.">
+<meta property="og:url" content="https://community-corner.org/">
+<meta property="og:image" content="https://community-corner.org/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#C3262E">
+<link rel="icon" type="image/png" href="img/favicon.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Libre+Franklin:wght@400;600;800&family=Courier+Prime:wght@700&family=Frank+Ruhl+Libre:wght@500&display=swap">
 <style>
 :root{
@@ -74,12 +87,14 @@ section.view{padding-block:40px 20px}
 .bar{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:end}
 .bar input{font:15px var(--body);padding:9px 12px;border:2px solid var(--ink);background:var(--card);width:min(260px,100%)}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:22px;padding-block:24px}
-.issue{background:none;border:0;padding:0;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.issue{display:block;width:100%;background:none;border:0;padding:0;text-align:left;cursor:pointer;font:inherit;color:inherit}
 .issue img{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:top;border:2px solid var(--ink);background:var(--card);transition:transform .15s}
 .issue:hover img,.issue:focus-visible img{transform:translateY(-4px);box-shadow:5px 5px 0 var(--red)}
 .issue b{display:block;font:400 20px var(--display);margin-top:8px}
 .issue span{font-size:13px;color:var(--muted)}
-.dl{background:var(--red)} .issue-wrap .dl{margin-top:8px;padding:7px 12px;font-size:13px}
+.dl{background:var(--red)}
+.share{background:#1F7A4D}
+.share:hover,.share:focus-visible{background:#16603C} .issue-wrap .dl{margin-top:8px;padding:7px 12px;font-size:13px}
 .new{display:inline-block;background:var(--red);color:#fff;font:700 11px var(--body);padding:2px 6px;margin-left:6px;vertical-align:middle;letter-spacing:.06em}
 
 /* reader */
@@ -208,7 +223,7 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
   <section class="view" id="v-issue" hidden>
     <div class="rtop">
       <div><h2 class="sec-h" id="r-title"></h2><div class="meta" id="r-meta"></div></div>
-      <span id="r-dl"></span> <a class="btn" href="#past">← All issues</a>
+      <span id="r-dl"></span> <span id="r-share"></span> <a class="btn" href="#past">← All issues</a>
     </div>
     <div class="pages" id="r-pages"></div>
   </section>
@@ -296,6 +311,7 @@ function track(event,path){
   fetch(`${CFG.supabaseUrl}/rest/v1/visits`,{method:'POST',keepalive:true,headers:{apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey,'Content-Type':'application/json',Prefer:'return=minimal'},
     body:JSON.stringify({event,path:String(path).slice(0,100),ref:REF,vid:VID,mobile:/Mobi|Android|iPhone/i.test(navigator.userAgent)})}).catch(()=>{});
 }
+const shareBtn=i=>`<button class="btn share" data-share="${i.num}">Share on WhatsApp</button>`;
 const $=id=>document.getElementById(id);
 const fmt=d=>new Date(d+'T12:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
 let issues=[];
@@ -319,8 +335,8 @@ function renderHome(){
     <div><span class="eyebrow">This week</span><h2>Issue #${L.num}${L.title?': '+L.title:''}</h2>
     <div class="meta">${fmt(L.date)}${L.hebrew?' · '+L.hebrew:''}</div>
     ${L.yomtov?`<div class="times"><div>Candle lighting<b>${L.yomtov}</b></div><div>Tzais<b>${L.tzais}</b></div></div>`:''}
-    <button class="btn">Read this issue</button> ${dl(L)} <a class="btn" href="#past" style="background:none;color:var(--ink);text-decoration:underline">See past issues</a></div>`;
-  $('latest').querySelectorAll('button:not([data-pdf])').forEach(b=>b.onclick=()=>location.hash=L.num);
+    <button class="btn">Read this issue</button> ${dl(L)} ${shareBtn(L)} <a class="btn" href="#past" style="background:none;color:var(--ink);text-decoration:underline">See past issues</a></div>`;
+  $('latest').querySelectorAll('button:not([data-pdf]):not([data-share])').forEach(b=>b.onclick=()=>location.hash=L.num);
 }
 function renderPast(){
   const q=$('q').value.trim().toLowerCase(),g=$('grid');g.innerHTML='';
@@ -336,13 +352,21 @@ function route(){
   document.querySelectorAll('.menu a').forEach(a=>a.classList.toggle('on',a.dataset.v===(v==='issue'?'past':v)));
   if(i){
     $('r-title').textContent=`Issue #${i.num}${i.title?': '+i.title:''}`;
-    $('r-dl').innerHTML=dl(i);$('r-meta').textContent=fmt(i.date)+(i.hebrew?' · '+i.hebrew:'');
+    $('r-dl').innerHTML=dl(i);$('r-share').innerHTML=shareBtn(i);$('r-meta').textContent=fmt(i.date)+(i.hebrew?' · '+i.hebrew:'');
     $('r-pages').innerHTML=Array.from({length:i.pages},(_,k)=>`<img loading="lazy" src="${F(i,'p'+(k+1)+'.jpg')}" alt="Issue ${i.num}, spread ${k+1}"><div class="pnum">Spread ${k+1} of ${i.pages}</div>`).join('');
   }
   if(location.hash)scrollTo({top:0});
 }
 $('q').oninput=renderPast;
 addEventListener('hashchange',route);
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-share]');if(!b)return;e.stopPropagation();
+  const i=issues.find(x=>x.num==b.dataset.share);if(!i)return;
+  const url=`https://community-corner.org/#${i.num}`,text=`Community Corner #${i.num}${i.title?': '+i.title:''}`;
+  track('share',String(i.num));
+  if(navigator.share&&/Mobi|Android|iPhone/i.test(navigator.userAgent)){try{await navigator.share({title:text,text,url});return}catch(err){if(err&&err.name==='AbortError')return}}
+  window.open('https://wa.me/?text='+encodeURIComponent(text+' '+url),'_blank','noopener');
+},true);
 document.querySelector('.subnav').addEventListener('click',e=>{e.preventDefault();$('subform').scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>$('s-email').focus({preventScroll:true}),400)});
 $('subform').addEventListener('submit',async e=>{
   e.preventDefault();const em=$('s-email'),m=$('s-msg'),btn=e.target.querySelector('button');
@@ -399,9 +423,9 @@ async function loadIssues(){
   try{
     const rows=await fetch(`${CFG.supabaseUrl}/rest/v1/issues?select=*&published=eq.true&order=num.desc`,{headers:h}).then(r=>r.ok?r.json():[]);
     rows.forEach(i=>i.base=`${CFG.supabaseUrl}/storage/v1/object/public/issues/${i.num}/`);
-    const st=await fetch(`${CFG.supabaseUrl}/rest/v1/settings?key=in.(zchus,site)&select=key,value`,{headers:h}).then(r=>r.ok?r.json():[]);
-    const zz=st.find(x=>x.key==='zchus');if(zz)renderZchus(zz.value);
-    const ss=st.find(x=>x.key==='site');if(ss)applySite(ss.value);
+    const sets=await fetch(`${CFG.supabaseUrl}/rest/v1/settings?key=in.(zchus,site)&select=key,value`,{headers:h}).then(r=>r.ok?r.json():[]);
+    const zz=sets.find(x=>x.key==='zchus');if(zz)renderZchus(zz.value);
+    const ss=sets.find(x=>x.key==='site');if(ss)applySite(ss.value);
     const nums=new Set(rows.map(r=>r.num));
     return rows.concat(st.filter(i=>!nums.has(i.num)));
   }catch{return st}
