@@ -67,6 +67,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 .ad .tools button{font:700 12px var(--body);border:1px solid var(--ink);background:var(--card);padding:4px 8px;cursor:pointer}
 .sticky{position:sticky;bottom:0;background:var(--paper);border-top:2px solid var(--ink);padding-block:12px;margin-top:10px;z-index:2}
 .login{max-width:400px;margin:40px auto}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (max-width:700px){.grid,.grid2{grid-template-columns:1fr}.ad{grid-template-columns:70px 1fr}.ad img,.ad .ph{width:70px;height:80px}.ad .tools{flex-direction:row;grid-column:1/-1}}
 </style>
 </head>
@@ -75,6 +76,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
   <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN</small></a>
   <nav id="nav" hidden>
     <button data-go="list" class="on">Issues</button>
+    <button data-go="subs">Subscribers</button>
     <button data-go="settings">Settings</button>
     <a class="lnk" href="../" target="_blank" rel="noopener">View site ↗</a>
     <button id="logout">Log out</button>
@@ -220,6 +222,30 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
     </div>
   </section>
 
+  <!-- SUBSCRIBERS -->
+  <section id="v-subs" hidden>
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div><h2>Subscribers <span id="sub-count" class="hint" style="font:600 15px var(--body)"></span></h2>
+        <p class="hint" style="margin:0">People who signed up on the website to get the paper by email.</p></div>
+        <button class="btn alt small" id="sub-copy" type="button">Copy all emails</button>
+      </div>
+      <div style="overflow-x:auto;margin-top:14px"><table>
+        <thead><tr><th>Email</th><th>Signed up</th><th>Status</th><th></th></tr></thead>
+        <tbody id="sub-list"></tbody>
+      </table></div>
+      <p class="msg" id="sub-msg" role="status"></p>
+    </div>
+    <form class="card" id="sub-add">
+      <h3>Add people</h3>
+      <p class="hint">Paste emails (like from the old Google Form). One per line, or separated by commas.</p>
+      <label for="sub-paste" class="sr">Emails</label>
+      <textarea id="sub-paste" rows="6" placeholder="e.g. name@gmail.com"></textarea>
+      <p><button class="btn" type="submit">Add them</button></p>
+      <p class="msg" id="sub-add-msg" role="status"></p>
+    </form>
+  </section>
+
   <!-- SETTINGS -->
   <form id="v-settings" class="card" hidden>
     <h2>Settings</h2>
@@ -237,7 +263,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 <script>
 const $=id=>document.getElementById(id);
 const CFG=window.CC_CONFIG||{};
-const views=['login','reset','list','edit','settings','bulk'];
+const views=['login','reset','list','edit','settings','bulk','subs'];
 function show(v){views.forEach(x=>$('v-'+x).hidden=x!==v);document.querySelectorAll('[data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===v||(v==='edit'&&b.dataset.go==='list')));scrollTo(0,0)}
 function say(id,text,kind){const m=$(id);m.textContent=text||'';m.className='msg'+(kind?' '+kind:'')}
 const esc=t=>String(t??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
@@ -278,7 +304,7 @@ $('v-reset').onsubmit=async e=>{
   say('r-msg','Password saved.','ok');setTimeout(start,800);
 };
 $('logout').onclick=async()=>{await sb.auth.signOut();location.reload()};
-document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>b.dataset.go==='list'?loadList():openSettings());
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>({list:loadList,settings:openSettings,subs:loadSubs})[b.dataset.go]());
 
 /* ---------- list ---------- */
 async function loadList(){
@@ -596,6 +622,35 @@ $('bgo').onclick=async()=>{
   $('bcancel').disabled=false;
   const r=await sb.from('issues').select('num,title,date,published,pages,fun,sponsors').order('num',{ascending:false});if(r.data)ISSUES=r.data;
   checkBulk();
+};
+
+/* ---------- subscribers ---------- */
+let SUBS=[];
+async function loadSubs(){
+  show('subs');say('sub-msg','Loading…');
+  const {data,error}=await sb.from('subscribers').select('email,created_at,unsubscribed').order('created_at',{ascending:false});
+  if(error){say('sub-msg',error.message.includes('does not exist')?'The subscribers table is not set up yet. Run subscribers.sql in Supabase.':error.message,'err');return}
+  SUBS=data;const active=data.filter(x=>!x.unsubscribed).length;
+  $('sub-count').textContent=`· ${active} active`;say('sub-msg',data.length?'':'No subscribers yet.');
+  $('sub-list').innerHTML=data.map(x=>`<tr><td>${esc(x.email)}</td><td>${fmt((x.created_at||'').slice(0,10))}</td>
+    <td><span class="pill ${x.unsubscribed?'draft':'live'}">${x.unsubscribed?'UNSUBSCRIBED':'ACTIVE'}</span></td>
+    <td style="text-align:right"><button class="btn alt small" data-sdel="${esc(x.email)}" type="button">Remove</button></td></tr>`).join('');
+  $('sub-list').querySelectorAll('[data-sdel]').forEach(b=>b.onclick=async()=>{
+    if(!b.dataset.armed){b.dataset.armed=1;b.textContent='Click again';setTimeout(()=>{delete b.dataset.armed;b.textContent='Remove'},4000);return}
+    const {error}=await sb.from('subscribers').delete().eq('email',b.dataset.sdel);error?say('sub-msg',error.message,'err'):loadSubs();
+  });
+}
+$('sub-copy').onclick=async()=>{
+  const list=SUBS.filter(x=>!x.unsubscribed).map(x=>x.email).join(', ');
+  try{await navigator.clipboard.writeText(list);say('sub-msg','Copied '+SUBS.filter(x=>!x.unsubscribed).length+' emails.','ok')}catch{say('sub-msg',list)}
+};
+$('sub-add').onsubmit=async e=>{
+  e.preventDefault();
+  const emails=[...new Set($('sub-paste').value.split(/[\s,;]+/).map(x=>x.trim().toLowerCase()).filter(x=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x)))];
+  if(!emails.length){say('sub-add-msg','No emails found. Paste one per line.','err');return}
+  const {error}=await sb.from('subscribers').upsert(emails.map(email=>({email})),{onConflict:'email',ignoreDuplicates:true});
+  if(error){say('sub-add-msg',error.message,'err');return}
+  $('sub-paste').value='';say('sub-add-msg',`Added ${emails.length} email${emails.length>1?'s':''} (duplicates skipped).`,'ok');loadSubs();
 };
 
 start();
