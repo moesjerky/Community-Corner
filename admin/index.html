@@ -589,7 +589,7 @@ $('v-edit').onsubmit=async e=>{
     say('save-msg',row.published?'Saved! It is live on the website.':'Saved as a draft. Publish it when you are ready.','ok');
     const top=Math.max(0,...ISSUES.map(i=>i.num));
     const prev=ISSUES.find(i=>i.num===num);
-    if(row.published&&num>=top&&!prev?.emailed_at){
+    if(row.published&&num>=top&&!prev?.emailed_at&&(isNew||!prev?.published)){
       say('save-msg','Saved and live. Emailing subscribers…','ok');
       const ok=await mailIssue(num,false,null,true);
       say('save-msg',ok?'Saved, live, and emailed to subscribers. 📬':'Saved and live, but the email did not go out. Use "Email subscribers" on the list.',ok?'ok':'err');
