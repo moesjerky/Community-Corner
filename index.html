@@ -125,6 +125,16 @@ section.view{padding-block:40px 20px}
 .print{margin-top:24px;padding:14px 16px;background:var(--card);border:2px dashed var(--line)}
 
 /* subscribe */
+.subbar{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;background:var(--gold);color:var(--ink);text-decoration:none;font:700 14px var(--body);padding:8px 16px;border-bottom:2px solid var(--ink)}
+.subbar b{background:var(--ink);color:var(--gold);padding:4px 12px;border-radius:999px;font-weight:700}
+.subbar:hover b,.subbar:focus-visible b{background:var(--red);color:#fff}
+.subpromo{margin-block:10px 24px;background:var(--blue);color:#fff;padding:24px;display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center;border:3px solid var(--ink);box-shadow:6px 6px 0 var(--gold)}
+.subpromo h3{font-size:28px;color:var(--gold)}
+.subpromo p{margin:6px 0 0;max-width:56ch}
+.subpromo .btn{margin:0;background:var(--gold);color:var(--ink)}
+.subpromo .btn:hover,.subpromo .btn:focus-visible{background:#fff}
+.subpage{margin-top:20px}
+.subgrid select{min-width:0;font:16px var(--body);padding:10px 12px;border:2px solid var(--ink);background:#fff;color:var(--ink);border-radius:0}
 .subbox{margin-top:10px;margin-bottom:24px;background:var(--blue);color:#fff;padding:24px;display:grid;grid-template-columns:minmax(0,300px) 1fr;gap:12px 28px;align-items:center;border:3px solid var(--ink);box-shadow:6px 6px 0 var(--gold)}
 .subbox h3{font-size:28px;color:var(--gold)}
 .subbox p{margin:6px 0 0}
@@ -197,9 +207,10 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
 <header class="head"><div class="wrap">
   <a class="logo" href="#home"><img src="img/cc-logo.png" alt="Community Corner" width="688" height="286"></a>
   <nav class="menu" aria-label="Main">
-    <a href="#home" data-v="home">Home</a><a href="#past" data-v="past">Past Issues</a><a href="#fun" data-v="fun">Fun Stuff</a><a href="#sponsors" data-v="sponsors">Sponsors</a><a href="#contact" data-v="contact">Contact</a><a href="#subscribe" class="subnav">Subscribe</a>
+    <a href="#home" data-v="home">Home</a><a href="#past" data-v="past">Past Issues</a><a href="#fun" data-v="fun">Fun Stuff</a><a href="#sponsors" data-v="sponsors">Sponsors</a><a href="#contact" data-v="contact">Contact</a><a href="#subscribe" class="subnav" data-v="subscribe">Subscribe</a>
   </nav>
 </div></header>
+<a class="subbar" id="subbar" href="#subscribe"><span>Get the Community Corner in your inbox every week</span><b>Subscribe</b></a>
 
 <div class="banner wrap">
   <h1 data-t="bannerTitle">The Community Corner</h1>
@@ -246,6 +257,27 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
     <p class="print" id="print"></p>
   </section>
 
+  <section class="view" id="v-subscribe" hidden>
+    <span class="eyebrow plum">Free every week</span>
+    <h2 class="sec-h">Get the paper in your inbox</h2>
+    <p class="meta">Fill this out and we'll email you every new issue. Only your name and email are needed.</p>
+    <form class="subbox subpage" id="subform" novalidate>
+      <div><h3>Sign up</h3>
+      <p>Every Friday we'll email you the new issue. Free, and you can unsubscribe anytime.</p></div>
+      <div class="subgrid">
+        <label for="s-name">Full name *<input id="s-name" name="name" autocomplete="name" required></label>
+        <label for="s-email">Email *<input id="s-email" name="email" type="email" autocomplete="email" required></label>
+        <label for="s-phone">Phone<input id="s-phone" name="phone" type="tel" autocomplete="tel"></label>
+        <label for="s-address">Address / town<input id="s-address" name="address" autocomplete="street-address"></label>
+        <label for="s-shul">Shul<input id="s-shul" name="shul"></label>
+        <label for="s-heard">How did you hear about us?<select id="s-heard" name="heard"><option value="">Choose one</option><option>Shul</option><option>Evergreen</option><option>Uptown</option><option>Friends</option><option>Other</option></select></label>
+        <input id="s-web" name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true">
+        <button class="btn" type="submit">Subscribe</button>
+      </div>
+      <p class="submsg" id="s-msg" role="status"></p>
+    </form>
+  </section>
+
   <section class="view" id="v-contact" hidden>
     <span class="eyebrow plum">Contact</span>
     <h2 class="sec-h">Contact Us</h2>
@@ -265,22 +297,12 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
     </form>
   </section>
 
-  <div id="subscribe">
-    <form class="subbox" id="subform" novalidate>
-      <div><h3 data-t="subTitle">Get the paper in your inbox</h3>
-      <p data-t="subText">Every Friday we'll email you the new issue. Free, and you can unsubscribe anytime.</p></div>
-      <div class="subgrid">
-        <label for="s-name">Full name *<input id="s-name" name="name" autocomplete="name" required></label>
-        <label for="s-email">Email *<input id="s-email" name="email" type="email" autocomplete="email" required></label>
-        <label for="s-phone">Phone<input id="s-phone" name="phone" type="tel" autocomplete="tel"></label>
-        <label for="s-address">Address / town<input id="s-address" name="address" autocomplete="street-address"></label>
-        <label for="s-shul" class="wide">Shul<input id="s-shul" name="shul"></label>
-        <input id="s-web" name="website" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true">
-        <button class="btn" type="submit">Subscribe</button>
-      </div>
-      <p class="submsg" id="s-msg" role="status"></p>
-    </form>
+  <div class="subpromo" id="subpromo">
+    <div><h3 data-t="subTitle">Get the paper in your inbox</h3>
+    <p data-t="subText">Every Friday we'll email you the new issue. Free, and you can unsubscribe anytime.</p></div>
+    <a class="btn" href="#subscribe">Subscribe</a>
   </div>
+
 
   <div class="cta">
     <div><h3 data-t="adTitle">Advertise with Community Corner</h3>
@@ -344,10 +366,10 @@ function renderPast(){
   if(!g.children.length)g.innerHTML='<p class="meta">No issues match that search.</p>';
 }
 function route(){
-  if(location.hash==='#subscribe'){const f=$('subform');f.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>$('s-email').focus({preventScroll:true}),400);return}
   const h=location.hash.slice(1)||'home',n=+h,i=issues.find(x=>x.num===n);
-  const v=i?'issue':(['home','past','fun','sponsors','contact'].includes(h)?h:'home');
-  ['home','past','issue','fun','sponsors','contact'].forEach(x=>$('v-'+x).hidden=x!==v);
+  const v=i?'issue':(['home','past','fun','sponsors','contact','subscribe'].includes(h)?h:'home');
+  ['home','past','issue','fun','sponsors','contact','subscribe'].forEach(x=>$('v-'+x).hidden=x!==v);
+  $('subpromo').hidden=v==='subscribe';$('subbar').hidden=v==='subscribe';
   i?track('read',String(i.num)):track('view',v);
   document.querySelectorAll('.menu a').forEach(a=>a.classList.toggle('on',a.dataset.v===(v==='issue'?'past':v)));
   if(i){
@@ -367,7 +389,6 @@ document.addEventListener('click',async e=>{
   if(navigator.share&&/Mobi|Android|iPhone/i.test(navigator.userAgent)){try{await navigator.share({title:text,text,url});return}catch(err){if(err&&err.name==='AbortError')return}}
   window.open('https://wa.me/?text='+encodeURIComponent(text+' '+url),'_blank','noopener');
 },true);
-document.querySelector('.subnav').addEventListener('click',e=>{e.preventDefault();$('subform').scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>$('s-email').focus({preventScroll:true}),400)});
 $('subform').addEventListener('submit',async e=>{
   e.preventDefault();const em=$('s-email'),m=$('s-msg'),btn=e.target.querySelector('button');
   if($('s-web').value)return;
@@ -376,7 +397,7 @@ $('subform').addEventListener('submit',async e=>{
   if(!DB){m.textContent="Signups aren't open yet. Check back soon.";return}
   btn.disabled=true;m.textContent='Signing you up…';
   try{
-    const r=await fetch(`${CFG.supabaseUrl}/rest/v1/subscribers`,{method:'POST',headers:{apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({email:em.value.trim().toLowerCase(),name:$('s-name').value.trim(),phone:$('s-phone').value.trim(),address:$('s-address').value.trim(),shul:$('s-shul').value.trim()})});
+    const r=await fetch(`${CFG.supabaseUrl}/rest/v1/subscribers`,{method:'POST',headers:{apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({email:em.value.trim().toLowerCase(),name:$('s-name').value.trim(),phone:$('s-phone').value.trim(),address:$('s-address').value.trim(),shul:$('s-shul').value.trim(),heard:$('s-heard').value})});
     if(r.ok){m.textContent="You're in! Look for the paper in your inbox every week.";e.target.reset();track('subscribe','')}
     else if(r.status===409){m.textContent="You're already subscribed. 👍"}
     else throw 0;
