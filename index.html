@@ -247,6 +247,7 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
         <select id="c-topic" name="topic"><option>Advertising</option><option>Submit an article or photo</option><option>Subscribe</option><option>Something else</option></select>
       </label>
       <label for="c-msg">Message<textarea id="c-msg" name="message" rows="6" required></textarea></label>
+      <input type="text" name="_honey" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
       <button class="btn" type="submit">Send message</button>
       <p class="cnote" id="c-note" role="status"></p>
     </form>
@@ -330,14 +331,16 @@ $('subform').addEventListener('submit',async e=>{
   finally{btn.disabled=false}
 });
 /* Contact form. Set FORM_ENDPOINT to the Formspree URL to turn on sending. */
-const FORM_ENDPOINT='';
+const FORM_ENDPOINT='https://formsubmit.co/ajax/submissions@ourcommunitycorner.com';
 $('cform').addEventListener('submit',async e=>{
   e.preventDefault();const f=e.target,n=$('c-note');n.className='cnote';
   if(!f.checkValidity()){n.classList.add('err');n.textContent='Please fill in your name, a valid email, and a message.';f.reportValidity();return}
   if(!FORM_ENDPOINT){n.classList.add('err');n.textContent="Our contact form isn't connected yet. Please check back soon.";return}
   const btn=f.querySelector('button');btn.disabled=true;n.textContent='Sending…';
-  try{const r=await fetch(FORM_ENDPOINT,{method:'POST',headers:{Accept:'application/json'},body:new FormData(f)});
-    if(!r.ok)throw 0;f.reset();n.textContent="Thanks! Your message was sent. We'll get back to you soon.";}
+  try{const fd=new FormData(f);fd.append('_subject','Website message: '+fd.get('topic'));fd.append('_template','table');fd.append('_captcha','false');fd.append('_replyto',fd.get('email'));
+    const r=await fetch(FORM_ENDPOINT,{method:'POST',headers:{Accept:'application/json'},body:fd});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||String(d.success)!=='true')throw 0;f.reset();n.textContent="Thanks! Your message was sent. We'll get back to you soon.";}
   catch{n.classList.add('err');n.textContent="That didn't go through. Check your internet and try again.";}
   finally{btn.disabled=false}
 });
