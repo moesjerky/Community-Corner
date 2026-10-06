@@ -113,7 +113,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
     <div class="card">
       <div class="row" style="justify-content:space-between">
         <div><h2>Issues</h2><p class="hint" style="margin:0">Add the new issue every week. Drafts stay hidden until you publish them.</p></div>
-        <button class="btn red" id="new-issue">+ New issue</button>
+        <div class="row"><button class="btn alt" id="bulk-open">Add many at once</button><button class="btn red" id="new-issue">+ New issue</button></div>
       </div>
       <div style="overflow-x:auto;margin-top:14px"><table>
         <thead><tr><th></th><th>Issue</th><th>Date</th><th>Status</th><th></th></tr></thead>
@@ -201,6 +201,25 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
     </div><p class="msg" id="save-msg" role="status"></p></div>
   </form>
 
+  <!-- BULK -->
+  <section id="v-bulk" hidden>
+    <div class="card">
+      <h2>Add many issues</h2>
+      <p class="hint">Drop in several PDFs. Put the issue number in each file name (like <b>CC_week_245.pdf</b>). Dates are guessed one week apart; fix any that are wrong. Fun Stuff and Sponsors can be added later with Edit.</p>
+      <div class="drop" id="bdrop" tabindex="0" role="button"><b>Drop PDFs here, or click to choose them</b></div>
+      <input type="file" id="bpdf" accept="application/pdf" multiple hidden>
+      <div style="overflow-x:auto;margin-top:14px"><table>
+        <thead><tr><th>File</th><th>Issue #</th><th>Date</th><th>Status</th><th></th></tr></thead>
+        <tbody id="blist"></tbody>
+      </table></div>
+      <div class="row" style="margin-top:14px;justify-content:space-between">
+        <button type="button" class="btn alt" id="bcancel">Back to issues</button>
+        <button type="button" class="btn red" id="bgo" disabled>Upload all</button>
+      </div>
+      <p class="msg" id="bmsg" role="status"></p>
+    </div>
+  </section>
+
   <!-- SETTINGS -->
   <form id="v-settings" class="card" hidden>
     <h2>Settings</h2>
@@ -218,7 +237,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 <script>
 const $=id=>document.getElementById(id);
 const CFG=window.CC_CONFIG||{};
-const views=['login','reset','list','edit','settings'];
+const views=['login','reset','list','edit','settings','bulk'];
 function show(v){views.forEach(x=>$('v-'+x).hidden=x!==v);document.querySelectorAll('[data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===v||(v==='edit'&&b.dataset.go==='list')));scrollTo(0,0)}
 function say(id,text,kind){const m=$(id);m.textContent=text||'';m.className='msg'+(kind?' '+kind:'')}
 const esc=t=>String(t??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
@@ -390,6 +409,22 @@ $('drop').ondragleave=()=>$('drop').classList.remove('over');
 $('drop').ondrop=e=>{e.preventDefault();$('drop').classList.remove('over');const f=e.dataTransfer.files[0];if(f)readPdf(f)};
 $('pdf').onchange=e=>{const f=e.target.files[0];if(f)readPdf(f);e.target.value=''};
 const toBlob=(c,q)=>new Promise(r=>c.toBlob(r,'image/jpeg',q));
+async function renderPdf(file,onPage){
+  const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+  const pages=[];let first=null;
+  for(let n=1;n<=doc.numPages;n++){
+    onPage&&onPage(n,doc.numPages);
+    const pg=await doc.getPage(n),v1=pg.getViewport({scale:1}),vp=pg.getViewport({scale:2400/v1.width});
+    const c=document.createElement('canvas');c.width=Math.round(vp.width);c.height=Math.round(vp.height);
+    const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);
+    await pg.render({canvasContext:ctx,viewport:vp}).promise;
+    pages.push(await toBlob(c,.8));if(n===1)first=c;else{c.width=c.height=0}
+  }
+  const land=first.width>first.height,sw=land?first.width/2:first.width,scale=Math.min(1,800/sw);
+  const cc=document.createElement('canvas');cc.width=Math.round(sw*scale);cc.height=Math.round(first.height*scale);
+  cc.getContext('2d').drawImage(first,land?first.width/2:0,0,sw,first.height,0,0,cc.width,cc.height);
+  return {pages,cover:await toBlob(cc,.82)};
+}
 async function readPdf(file){
   if(!/pdf$/i.test(file.type)&&!/\.pdf$/i.test(file.name)){say('pdf-msg','That file is not a PDF.','err');return}
   PDF_FILE=file;PAGES=null;$('thumbs').innerHTML='';$('save').disabled=true;
@@ -496,6 +531,72 @@ async function importIssue(num,btn){
     say('import-msg',`#${num} is in. You can edit it now.`,'ok');loadList();
   }catch(err){say('import-msg',err.message,'err');btn.disabled=false}
 }
+
+/* ---------- bulk add ---------- */
+let BULK=[];
+function guessDate(num){
+  const ref=ISSUES.find(i=>i.date)||{num:249,date:'2026-09-25'};
+  const d=new Date(ref.date+'T12:00');d.setDate(d.getDate()-7*(ref.num-num));
+  return d.toLocaleDateString('en-CA');
+}
+function drawBulk(){
+  $('blist').innerHTML=BULK.map((b,k)=>`<tr>
+    <td>${esc(b.file.name)}</td>
+    <td><input type="number" min="1" value="${b.num||''}" data-bk="${k}" data-bf="num" style="width:90px"></td>
+    <td><input type="date" value="${b.date||''}" data-bk="${k}" data-bf="date"></td>
+    <td><span class="pill ${b.state==='done'?'live':'draft'}">${esc(b.status)}</span></td>
+    <td>${b.state==='done'?'':`<button type="button" class="btn alt small" data-brm="${k}">Remove</button>`}</td></tr>`).join('');
+  $('blist').querySelectorAll('[data-bf]').forEach(i=>i.onchange=()=>{const b=BULK[i.dataset.bk];b[i.dataset.bf]=i.dataset.bf==='num'?+i.value:i.value;if(i.dataset.bf==='num'&&!b.dateTouched)b.date=guessDate(b.num);if(i.dataset.bf==='date')b.dateTouched=1;checkBulk();drawBulk()});
+  $('blist').querySelectorAll('[data-brm]').forEach(x=>x.onclick=()=>{BULK.splice(+x.dataset.brm,1);checkBulk();drawBulk()});
+}
+function checkBulk(){
+  const seen=new Set();
+  BULK.forEach(b=>{if(b.state==='done')return;
+    if(!b.num){b.status='Needs issue #';b.state='bad'}
+    else if(ISSUES.some(i=>i.num===b.num)){b.status='Already on site, will skip';b.state='skip'}
+    else if(seen.has(b.num)){b.status='Same # twice';b.state='bad'}
+    else{b.status='Ready';b.state='ready'}
+    seen.add(b.num)});
+  $('bgo').disabled=!BULK.some(b=>b.state==='ready');
+}
+function addBulkFiles(files){
+  [...files].filter(f=>/\.pdf$/i.test(f.name)).forEach(f=>{
+    const m=f.name.match(/(\d+)(?!.*\d)/),num=m?+m[1]:0;
+    BULK.push({file:f,num,date:num?guessDate(num):''});
+  });
+  BULK.sort((a,b)=>(b.num||0)-(a.num||0));checkBulk();drawBulk();
+}
+$('bulk-open').onclick=()=>{BULK=[];drawBulk();say('bmsg','');$('bgo').disabled=true;show('bulk')};
+$('bcancel').onclick=loadList;
+$('bdrop').onclick=()=>$('bpdf').click();
+$('bdrop').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('bpdf').click()}};
+$('bdrop').ondragover=e=>{e.preventDefault();$('bdrop').classList.add('over')};
+$('bdrop').ondragleave=()=>$('bdrop').classList.remove('over');
+$('bdrop').ondrop=e=>{e.preventDefault();$('bdrop').classList.remove('over');addBulkFiles(e.dataTransfer.files)};
+$('bpdf').onchange=e=>{addBulkFiles(e.target.files);e.target.value=''};
+$('bgo').onclick=async()=>{
+  const todo=BULK.filter(b=>b.state==='ready');
+  if(todo.some(b=>!b.date)){say('bmsg','Every issue needs a date.','err');return}
+  $('bgo').disabled=true;$('bcancel').disabled=true;let ok=0;
+  for(const [k,b] of todo.entries()){
+    try{
+      b.status='Making pages…';drawBulk();
+      const r=await renderPdf(b.file,(n,t)=>{b.status=`Page ${n} of ${t}…`;drawBulk()});
+      for(let i=0;i<r.pages.length;i++){b.status=`Uploading ${i+1} of ${r.pages.length}…`;drawBulk();await up(`${b.num}/p${i+1}.jpg`,r.pages[i],'image/jpeg')}
+      b.status='Uploading PDF…';drawBulk();
+      await up(`${b.num}/cover.jpg`,r.cover,'image/jpeg');
+      await up(`${b.num}/issue.pdf`,b.file,'application/pdf');
+      const {error}=await sb.from('issues').upsert({num:b.num,date:b.date,pages:r.pages.length,published:true});
+      if(error)throw error;
+      b.status='Done ✓';b.state='done';ok++;
+    }catch(err){b.status='Failed: '+(err.message||'error');b.state='bad'}
+    drawBulk();say('bmsg',`${k+1} of ${todo.length} finished…`);
+  }
+  say('bmsg',`Added ${ok} of ${todo.length} issues.`+(ok<todo.length?' Fix the failed ones and click Upload all again.':''),ok===todo.length?'ok':'err');
+  $('bcancel').disabled=false;
+  const r=await sb.from('issues').select('num,title,date,published,pages,fun,sponsors').order('num',{ascending:false});if(r.data)ISSUES=r.data;
+  checkBulk();
+};
 
 start();
 </script>
