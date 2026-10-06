@@ -26,9 +26,9 @@ function emailHtml(issue: any, cover: string, pdf: string, unsub: string) {
 <p style="margin:0 0 6px;font:bold 13px Arial,sans-serif;letter-spacing:1px;color:#3F6B34;text-transform:uppercase">This week's paper is here</p>
 <h1 style="margin:0 0 14px;font:bold 26px Arial,sans-serif;color:#24192E">${esc(title)}</h1>
 ${times}
-<a href="${SITE}/#${issue.num}"><img src="${cover}" alt="Cover of issue ${issue.num}" width="516" style="display:block;width:100%;max-width:516px;height:auto;border:2px solid #24192E"></a>
+<a href="${SITE}/?ref=email#${issue.num}"><img src="${cover}" alt="Cover of issue ${issue.num}" width="516" style="display:block;width:100%;max-width:516px;height:auto;border:2px solid #24192E"></a>
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:20px"><tr>
-<td style="background:#24192E;padding:12px 20px"><a href="${SITE}/#${issue.num}" style="font:bold 16px Arial,sans-serif;color:#F5EEDC;text-decoration:none">Read online</a></td>
+<td style="background:#24192E;padding:12px 20px"><a href="${SITE}/?ref=email#${issue.num}" style="font:bold 16px Arial,sans-serif;color:#F5EEDC;text-decoration:none">Read online</a></td>
 <td width="10"></td>
 <td style="background:#C3262E;padding:12px 20px"><a href="${pdf}" style="font:bold 16px Arial,sans-serif;color:#fff;text-decoration:none">Download PDF</a></td>
 </tr></table>
