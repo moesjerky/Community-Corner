@@ -153,13 +153,15 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
         <div><h2>Issues</h2><p class="hint" style="margin:0">Add the new issue every week. Drafts stay hidden until you publish them.</p></div>
         <div class="row"><button class="btn alt" id="bulk-open">Add many at once</button><button class="btn red" id="new-issue">+ New issue</button></div>
       </div>
+      <p style="margin:14px 0 0"><button class="btn alt small" type="button" id="fix-covers">Check cover order on all issues</button>
+      <span class="hint">Fixes issues where the thumbnail shows an inside page instead of the cover.</span></p>
+      <p class="msg" id="fix-msg" role="status"></p>
       <div style="overflow-x:auto;margin-top:14px"><table>
         <thead><tr><th></th><th>Issue</th><th>Date</th><th>Status</th><th>Email</th><th></th></tr></thead>
         <tbody id="list"></tbody>
       </table></div>
       <p class="msg" id="list-msg" role="status"></p>
-      <p style="margin:6px 0 0"><button class="btn alt small" type="button" id="fix-covers">Check cover order on all issues</button>
-      <span class="hint">Fixes issues where the thumbnail shows an inside page instead of the cover.</span></p>
+
     </div>
     <div class="card" id="import-card" hidden>
       <h3>Bring in older issues</h3>
@@ -891,7 +893,7 @@ $('in-all').onchange=loadInbox;
 $('fix-covers').onclick=async()=>{
   const btn=$('fix-covers');btn.disabled=true;let fixed=[],failed=[];
   for(const [k,i] of ISSUES.entries()){
-    say('list-msg',`Checking #${i.num} (${k+1} of ${ISSUES.length})… ${fixed.length} fixed so far`);
+    say('fix-msg',`Checking #${i.num} (${k+1} of ${ISSUES.length})… ${fixed.length} fixed so far`);
     try{
       const res=await fetch(pub(i.num+'/issue.pdf')+'?t='+Date.now());if(!res.ok)throw new Error('no PDF');
       const r=await renderPdf(new File([await res.blob()],i.num+'.pdf',{type:'application/pdf'}));
@@ -901,7 +903,7 @@ $('fix-covers').onclick=async()=>{
     }catch(err){failed.push(i.num)}
   }
   btn.disabled=false;
-  say('list-msg',(fixed.length?`Fixed ${fixed.length}: #${fixed.join(', #')}.`:'All covers were already right.')+(failed.length?` Could not check: #${failed.join(', #')}.`:'')+' Refresh in a minute to see the new thumbnails.',failed.length?'err':'ok');
+  say('fix-msg',(fixed.length?`Fixed ${fixed.length}: #${fixed.join(', #')}.`:'All covers were already right.')+(failed.length?` Could not check: #${failed.join(', #')}.`:'')+' Refresh in a minute to see the new thumbnails.',failed.length?'err':'ok');
 };
 
 start();
