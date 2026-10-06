@@ -34,6 +34,7 @@ main{padding-block:28px 60px}
 label{display:flex;flex-direction:column;gap:5px;font-weight:700;font-size:13px}
 input,textarea,select{font:15px var(--body);padding:9px 11px;border:2px solid var(--ink);background:#fff;color:var(--ink);border-radius:0;width:100%}
 textarea{resize:vertical}
+input::placeholder,textarea::placeholder{color:#B5A98F;font-style:italic}
 input:focus,textarea:focus{outline:3px solid var(--gold);outline-offset:0}
 .mono{font-family:ui-monospace,Menlo,monospace;letter-spacing:.15em;text-transform:uppercase}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -132,7 +133,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
   <form id="v-edit" hidden novalidate>
     <div class="card">
       <h2 id="e-head">New issue</h2>
-      <p class="hint">Start with the PDF. Everything else can be filled in after.</p>
+      <p class="hint"><b>Only the PDF, Issue # and Date are needed.</b> Everything else is optional. Gray text is just an example.</p>
       <div class="drop" id="drop" tabindex="0" role="button">
         <b id="drop-label">Drop the PDF here, or click to choose it</b>
         <div class="hint" style="margin:6px 0 0">We'll turn each page into a picture and make the cover.</div>
@@ -143,27 +144,27 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
     </div>
 
     <div class="card">
-      <h3>Issue info</h3>
+      <h3>Issue info <span class="hint" style="font:600 13px var(--body)">· Issue # and Date needed, rest optional</span></h3>
       <div class="grid">
         <label for="e-num">Issue #<input id="e-num" type="number" min="1" required></label>
         <label for="e-date">Date<input id="e-date" type="date" required></label>
-        <label for="e-hebrew">Hebrew date<input id="e-hebrew" placeholder="14 Tishrei 5787"></label>
+        <label for="e-hebrew">Hebrew date<input id="e-hebrew" placeholder="e.g. 14 Tishrei 5787"></label>
       </div>
       <div class="grid" style="margin-top:14px">
-        <label for="e-title" style="grid-column:span 1">Title<input id="e-title" placeholder="Mega Succos Edition"></label>
-        <label for="e-yomtov">Candle lighting<input id="e-yomtov" placeholder="6:30 PM"></label>
-        <label for="e-tzais">Tzais<input id="e-tzais" placeholder="8:00 PM"></label>
+        <label for="e-title" style="grid-column:span 1">Title<input id="e-title" placeholder="e.g. Mega Succos Edition"></label>
+        <label for="e-yomtov">Candle lighting<input id="e-yomtov" placeholder="e.g. 6:30 PM"></label>
+        <label for="e-tzais">Tzais<input id="e-tzais" placeholder="e.g. 8:00 PM"></label>
       </div>
     </div>
 
     <div class="card">
-      <div class="row" style="justify-content:space-between"><h3>Fun Stuff</h3><button type="button" class="btn alt small" id="copy-fun">Copy from last issue</button></div>
+      <div class="row" style="justify-content:space-between"><h3>Fun Stuff <span class="hint" style="font:600 13px var(--body)">· optional, only shows for the newest issue</span></h3><button type="button" class="btn alt small" id="copy-fun">Copy from last issue</button></div>
       <p class="hint">Leave a box empty to hide that part.</p>
       <div class="grid2">
-        <label for="f-wstitle">Word search title<input id="f-wstitle" placeholder="Succos Word Search"></label>
+        <label for="f-wstitle">Word search title<input id="f-wstitle" placeholder="e.g. Succos Word Search"></label>
         <span></span>
-        <label for="f-grid">Letter grid (one row per line)<textarea id="f-grid" rows="10" class="mono" placeholder="SNIMLIESUCCAHH&#10;HHOSHANOSSAOMA"></textarea></label>
-        <label for="f-words">Words to find (one per line)<textarea id="f-words" rows="10" placeholder="LULAV&#10;ESROG"></textarea></label>
+        <label for="f-grid">Letter grid (one row per line)<textarea id="f-grid" rows="10" class="mono" placeholder="e.g. SNIMLIESUCCAHH&#10;HHOSHANOSSAOMA"></textarea></label>
+        <label for="f-words">Words to find (one per line)<textarea id="f-words" rows="10" placeholder="e.g. LULAV&#10;ESROG"></textarea></label>
       </div>
       <p class="msg" id="grid-msg"></p>
       <div class="grid2" style="margin-top:6px">
@@ -173,7 +174,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
       </div>
       <div class="grid" style="margin-top:14px">
         <label for="f-word">Word of the week<input id="f-word"></label>
-        <label for="f-say">How to say it<input id="f-say" placeholder="yoo-BIK-wih-tus"></label>
+        <label for="f-say">How to say it<input id="f-say" placeholder="e.g. yoo-BIK-wih-tus"></label>
         <label for="f-mean">Meaning<input id="f-mean"></label>
       </div>
       <div class="grid2" style="margin-top:14px">
@@ -183,12 +184,12 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
     </div>
 
     <div class="card">
-      <div class="row" style="justify-content:space-between"><h3>Sponsors</h3><button type="button" class="btn alt small" id="copy-ads">Copy from last issue</button></div>
+      <div class="row" style="justify-content:space-between"><h3>Sponsors <span class="hint" style="font:600 13px var(--body)">· optional, only shows for the newest issue</span></h3><button type="button" class="btn alt small" id="copy-ads">Copy from last issue</button></div>
       <p class="hint">Click a picture to upload or change the ad. Use ↑ ↓ to change the order.</p>
       <div class="ads" id="ads"></div>
       <p><button type="button" class="btn alt small" id="add-ad">+ Add sponsor</button></p>
       <div class="grid2">
-        <label for="s-pname">Printing sponsored by<input id="s-pname" placeholder="Mailway"></label>
+        <label for="s-pname">Printing sponsored by<input id="s-pname" placeholder="e.g. Mailway"></label>
         <label for="s-pinfo">Their info<input id="s-pinfo"></label>
       </div>
       <input type="file" id="ad-file" accept="image/*" hidden>
