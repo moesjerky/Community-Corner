@@ -860,9 +860,9 @@ async function inboxCount(){
 }
 async function loadInbox(){
   show('inbox');say('in-msg','Loading…');
-  let q=sb.from('submissions').select('*').order('created_at',{ascending:false}).limit(200);
+  let q=sb.from('submissions').select('*');
   if(!$('in-all').checked)q=q.eq('done',false);
-  const {data,error}=await q;
+  const {data,error}=await q.order('created_at',{ascending:false}).limit(200);
   if(error){say('in-msg',/does not exist|schema cache/.test(error.message)?'The inbox is not set up yet. Run submissions.sql in Supabase.':error.message,'err');return}
   say('in-msg',data.length?'':'Nothing new right now.');
   const urls={};
