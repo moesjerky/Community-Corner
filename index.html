@@ -32,6 +32,7 @@ h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.1;text-wrap:ba
 .logo{display:block;text-decoration:none;font:400 30px/.86 var(--display);color:var(--plum);letter-spacing:.02em;
   -webkit-text-stroke:0;text-shadow:2px 2px 0 #fff,-2px -2px 0 #fff,2px -2px 0 #fff,-2px 2px 0 #fff,0 2px 0 #fff,2px 0 0 #fff,0 -2px 0 #fff,-2px 0 0 #fff,4px 4px 0 var(--red-dk)}
 .logo span{display:block;font-size:1.22em}
+.logo img{display:block;height:62px;width:auto}
 .menu{display:flex;gap:4px;overflow-x:auto;min-width:0}
 .menu a{font:700 15px var(--body);color:#fff;text-decoration:none;padding:9px 14px;border-radius:999px;white-space:nowrap}
 .menu a:hover,.menu a:focus-visible{background:var(--red-dk);outline:none}
@@ -146,6 +147,7 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
   .latest,.fun{grid-template-columns:1fr}
   .grid{grid-template-columns:repeat(2,1fr);gap:14px}
   .logo{font-size:22px}
+  .logo img{height:46px}
   .menu a{padding:8px 9px;font-size:14px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}.ticker .track{animation:none}}
@@ -157,7 +159,7 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
   <div class="names"><bdi class="he" lang="he" dir="rtl">דניאל בן מרים</bdi><span class="and">and</span><bdi class="he" lang="he" dir="rtl">דוד משה בן יהודית רחל</bdi></div>
 </div>
 <header class="head"><div class="wrap">
-  <a class="logo" href="#home">COMMUNITY<span>CORNER</span></a>
+  <a class="logo" href="#home"><img src="img/cc-logo.png" alt="Community Corner" width="688" height="286"></a>
   <nav class="menu" aria-label="Main">
     <a href="#home" data-v="home">Home</a><a href="#past" data-v="past">Past Issues</a><a href="#fun" data-v="fun">Fun Stuff</a><a href="#sponsors" data-v="sponsors">Sponsors</a><a href="#contact" data-v="contact">Contact</a>
   </nav>
