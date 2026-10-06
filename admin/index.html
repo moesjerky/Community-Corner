@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Community Corner Admin</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Libre+Franklin:wght@400;600;800&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --red:#C3262E; --red-dk:#8E1B22; --plum:#4A2770; --blue:#0E4C8A; --schach:#3F6B34;
+  --paper:#F5EEDC; --card:#FFFDF7; --ink:#24192E; --muted:#6A5D70; --line:#E0D2B4; --gold:#FFE7B8;
+  --display:"Lilita One","Arial Black",Impact,sans-serif;
+  --body:"Libre Franklin",system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);font:15px/1.5 var(--body);margin:0}
+.wrap{max-width:980px;margin:0 auto;padding-inline:16px}
+h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.1;margin:0}
+.head{background:var(--red);color:#fff}
+.head .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:12px}
+.logo{font:400 24px/.9 var(--display);color:var(--plum);text-shadow:2px 2px 0 #fff,-2px -2px 0 #fff,2px -2px 0 #fff,-2px 2px 0 #fff,3px 3px 0 var(--red-dk);text-decoration:none}
+.logo small{display:block;font:700 11px var(--body);color:var(--gold);text-shadow:none;letter-spacing:.14em;margin-top:4px}
+.head nav{display:flex;gap:6px;flex-wrap:wrap}
+.head a.lnk,.head button{font:700 14px var(--body);color:#fff;background:none;border:0;padding:8px 12px;border-radius:999px;cursor:pointer;text-decoration:none}
+.head a.lnk:hover,.head button:hover,.head button.on{background:var(--gold);color:var(--red-dk)}
+main{padding-block:28px 60px}
+.card{background:var(--card);border:2px solid var(--ink);padding:20px;margin-bottom:22px}
+.card h2{font-size:26px;margin-bottom:4px}
+.card h3{font-size:20px;margin:0 0 10px}
+.hint{color:var(--muted);font-size:13px;margin:0 0 14px}
+label{display:flex;flex-direction:column;gap:5px;font-weight:700;font-size:13px}
+input,textarea,select{font:15px var(--body);padding:9px 11px;border:2px solid var(--ink);background:#fff;color:var(--ink);border-radius:0;width:100%}
+textarea{resize:vertical}
+input:focus,textarea:focus{outline:3px solid var(--gold);outline-offset:0}
+.mono{font-family:ui-monospace,Menlo,monospace;letter-spacing:.15em;text-transform:uppercase}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.btn{font:700 15px var(--body);background:var(--ink);color:var(--paper);border:0;padding:11px 18px;cursor:pointer}
+.btn:hover,.btn:focus-visible{background:var(--red);outline:none}
+.btn.alt{background:none;color:var(--ink);border:2px solid var(--ink);padding:9px 16px}
+.btn.alt:hover{background:var(--gold);color:var(--ink)}
+.btn.red{background:var(--red)}
+.btn.small{padding:6px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:wait}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.msg{font-weight:700;min-height:1.4em;margin:10px 0 0}
+.msg.err{color:var(--red)} .msg.ok{color:var(--schach)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px solid var(--ink);display:block}
+.pill{display:inline-block;font:700 11px var(--body);padding:3px 8px;letter-spacing:.06em}
+.pill.live{background:var(--schach);color:#fff} .pill.draft{background:var(--line);color:var(--ink)}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.thumbs img{height:90px;border:1px solid var(--ink)}
+.drop{border:2px dashed var(--ink);background:#fff;padding:22px;text-align:center;cursor:pointer}
+.drop:hover,.drop.over{background:var(--gold)}
+.ads{display:flex;flex-direction:column;gap:12px}
+.ad{display:grid;grid-template-columns:90px 1fr 1fr auto;gap:10px;align-items:center;border:1px solid var(--line);padding:10px;background:#fff}
+.ad img{width:90px;height:100px;object-fit:contain;background:var(--paper);border:1px solid var(--line)}
+.ad .ph{width:90px;height:100px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);border:1px dashed var(--line);text-align:center;cursor:pointer}
+.ad .tools{display:flex;flex-direction:column;gap:4px}
+.ad .tools button{font:700 12px var(--body);border:1px solid var(--ink);background:var(--card);padding:4px 8px;cursor:pointer}
+.sticky{position:sticky;bottom:0;background:var(--paper);border-top:2px solid var(--ink);padding-block:12px;margin-top:10px;z-index:2}
+.login{max-width:400px;margin:40px auto}
+@media (max-width:700px){.grid,.grid2{grid-template-columns:1fr}.ad{grid-template-columns:70px 1fr}.ad img,.ad .ph{width:70px;height:80px}.ad .tools{flex-direction:row;grid-column:1/-1}}
+</style>
+</head>
+<body>
+<header class="head"><div class="wrap">
+  <a class="logo" href="../">COMMUNITY<br>CORNER<small>ADMIN</small></a>
+  <nav id="nav" hidden>
+    <button data-go="list" class="on">Issues</button>
+    <button data-go="settings">Settings</button>
+    <a class="lnk" href="../" target="_blank" rel="noopener">View site ↗</a>
+    <button id="logout">Log out</button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+  <div id="setup" class="card" hidden>
+    <h2>Almost ready</h2>
+    <p>The database isn't connected yet. Paste the Supabase Project URL and anon key into <b>config.js</b>.</p>
+  </div>
+
+  <!-- LOGIN -->
+  <form id="v-login" class="card login" hidden>
+    <h2>Log in</h2>
+    <p class="hint">For Community Corner staff only.</p>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <label for="l-email">Email<input id="l-email" type="email" autocomplete="username" required></label>
+      <label for="l-pass">Password<input id="l-pass" type="password" autocomplete="current-password" required></label>
+      <button class="btn" type="submit">Log in</button>
+      <button class="btn alt" type="button" id="l-forgot">Forgot password?</button>
+    </div>
+    <p class="msg" id="l-msg" role="status"></p>
+  </form>
+
+  <!-- NEW PASSWORD (after reset link) -->
+  <form id="v-reset" class="card login" hidden>
+    <h2>Set a new password</h2>
+    <label for="r-pass">New password<input id="r-pass" type="password" minlength="8" autocomplete="new-password" required></label>
+    <p><button class="btn" type="submit">Save password</button></p>
+    <p class="msg" id="r-msg" role="status"></p>
+  </form>
+
+  <!-- ISSUE LIST -->
+  <section id="v-list" hidden>
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div><h2>Issues</h2><p class="hint" style="margin:0">Add the new issue every week. Drafts stay hidden until you publish them.</p></div>
+        <button class="btn red" id="new-issue">+ New issue</button>
+      </div>
+      <div style="overflow-x:auto;margin-top:14px"><table>
+        <thead><tr><th></th><th>Issue</th><th>Date</th><th>Status</th><th></th></tr></thead>
+        <tbody id="list"></tbody>
+      </table></div>
+      <p class="msg" id="list-msg" role="status"></p>
+    </div>
+    <div class="card" id="import-card" hidden>
+      <h3>Bring in older issues</h3>
+      <p class="hint">These issues are on the site as files but not in the database yet. Bring them in so you can edit them here.</p>
+      <div class="row" id="import-list"></div>
+      <p class="msg" id="import-msg" role="status"></p>
+    </div>
+  </section>
+
+  <!-- EDITOR -->
+  <form id="v-edit" hidden novalidate>
+    <div class="card">
+      <h2 id="e-head">New issue</h2>
+      <p class="hint">Start with the PDF. Everything else can be filled in after.</p>
+      <div class="drop" id="drop" tabindex="0" role="button">
+        <b id="drop-label">Drop the PDF here, or click to choose it</b>
+        <div class="hint" style="margin:6px 0 0">We'll turn each page into a picture and make the cover.</div>
+      </div>
+      <input type="file" id="pdf" accept="application/pdf" hidden>
+      <div class="thumbs" id="thumbs"></div>
+      <p class="msg" id="pdf-msg" role="status"></p>
+    </div>
+
+    <div class="card">
+      <h3>Issue info</h3>
+      <div class="grid">
+        <label for="e-num">Issue #<input id="e-num" type="number" min="1" required></label>
+        <label for="e-date">Date<input id="e-date" type="date" required></label>
+        <label for="e-hebrew">Hebrew date<input id="e-hebrew" placeholder="14 Tishrei 5787"></label>
+      </div>
+      <div class="grid" style="margin-top:14px">
+        <label for="e-title" style="grid-column:span 1">Title<input id="e-title" placeholder="Mega Succos Edition"></label>
+        <label for="e-yomtov">Candle lighting<input id="e-yomtov" placeholder="6:30 PM"></label>
+        <label for="e-tzais">Tzais<input id="e-tzais" placeholder="8:00 PM"></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h3>Fun Stuff</h3><button type="button" class="btn alt small" id="copy-fun">Copy from last issue</button></div>
+      <p class="hint">Leave a box empty to hide that part.</p>
+      <div class="grid2">
+        <label for="f-wstitle">Word search title<input id="f-wstitle" placeholder="Succos Word Search"></label>
+        <span></span>
+        <label for="f-grid">Letter grid (one row per line)<textarea id="f-grid" rows="10" class="mono" placeholder="SNIMLIESUCCAHH&#10;HHOSHANOSSAOMA"></textarea></label>
+        <label for="f-words">Words to find (one per line)<textarea id="f-words" rows="10" placeholder="LULAV&#10;ESROG"></textarea></label>
+      </div>
+      <p class="msg" id="grid-msg"></p>
+      <div class="grid2" style="margin-top:6px">
+        <label for="f-pq">Parsha question<input id="f-pq"></label><span></span>
+        <label for="f-lq">Last week's question<input id="f-lq"></label>
+        <label for="f-la">Last week's answer<input id="f-la"></label>
+      </div>
+      <div class="grid" style="margin-top:14px">
+        <label for="f-word">Word of the week<input id="f-word"></label>
+        <label for="f-say">How to say it<input id="f-say" placeholder="yoo-BIK-wih-tus"></label>
+        <label for="f-mean">Meaning<input id="f-mean"></label>
+      </div>
+      <div class="grid2" style="margin-top:14px">
+        <label for="f-ex">Example sentence<input id="f-ex"></label>
+        <label for="f-fact">Cool fact<input id="f-fact"></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between"><h3>Sponsors</h3><button type="button" class="btn alt small" id="copy-ads">Copy from last issue</button></div>
+      <p class="hint">Click a picture to upload or change the ad. Use ↑ ↓ to change the order.</p>
+      <div class="ads" id="ads"></div>
+      <p><button type="button" class="btn alt small" id="add-ad">+ Add sponsor</button></p>
+      <div class="grid2">
+        <label for="s-pname">Printing sponsored by<input id="s-pname" placeholder="Mailway"></label>
+        <label for="s-pinfo">Their info<input id="s-pinfo"></label>
+      </div>
+      <input type="file" id="ad-file" accept="image/*" hidden>
+    </div>
+
+    <div class="sticky"><div class="row" style="justify-content:space-between">
+      <label style="flex-direction:row;align-items:center;gap:8px;font-size:15px"><input type="checkbox" id="e-pub" style="width:20px;height:20px"> Published (show on the website)</label>
+      <div class="row"><button type="button" class="btn alt" id="cancel">Cancel</button><button type="submit" class="btn red" id="save">Save issue</button></div>
+    </div><p class="msg" id="save-msg" role="status"></p></div>
+  </form>
+
+  <!-- SETTINGS -->
+  <form id="v-settings" class="card" hidden>
+    <h2>Settings</h2>
+    <h3 style="margin-top:14px">Z'chus bar (top of every page)</h3>
+    <label for="z-text">Text<input id="z-text"></label>
+    <label for="z-names" style="margin-top:12px">Names (one per line, leave empty to hide the bar)<textarea id="z-names" rows="4" dir="auto"></textarea></label>
+    <p><button class="btn" type="submit">Save settings</button></p>
+    <p class="msg" id="z-msg" role="status"></p>
+  </form>
+</main>
+
+<script src="../config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const CFG=window.CC_CONFIG||{};
+const views=['login','reset','list','edit','settings'];
+function show(v){views.forEach(x=>$('v-'+x).hidden=x!==v);document.querySelectorAll('[data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===v||(v==='edit'&&b.dataset.go==='list')));scrollTo(0,0)}
+function say(id,text,kind){const m=$(id);m.textContent=text||'';m.className='msg'+(kind?' '+kind:'')}
+const esc=t=>String(t??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const fmt=d=>d?new Date(d+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+
+if(!CFG.supabaseUrl||!CFG.supabaseKey){$('setup').hidden=false;throw new Error('not configured')}
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const sb=supabase.createClient(CFG.supabaseUrl,CFG.supabaseKey);
+const BUCKET='issues';
+const pub=path=>sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+let ISSUES=[];
+
+/* ---------- auth ---------- */
+async function start(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){$('nav').hidden=true;show('login');return}
+  const {data,error}=await sb.rpc('is_admin');
+  if(error||!data){$('nav').hidden=true;show('login');say('l-msg',"This account isn't on the admin list. Ask Moe to add your email.",'err');await sb.auth.signOut();return}
+  $('nav').hidden=false;loadList();
+}
+sb.auth.onAuthStateChange(ev=>{if(ev==='PASSWORD_RECOVERY')show('reset')});
+$('v-login').onsubmit=async e=>{
+  e.preventDefault();say('l-msg','Logging in…');
+  const {error}=await sb.auth.signInWithPassword({email:$('l-email').value.trim(),password:$('l-pass').value});
+  if(error){say('l-msg','Wrong email or password. Try again.','err');return}
+  say('l-msg','');start();
+};
+$('l-forgot').onclick=async()=>{
+  const email=$('l-email').value.trim();
+  if(!email){say('l-msg','Type your email first, then click Forgot password.','err');return}
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.href.split('#')[0]});
+  say('l-msg',error?'Could not send the email. Try again in a minute.':'Check your email for a link to set a new password.',error?'err':'ok');
+};
+$('v-reset').onsubmit=async e=>{
+  e.preventDefault();
+  const {error}=await sb.auth.updateUser({password:$('r-pass').value});
+  if(error){say('r-msg','Password must be at least 8 characters.','err');return}
+  say('r-msg','Password saved.','ok');setTimeout(start,800);
+};
+$('logout').onclick=async()=>{await sb.auth.signOut();location.reload()};
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>b.dataset.go==='list'?loadList():openSettings());
+
+/* ---------- list ---------- */
+async function loadList(){
+  show('list');say('list-msg','Loading…');
+  const {data,error}=await sb.from('issues').select('num,title,date,published,pages,fun,sponsors').order('num',{ascending:false});
+  if(error){say('list-msg','Could not load issues: '+error.message,'err');return}
+  ISSUES=data;say('list-msg',data.length?'':'No issues yet. Click "+ New issue" to add one.');
+  $('list').innerHTML=data.map(i=>`<tr>
+    <td><img src="${pub(i.num+'/cover.jpg')}" alt=""></td>
+    <td><b>#${i.num}</b><br><span class="hint">${esc(i.title)}</span></td>
+    <td>${fmt(i.date)}</td>
+    <td><span class="pill ${i.published?'live':'draft'}">${i.published?'LIVE':'DRAFT'}</span></td>
+    <td><div class="row" style="justify-content:flex-end">
+      <button class="btn small" data-edit="${i.num}">Edit</button>
+      <button class="btn alt small" data-pub="${i.num}">${i.published?'Hide':'Publish'}</button>
+      <button class="btn alt small" data-del="${i.num}">Delete</button></div></td></tr>`).join('');
+  $('list').querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openEditor(+b.dataset.edit));
+  $('list').querySelectorAll('[data-pub]').forEach(b=>b.onclick=async()=>{
+    const i=ISSUES.find(x=>x.num==b.dataset.pub);
+    const {error}=await sb.from('issues').update({published:!i.published}).eq('num',i.num);
+    error?say('list-msg',error.message,'err'):loadList();
+  });
+  $('list').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>confirmDelete(b));
+  checkImports();
+}
+function confirmDelete(b){
+  if(b.dataset.armed){deleteIssue(+b.dataset.del);return}
+  b.dataset.armed=1;b.textContent='Click again to delete';b.classList.add('red');
+  setTimeout(()=>{delete b.dataset.armed;b.textContent='Delete';b.classList.remove('red')},4000);
+}
+async function deleteIssue(num){
+  say('list-msg',`Deleting #${num}…`);
+  const files=await listAll(String(num));
+  if(files.length)await sb.storage.from(BUCKET).remove(files);
+  const {error}=await sb.from('issues').delete().eq('num',num);
+  error?say('list-msg',error.message,'err'):loadList();
+}
+async function listAll(prefix){
+  const out=[];const {data}=await sb.storage.from(BUCKET).list(prefix,{limit:1000});
+  for(const f of data||[]){const p=prefix+'/'+f.name;if(f.id)out.push(p);else out.push(...await listAll(p))}
+  return out;
+}
+
+/* ---------- editor ---------- */
+let EDIT=null,PAGES=null,PDF_FILE=null,ADS=[],adSlot=null;
+function blankFun(){return {wordsearch:{title:'',grid:[],words:[]},parsha:{},word:{},fact:''}}
+async function openEditor(num){
+  PAGES=null;PDF_FILE=null;$('thumbs').innerHTML='';say('pdf-msg','');say('save-msg','');say('grid-msg','');
+  $('drop-label').textContent='Drop the PDF here, or click to choose it';
+  if(num){
+    const {data,error}=await sb.from('issues').select('*').eq('num',num).single();
+    if(error){say('list-msg',error.message,'err');return}
+    EDIT=data;$('e-head').textContent=`Edit issue #${num}`;
+    $('drop-label').textContent='Drop a new PDF here only if you want to replace the pages';
+    $('thumbs').innerHTML=`<img src="${pub(num+'/cover.jpg')}?t=${Date.now()}" alt="Current cover">`;
+  }else{
+    const last=ISSUES[0];
+    EDIT={num:last?last.num+1:'',date:new Date().toLocaleDateString('en-CA'),published:true,fun:null,sponsors:last?.sponsors||null};
+    $('e-head').textContent='New issue';
+  }
+  $('e-num').value=EDIT.num;$('e-num').disabled=!!num;
+  $('e-date').value=EDIT.date||'';$('e-hebrew').value=EDIT.hebrew||'';$('e-title').value=EDIT.title||'';
+  $('e-yomtov').value=EDIT.yomtov||'';$('e-tzais').value=EDIT.tzais||'';$('e-pub').checked=!!EDIT.published;
+  fillFun(EDIT.fun||blankFun());fillSponsors(EDIT.sponsors||{ads:[]});
+  show('edit');
+}
+$('new-issue').onclick=()=>openEditor(null);
+$('cancel').onclick=loadList;
+
+function fillFun(f){
+  const ws=f.wordsearch||{};
+  $('f-wstitle').value=ws.title||'';$('f-grid').value=(ws.grid||[]).join('\n');$('f-words').value=(ws.words||[]).join('\n');
+  const p=f.parsha||{};$('f-pq').value=p.question||'';$('f-lq').value=p.lastQ||'';$('f-la').value=p.lastA||'';
+  const w=f.word||{};$('f-word').value=w.word||'';$('f-say').value=w.say||'';$('f-mean').value=w.meaning||'';$('f-ex').value=w.example||'';
+  $('f-fact').value=f.fact||'';
+}
+function readFun(){
+  const grid=$('f-grid').value.split('\n').map(r=>r.replace(/[^A-Za-z]/g,'').toUpperCase()).filter(Boolean);
+  const words=$('f-words').value.split('\n').map(w=>w.trim().toUpperCase()).filter(Boolean);
+  const f={};
+  if(grid.length)f.wordsearch={title:$('f-wstitle').value.trim()||'Word Search',grid,words};
+  if($('f-pq').value.trim())f.parsha={question:$('f-pq').value.trim(),lastQ:$('f-lq').value.trim(),lastA:$('f-la').value.trim()};
+  if($('f-word').value.trim())f.word={word:$('f-word').value.trim(),say:$('f-say').value.trim(),meaning:$('f-mean').value.trim(),example:$('f-ex').value.trim()};
+  if($('f-fact').value.trim())f.fact=$('f-fact').value.trim();
+  return Object.keys(f).length?f:null;
+}
+function checkGrid(){
+  const rows=$('f-grid').value.split('\n').map(r=>r.replace(/[^A-Za-z]/g,'')).filter(Boolean);
+  if(!rows.length){say('grid-msg','');return true}
+  const bad=rows.some(r=>r.length!==rows[0].length);
+  say('grid-msg',bad?`Every row needs the same number of letters (first row has ${rows[0].length}).`:`Grid: ${rows.length} rows × ${rows[0].length} letters ✓`,bad?'err':'ok');
+  return !bad;
+}
+$('f-grid').oninput=checkGrid;
+$('copy-fun').onclick=async()=>{
+  const prev=ISSUES.find(i=>i.fun&&i.num!==+$('e-num').value);
+  prev?fillFun(prev.fun):say('grid-msg','No earlier issue has Fun Stuff yet.','err');
+};
+
+/* sponsors */
+function adSrc(a){return a.file?URL.createObjectURL(a.file):a.img}
+function fillSponsors(s){
+  ADS=(s.ads||[]).map(a=>({...a}));
+  $('s-pname').value=s.print?.name||'';$('s-pinfo').value=s.print?.info||'';
+  drawAds();
+}
+function drawAds(){
+  $('ads').innerHTML=ADS.map((a,k)=>`<div class="ad">
+    ${a.img||a.file?`<img src="${esc(adSrc(a))}" alt="" data-pic="${k}" style="cursor:pointer">`:`<div class="ph" data-pic="${k}">Click to add picture</div>`}
+    <label>Business name<input data-k="${k}" data-f="name" value="${esc(a.name)}"></label>
+    <label>Phone, email, website<input data-k="${k}" data-f="info" value="${esc(a.info)}"></label>
+    <div class="tools"><button type="button" data-mv="${k}" data-d="-1" aria-label="Move up">↑</button><button type="button" data-mv="${k}" data-d="1" aria-label="Move down">↓</button><button type="button" data-rm="${k}">Remove</button></div>
+  </div>`).join('')||'<p class="hint">No sponsors yet.</p>';
+  $('ads').querySelectorAll('[data-f]').forEach(i=>i.oninput=()=>ADS[i.dataset.k][i.dataset.f]=i.value);
+  $('ads').querySelectorAll('[data-pic]').forEach(p=>p.onclick=()=>{adSlot=+p.dataset.pic;$('ad-file').click()});
+  $('ads').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ADS.splice(+b.dataset.rm,1);drawAds()});
+  $('ads').querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{const k=+b.dataset.mv,j=k+ +b.dataset.d;if(j<0||j>=ADS.length)return;[ADS[k],ADS[j]]=[ADS[j],ADS[k]];drawAds()});
+}
+$('ad-file').onchange=e=>{const f=e.target.files[0];if(f&&adSlot!==null){ADS[adSlot].file=f;drawAds()}e.target.value=''};
+$('add-ad').onclick=()=>{ADS.push({name:'',info:''});drawAds()};
+$('copy-ads').onclick=()=>{const prev=ISSUES.find(i=>i.sponsors&&i.num!==+$('e-num').value);if(prev)fillSponsors(prev.sponsors)};
+
+/* PDF -> page pictures */
+$('drop').onclick=()=>$('pdf').click();
+$('drop').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('pdf').click()}};
+$('drop').ondragover=e=>{e.preventDefault();$('drop').classList.add('over')};
+$('drop').ondragleave=()=>$('drop').classList.remove('over');
+$('drop').ondrop=e=>{e.preventDefault();$('drop').classList.remove('over');const f=e.dataTransfer.files[0];if(f)readPdf(f)};
+$('pdf').onchange=e=>{const f=e.target.files[0];if(f)readPdf(f);e.target.value=''};
+const toBlob=(c,q)=>new Promise(r=>c.toBlob(r,'image/jpeg',q));
+async function readPdf(file){
+  if(!/pdf$/i.test(file.type)&&!/\.pdf$/i.test(file.name)){say('pdf-msg','That file is not a PDF.','err');return}
+  PDF_FILE=file;PAGES=null;$('thumbs').innerHTML='';$('save').disabled=true;
+  const m=file.name.match(/(\d+)(?!.*\d)/);if(m&&!$('e-num').disabled&&!$('e-num').value)$('e-num').value=m[1];
+  try{
+    const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+    const pages=[];
+    for(let n=1;n<=doc.numPages;n++){
+      say('pdf-msg',`Making page pictures… ${n} of ${doc.numPages}`);
+      const pg=await doc.getPage(n),v1=pg.getViewport({scale:1}),vp=pg.getViewport({scale:2400/v1.width});
+      const c=document.createElement('canvas');c.width=Math.round(vp.width);c.height=Math.round(vp.height);
+      const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);
+      await pg.render({canvasContext:ctx,viewport:vp}).promise;
+      pages.push({blob:await toBlob(c,.8),canvas:n===1?c:null});
+      const t=document.createElement('img');t.src=URL.createObjectURL(pages[n-1].blob);t.alt=`Page ${n}`;$('thumbs').append(t);
+    }
+    const c1=pages[0].canvas,land=c1.width>c1.height,sw=land?c1.width/2:c1.width,scale=Math.min(1,800/sw);
+    const cc=document.createElement('canvas');cc.width=Math.round(sw*scale);cc.height=Math.round(c1.height*scale);
+    cc.getContext('2d').drawImage(c1,land?c1.width/2:0,0,sw,c1.height,0,0,cc.width,cc.height);
+    PAGES={pages:pages.map(p=>p.blob),cover:await toBlob(cc,.82)};
+    say('pdf-msg',`Ready: ${pages.length} pages. Fill in the info below and click Save.`,'ok');
+  }catch(err){PDF_FILE=null;say('pdf-msg',"Couldn't read that PDF. Try exporting it again.",'err')}
+  finally{$('save').disabled=false}
+}
+
+/* save */
+async function up(path,body,type){
+  const {error}=await sb.storage.from(BUCKET).upload(path,body,{upsert:true,contentType:type,cacheControl:'60'});
+  if(error)throw new Error(`Upload failed (${path}): ${error.message}`);
+}
+$('v-edit').onsubmit=async e=>{
+  e.preventDefault();
+  const num=+$('e-num').value;
+  if(!num){say('save-msg','Type the issue number.','err');$('e-num').focus();return}
+  if(!$('e-date').value){say('save-msg','Pick the date.','err');return}
+  const isNew=!$('e-num').disabled;
+  if(isNew&&!PAGES){say('save-msg','Add the PDF first.','err');return}
+  if(isNew&&ISSUES.some(i=>i.num===num)){say('save-msg',`Issue #${num} already exists. Edit it from the list instead.`,'err');return}
+  if(!checkGrid()){say('save-msg','Fix the word search grid first.','err');return}
+  $('save').disabled=true;
+  try{
+    let pages=EDIT.pages||0;
+    if(PAGES){
+      for(let k=0;k<PAGES.pages.length;k++){say('save-msg',`Uploading page ${k+1} of ${PAGES.pages.length}…`);await up(`${num}/p${k+1}.jpg`,PAGES.pages[k],'image/jpeg')}
+      say('save-msg','Uploading cover and PDF…');
+      await up(`${num}/cover.jpg`,PAGES.cover,'image/jpeg');
+      await up(`${num}/issue.pdf`,PDF_FILE,'application/pdf');
+      pages=PAGES.pages.length;
+    }
+    const ads=[];
+    for(const a of ADS){
+      if(!a.name&&!a.file&&!a.img)continue;
+      let img=a.img;
+      if(a.file){say('save-msg',`Uploading ad: ${a.name||'sponsor'}…`);const ext=(a.file.name.split('.').pop()||'jpg').toLowerCase();const path=`${num}/ads/${Date.now()}-${Math.random().toString(36).slice(2,7)}.${ext}`;await up(path,a.file,a.file.type||'image/jpeg');img=pub(path)}
+      ads.push({img,name:a.name||'',info:a.info||''});
+    }
+    const pn=$('s-pname').value.trim();
+    const sponsors=ads.length||pn?{ads,...(pn?{print:{name:pn,info:$('s-pinfo').value.trim()}}:{})}:null;
+    const row={num,title:$('e-title').value.trim(),date:$('e-date').value,hebrew:$('e-hebrew').value.trim(),yomtov:$('e-yomtov').value.trim(),tzais:$('e-tzais').value.trim(),pages,published:$('e-pub').checked,fun:readFun(),sponsors};
+    say('save-msg','Saving…');
+    const {error}=await sb.from('issues').upsert(row);
+    if(error)throw error;
+    say('save-msg',row.published?'Saved! It is live on the website.':'Saved as a draft. Publish it when you are ready.','ok');
+    setTimeout(loadList,1200);
+  }catch(err){say('save-msg',(err.message||'Something went wrong')+'. Nothing is lost; try Save again.','err')}
+  finally{$('save').disabled=false}
+};
+
+/* ---------- settings ---------- */
+async function openSettings(){
+  show('settings');say('z-msg','');
+  const {data}=await sb.from('settings').select('value').eq('key','zchus').maybeSingle();
+  const v=data?.value||{};$('z-text').value=v.text||'';$('z-names').value=(v.names||[]).join('\n');
+}
+$('v-settings').onsubmit=async e=>{
+  e.preventDefault();
+  const value={text:$('z-text').value.trim(),names:$('z-names').value.split('\n').map(s=>s.trim()).filter(Boolean)};
+  const {error}=await sb.from('settings').upsert({key:'zchus',value});
+  say('z-msg',error?error.message:'Saved. The website shows it now.',error?'err':'ok');
+};
+
+/* ---------- import issues that only exist as files on the site ---------- */
+let STATIC=[];
+async function checkImports(){
+  STATIC=await fetch('../issues.json',{cache:'no-store'}).then(r=>r.json()).catch(()=>[]);
+  const todo=STATIC.filter(s=>!ISSUES.some(i=>i.num===s.num));
+  $('import-card').hidden=!todo.length;
+  $('import-list').innerHTML=todo.map(s=>`<button class="btn small" data-imp="${s.num}">Bring in #${s.num}</button>`).join('');
+  $('import-list').querySelectorAll('[data-imp]').forEach(b=>b.onclick=()=>importIssue(+b.dataset.imp,b));
+}
+async function importIssue(num,btn){
+  btn.disabled=true;const s=STATIC.find(x=>x.num===num),base=`../issues/${num}/`;
+  const get=async f=>{const r=await fetch(base+f);if(!r.ok)throw new Error('Missing file '+f);return r.blob()};
+  try{
+    for(let k=1;k<=s.pages;k++){say('import-msg',`#${num}: page ${k} of ${s.pages}…`);await up(`${num}/p${k}.jpg`,await get(`p${k}.jpg`),'image/jpeg')}
+    say('import-msg',`#${num}: cover and PDF…`);
+    await up(`${num}/cover.jpg`,await get('cover.jpg'),'image/jpeg');
+    await up(`${num}/issue.pdf`,await get('issue.pdf'),'application/pdf');
+    const fun=s.fun?await fetch(base+'fun.json').then(r=>r.json()).catch(()=>null):null;
+    let sponsors=s.sponsors?await fetch(base+'sponsors.json').then(r=>r.json()).catch(()=>null):null;
+    if(sponsors){for(const a of sponsors.ads){if(/^https?:/.test(a.img))continue;say('import-msg',`#${num}: ad ${a.name}…`);const p=`${num}/ads/${a.img}`;await up(p,await get('ads/'+a.img),'image/jpeg');a.img=pub(p)}}
+    const row={num,title:s.title||'',date:s.date,hebrew:s.hebrew||'',yomtov:s.yomtov||'',tzais:s.tzais||'',pages:s.pages,published:true,fun,sponsors};
+    const {error}=await sb.from('issues').upsert(row);if(error)throw error;
+    say('import-msg',`#${num} is in. You can edit it now.`,'ok');loadList();
+  }catch(err){say('import-msg',err.message,'err');btn.disabled=false}
+}
+
+start();
+</script>
+</body>
+</html>

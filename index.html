@@ -138,8 +138,9 @@ details summary{cursor:pointer;font-weight:700;color:var(--red-dk)}
 .cta h3{font-size:28px;color:var(--gold)}
 .cta p{margin:6px 0 0;max-width:52ch}
 .email{background:#fff;color:var(--ink);font-weight:700;padding:10px 14px;user-select:all;word-break:break-all}
-footer{padding-block:4px 32px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:16px}
-.credit-mark img{display:block;height:34px;width:auto;opacity:.75;mix-blend-mode:multiply}
+footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted)}
+.credit-mark{position:absolute;right:14px;bottom:10px}
+.credit-mark img{display:block;height:56px;width:auto;opacity:.8;mix-blend-mode:multiply}
 
 @media (max-width:760px){
   .latest,.fun{grid-template-columns:1fr}
@@ -238,10 +239,13 @@ footer{padding-block:4px 32px;font-size:13px;color:var(--muted);display:flex;jus
   <figure><img id="lb-img" alt=""><figcaption><b id="lb-name"></b><span id="lb-info"></span><br><small id="lb-count"></small></figcaption></figure>
   <button class="arr" id="lb-next" aria-label="Next sponsor">›</button>
 </div>
-<footer class="wrap"><span>The Community Corner is an imprint of The Community Corner. All rights reserved.</span><div class="credit-mark" title="Site by Moe"><img src="img/credit-mark.png" alt="Site by Moe"></div></footer>
+<footer><span class="wrap" style="display:block;margin:0 auto;padding-right:110px">The Community Corner is an imprint of The Community Corner. All rights reserved.</span><div class="credit-mark" title="Site by Moe"><img src="img/credit-mark.png" alt="Site by Moe"></div></footer>
 
+<script src="config.js"></script>
 <script>
 const dl=i=>`<button class="btn dl" data-pdf="${i.num}">Download PDF</button>`;
+const CFG=window.CC_CONFIG||{},DB=!!(CFG.supabaseUrl&&CFG.supabaseKey);
+const F=(i,f)=>i.base+f;
 const $=id=>document.getElementById(id);
 const fmt=d=>new Date(d+'T12:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
 let issues=[];
@@ -253,13 +257,13 @@ function ticker(L){
 }
 function card(i,isNew){
   const b=document.createElement('button');b.className='issue';
-  b.innerHTML=`<img loading="lazy" src="issues/${i.num}/cover.jpg" alt="Cover of issue ${i.num}"><b>#${i.num}${isNew?'<span class="new">NEW</span>':''}</b><span>${i.title?i.title+' · ':''}${fmt(i.date)}</span>`;
+  b.innerHTML=`<img loading="lazy" src="${F(i,'cover.jpg')}" alt="Cover of issue ${i.num}"><b>#${i.num}${isNew?'<span class="new">NEW</span>':''}</b><span>${i.title?i.title+' · ':''}${fmt(i.date)}</span>`;
   b.onclick=()=>location.hash=i.num;return b;
 }
 function renderHome(){
   const L=issues[0];if(!L)return;
   $('latest').innerHTML=`
-    <button class="cover" aria-label="Read issue ${L.num}"><img src="issues/${L.num}/cover.jpg" alt="Cover of issue ${L.num}"></button>
+    <button class="cover" aria-label="Read issue ${L.num}"><img src="${F(L,'cover.jpg')}" alt="Cover of issue ${L.num}"></button>
     <div><span class="eyebrow">This week</span><h2>Issue #${L.num}${L.title?': '+L.title:''}</h2>
     <div class="meta">${fmt(L.date)}${L.hebrew?' · '+L.hebrew:''}</div>
     ${L.yomtov?`<div class="times"><div>Candle lighting<b>${L.yomtov}</b></div><div>Tzais<b>${L.tzais}</b></div></div>`:''}
@@ -279,7 +283,7 @@ function route(){
   if(i){
     $('r-title').textContent=`Issue #${i.num}${i.title?': '+i.title:''}`;
     $('r-dl').innerHTML=dl(i);$('r-meta').textContent=fmt(i.date)+(i.hebrew?' · '+i.hebrew:'');
-    $('r-pages').innerHTML=Array.from({length:i.pages},(_,k)=>`<img loading="lazy" src="issues/${i.num}/p${k+1}.jpg" alt="Issue ${i.num}, spread ${k+1}"><div class="pnum">Spread ${k+1} of ${i.pages}</div>`).join('');
+    $('r-pages').innerHTML=Array.from({length:i.pages},(_,k)=>`<img loading="lazy" src="${F(i,'p'+(k+1)+'.jpg')}" alt="Issue ${i.num}, spread ${k+1}"><div class="pnum">Spread ${k+1} of ${i.pages}</div>`).join('');
   }
   if(location.hash)scrollTo({top:0});
 }
@@ -305,7 +309,7 @@ $('lb').addEventListener('touchend',e=>{if(tx===null)return;const d=e.changedTou
 const dlNS=window.claude?.use?window.claude.use('downloads').catch(()=>null):Promise.resolve(null);
 document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-pdf]');if(!b)return;e.stopPropagation();
-  const n=b.dataset.pdf,url=`issues/${n}/issue.pdf`,name=`Community-Corner-${n}.pdf`,old=b.textContent;
+  const n=b.dataset.pdf,url=F(issues.find(x=>x.num==n),'issue.pdf'),name=`Community-Corner-${n}.pdf`,old=b.textContent;
   const ns=await dlNS;
   if(!ns){const a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();return}
   try{b.textContent='Getting PDF…';b.disabled=true;
@@ -315,8 +319,31 @@ document.addEventListener('click',async e=>{
   finally{b.disabled=false;setTimeout(()=>b.textContent=old,2500)}
 },true);
 ticker();
-fetch('issues.json').then(r=>r.json()).then(d=>{issues=d.sort((a,b)=>b.num-a.num);ticker(issues[0]);renderHome();renderPast();renderFun(issues.find(i=>i.fun)||issues[0]);renderSponsors(issues.find(i=>i.sponsors)||issues[0]);route()})
-  .catch(()=>{$('latest').innerHTML='<p class="meta">Issues could not load. Refresh the page to try again.</p>'});
+async function loadIssues(){
+  const st=await fetch('issues.json').then(r=>r.json()).catch(()=>[]);
+  st.forEach(i=>i.base=`issues/${i.num}/`);
+  if(!DB)return st;
+  const h={apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey};
+  try{
+    const rows=await fetch(`${CFG.supabaseUrl}/rest/v1/issues?select=*&published=eq.true&order=num.desc`,{headers:h}).then(r=>r.ok?r.json():[]);
+    rows.forEach(i=>i.base=`${CFG.supabaseUrl}/storage/v1/object/public/issues/${i.num}/`);
+    const z=await fetch(`${CFG.supabaseUrl}/rest/v1/settings?key=eq.zchus&select=value`,{headers:h}).then(r=>r.ok?r.json():[]);
+    if(z[0])renderZchus(z[0].value);
+    const nums=new Set(rows.map(r=>r.num));
+    return rows.concat(st.filter(i=>!nums.has(i.num)));
+  }catch{return st}
+}
+function renderZchus(v){
+  if(!v||!v.names||!v.names.length){document.querySelector('.zchus').hidden=true;return}
+  const n=v.names.map(x=>`<bdi class="he" lang="he" dir="rtl">${esc(x)}</bdi>`).join('<span class="and">and</span>');
+  document.querySelector('.zchus').innerHTML=`${esc(v.text||'')}<div class="names">${n}</div>`;
+}
+loadIssues().then(d=>{
+  issues=d.sort((a,b)=>b.num-a.num);
+  if(!issues.length){$('latest').innerHTML='<p class="meta">Issues could not load. Refresh the page to try again.</p>';return}
+  ticker(issues[0]);renderHome();renderPast();
+  renderFun(issues.find(i=>i.fun)||issues[0]);renderSponsors(issues.find(i=>i.sponsors)||issues[0]);route();
+});
 
 let ADS=[],adAt=0,lastFocus=null;
 function showAd(){const a=ADS[adAt];$('lb-img').src=a.src;$('lb-img').alt=a.name;$('lb-name').textContent=a.name;$('lb-info').textContent=a.info||'';$('lb-count').textContent=`${adAt+1} of ${ADS.length}`}
@@ -325,8 +352,8 @@ function closeAd(){$('lb').hidden=true;document.body.style.overflow='';lastFocus
 function stepAd(d){adAt=(adAt+d+ADS.length)%ADS.length;showAd()}
 function renderSponsors(L){
   $('s-from').textContent=`Issue #${L.num} sponsors`;
-  fetch(`issues/${L.num}/sponsors.json`).then(r=>r.json()).then(d=>{
-    ADS=d.ads.map(a=>({...a,src:`issues/${L.num}/ads/${a.img}`}));
+  (typeof L.sponsors==='object'?Promise.resolve(L.sponsors):fetch(F(L,'sponsors.json')).then(r=>r.json())).then(d=>{
+    ADS=d.ads.map(a=>({...a,src:/^https?:/.test(a.img)?a.img:F(L,'ads/'+a.img)}));
     $('ads').innerHTML=ADS.map((a,k)=>`<button class="ad" data-ad="${k}" aria-label="View ${esc(a.name)} ad bigger"><img loading="lazy" src="${esc(a.src)}" alt="${esc(a.name)}"><div><b>${esc(a.name)}</b><span>${esc(a.info||'')}</span></div></button>`).join('');
     $('ads').querySelectorAll('[data-ad]').forEach(b=>b.onclick=()=>openAd(+b.dataset.ad));
     if(d.print)$('print').innerHTML=`<b>Printing sponsored by ${esc(d.print.name)}</b> · ${esc(d.print.info)}`;else $('print').hidden=true;
@@ -337,7 +364,7 @@ let G=[],C=0,cells=[],items=[],start=null;const cell=(r,c)=>cells[r*C+c];
 const esc=t=>String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 function renderFun(L){
   $('f-from').textContent=`From Issue #${L.num}`;
-  fetch(`issues/${L.num}/fun.json`).then(r=>r.json()).then(f=>{
+  (typeof L.fun==='object'?Promise.resolve(L.fun):fetch(F(L,'fun.json')).then(r=>r.json())).then(f=>{
     const ws=f.wordsearch;
     if(ws){
       $('f-title').textContent=ws.title||'Word Search';
