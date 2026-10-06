@@ -1,0 +1,8 @@
+{
+ "wordsearch":{"title":"Succos Word Search",
+  "grid":["SNIMLIESUCCAHH","HHOSHANOSSAOMA","EMIIVTARLSIHSI","MASNSHCAHCSAAH","IRAHDACSMOCITU","NAPAIHAKAFOSAG","IOUZFHOHALLELV","APMISADAHASSRA","TIFPOUISESROGL","ZTUSHPIZINMSRU","EOITTEARAVOSHL","RMHCHOLHAMOEDI","ESARBAMINIMSRS","SIMCHASTORAHSV"],
+  "words":["CHOL HAMOED","SHEMINI ATZERES","HAKAFOS","USHPIZIN","HADASIM","SUCCAH","LULAV","HALLEL","ESROG","SIMCHAS TORAH","ARBA MINIM","HOSHANOS","ARAVOS","S'CHACH","PITOM"]},
+ "parsha":{"question":"What are three other names for Succos?","lastQ":"Who does Moshe call to act as witnesses in the beginning of the Parsha?","lastA":"The heaven and the earth."},
+ "word":{"word":"Ubiquitous","say":"yoo-BIK-wih-tus","meaning":"Seeming to be everywhere at once.","example":"Smartphones have become ubiquitous in modern life."},
+ "fact":"Your brain itself can't feel pain. That's why surgeons can operate on the brain while a patient is awake."
+}

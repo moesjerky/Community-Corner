@@ -1,0 +1,68 @@
+{
+ "print": {
+  "name": "Mailway",
+  "info": "8 Melnick Dr, Monsey, NY 10952 · 845-425-1776 · mailwayservices.com"
+ },
+ "ads": [
+  {
+   "img": "ad1.jpg",
+   "name": "Main Street Optical",
+   "info": "Monsey & Pomona · 845.517.5459"
+  },
+  {
+   "img": "ad2.jpg",
+   "name": "At Home Urgent Care @ Night",
+   "info": "Mutty Goldberg, NP · 917.692.1197"
+  },
+  {
+   "img": "ad3.jpg",
+   "name": "Vision Vinyl / Advanced Flooring",
+   "info": "646-509-4059 · Mendy@advancedflooringny.com · Use code 613"
+  },
+  {
+   "img": "ad4.jpg",
+   "name": "Rosenblum Architecture",
+   "info": "Pomona · (845) 364-0337 · todd@adaparch.com"
+  },
+  {
+   "img": "ad5.jpg",
+   "name": "SC Builders",
+   "info": "929-777-0372"
+  },
+  {
+   "img": "ad6.jpg",
+   "name": "Aspire",
+   "info": "afp.fund · (305) 509-8608"
+  },
+  {
+   "img": "ad7.jpg",
+   "name": "SJJ Insurance Services",
+   "info": "sjjinsuranceservices.com · 310-220-1019"
+  },
+  {
+   "img": "ad8.jpg",
+   "name": "Hive Discount",
+   "info": "250 NY-59, Airmont · (845) 371-2222"
+  },
+  {
+   "img": "ad9.jpg",
+   "name": "Mayvin HR",
+   "info": "mayvinhr.com · helpme@mayvinhr.com"
+  },
+  {
+   "img": "ad10.jpg",
+   "name": "Tria Media",
+   "info": "www.tria.video · info@tria.video · (866) 397-7894"
+  },
+  {
+   "img": "ad11.jpg",
+   "name": "Pressed & Personal",
+   "info": "845-262-1098 · PressedandPersonal4u@gmail.com"
+  },
+  {
+   "img": "ad12.jpg",
+   "name": "Great Big Boss Productions",
+   "info": "submissions@ourcommunitycorner.com"
+  }
+ ]
+}
