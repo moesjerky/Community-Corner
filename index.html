@@ -888,7 +888,11 @@ async function loadIssues(){
   const h={apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey};
   try{
     const rows=await fetch(`${CFG.supabaseUrl}/rest/v1/issues?select=*&published=eq.true&order=num.desc`,{headers:h}).then(r=>r.ok?r.json():[]);
-    rows.forEach(i=>i.base=`${CFG.supabaseUrl}/storage/v1/object/public/issues/${i.num}/`);
+    rows.forEach(i=>{
+      i.base=`${CFG.supabaseUrl}/storage/v1/object/public/issues/${i.num}/`;
+      // a few old PDFs were saved with the inside pages first; the corrected page files live with the site
+      const fx=st.find(x=>x.num===i.num&&x.coverFixed);if(fx){i.base=fx.base;i.pages=fx.pages}
+    });
     const sets=await fetch(`${CFG.supabaseUrl}/rest/v1/settings?key=in.(zchus,site)&select=key,value`,{headers:h}).then(r=>r.ok?r.json():[]);
     const zz=sets.find(x=>x.key==='zchus');if(zz)renderZchus(zz.value);
     const ss=sets.find(x=>x.key==='site');if(ss)applySite(ss.value);

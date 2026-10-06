@@ -158,6 +158,8 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
         <tbody id="list"></tbody>
       </table></div>
       <p class="msg" id="list-msg" role="status"></p>
+      <p style="margin:6px 0 0"><button class="btn alt small" type="button" id="fix-covers">Check cover order on all issues</button>
+      <span class="hint">Fixes issues where the thumbnail shows an inside page instead of the cover.</span></p>
     </div>
     <div class="card" id="import-card" hidden>
       <h3>Bring in older issues</h3>
@@ -528,43 +530,45 @@ $('drop').ondragleave=()=>$('drop').classList.remove('over');
 $('drop').ondrop=e=>{e.preventDefault();$('drop').classList.remove('over');const f=e.dataTransfer.files[0];if(f)readPdf(f)};
 $('pdf').onchange=e=>{const f=e.target.files[0];if(f)readPdf(f);e.target.value=''};
 const toBlob=(c,q)=>new Promise(r=>c.toBlob(r,'image/jpeg',q));
+// How red is the masthead band on the right half of a spread? (the cover has the red ribbon there)
+function mastheadRed(c){
+  const w=c.width,h=c.height,x0=Math.round(w*.56),y0=Math.round(h*.07),bw=Math.round(w*.38),bh=Math.max(1,Math.round(h*.08));
+  const d=c.getContext('2d').getImageData(x0,y0,bw,bh).data;let n=0,r=0;
+  for(let i=0;i<d.length;i+=4*7){n++;if(d[i]>150&&d[i+1]<95&&d[i+2]<95)r++}
+  return n?r/n:0;
+}
 async function renderPdf(file,onPage){
   const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
-  const pages=[];let first=null;
+  const pages=[],keep=[];
   for(let n=1;n<=doc.numPages;n++){
     onPage&&onPage(n,doc.numPages);
     const pg=await doc.getPage(n),v1=pg.getViewport({scale:1}),vp=pg.getViewport({scale:2400/v1.width});
     const c=document.createElement('canvas');c.width=Math.round(vp.width);c.height=Math.round(vp.height);
-    const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);
+    const ctx=c.getContext('2d',{willReadFrequently:n<=2});ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);
     await pg.render({canvasContext:ctx,viewport:vp}).promise;
-    pages.push(await toBlob(c,.8));if(n===1)first=c;else{c.width=c.height=0}
+    pages.push(await toBlob(c,.8));if(n<=2)keep.push(c);else{c.width=c.height=0}
+  }
+  // some PDFs are saved with the inside pages first: if spread 2 has the red masthead and spread 1 doesn't, put it first
+  let first=keep[0],swapped=false;
+  if(keep.length===2&&keep[0].width>keep[0].height){
+    const a=mastheadRed(keep[0]),b=mastheadRed(keep[1]);
+    if(b>.08&&a<.03){[pages[0],pages[1]]=[pages[1],pages[0]];first=keep[1];swapped=true}
   }
   const land=first.width>first.height,sw=land?first.width/2:first.width,scale=Math.min(1,800/sw);
   const cc=document.createElement('canvas');cc.width=Math.round(sw*scale);cc.height=Math.round(first.height*scale);
   cc.getContext('2d').drawImage(first,land?first.width/2:0,0,sw,first.height,0,0,cc.width,cc.height);
-  return {pages,cover:await toBlob(cc,.82)};
+  const cover=await toBlob(cc,.82);keep.forEach(c=>{c.width=c.height=0});
+  return {pages,cover,swapped};
 }
 async function readPdf(file){
   if(!/pdf$/i.test(file.type)&&!/\.pdf$/i.test(file.name)){say('pdf-msg','That file is not a PDF.','err');return}
   PDF_FILE=file;PAGES=null;$('thumbs').innerHTML='';$('save').disabled=true;
   const m=file.name.match(/(\d+)(?!.*\d)/);if(m&&!$('e-num').disabled&&!$('e-num').value)$('e-num').value=m[1];
   try{
-    const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
-    const pages=[];
-    for(let n=1;n<=doc.numPages;n++){
-      say('pdf-msg',`Making page pictures… ${n} of ${doc.numPages}`);
-      const pg=await doc.getPage(n),v1=pg.getViewport({scale:1}),vp=pg.getViewport({scale:2400/v1.width});
-      const c=document.createElement('canvas');c.width=Math.round(vp.width);c.height=Math.round(vp.height);
-      const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);
-      await pg.render({canvasContext:ctx,viewport:vp}).promise;
-      pages.push({blob:await toBlob(c,.8),canvas:n===1?c:null});
-      const t=document.createElement('img');t.src=URL.createObjectURL(pages[n-1].blob);t.alt=`Page ${n}`;$('thumbs').append(t);
-    }
-    const c1=pages[0].canvas,land=c1.width>c1.height,sw=land?c1.width/2:c1.width,scale=Math.min(1,800/sw);
-    const cc=document.createElement('canvas');cc.width=Math.round(sw*scale);cc.height=Math.round(c1.height*scale);
-    cc.getContext('2d').drawImage(c1,land?c1.width/2:0,0,sw,c1.height,0,0,cc.width,cc.height);
-    PAGES={pages:pages.map(p=>p.blob),cover:await toBlob(cc,.82)};
-    say('pdf-msg',`Ready: ${pages.length} pages. Fill in the info below and click Save.`,'ok');
+    const r=await renderPdf(file,(n,t)=>say('pdf-msg',`Making page pictures… ${n} of ${t}`));
+    PAGES={pages:r.pages,cover:r.cover};
+    [r.cover,...r.pages].forEach((b,k)=>{const t=document.createElement('img');t.src=URL.createObjectURL(b);t.alt=k?`Page ${k}`:'Cover';$('thumbs').append(t)});
+    say('pdf-msg',`Ready: ${r.pages.length} pages.${r.swapped?' (The cover was on page 2, so I put it first.)':''} The first picture is the cover. Fill in the info below and click Save.`,'ok');
   }catch(err){PDF_FILE=null;say('pdf-msg',"Couldn't read that PDF. Try exporting it again.",'err')}
   finally{$('save').disabled=false}
 }
@@ -882,6 +886,23 @@ async function loadInbox(){
     const {error}=await sb.from('submissions').delete().eq('id',b.dataset.sdel);error?say('in-msg',error.message,'err'):(loadInbox(),inboxCount())});
 }
 $('in-all').onchange=loadInbox;
+
+/* ---------- repair: put the cover first on issues whose PDF was saved inside-pages-first ---------- */
+$('fix-covers').onclick=async()=>{
+  const btn=$('fix-covers');btn.disabled=true;let fixed=[],failed=[];
+  for(const [k,i] of ISSUES.entries()){
+    say('list-msg',`Checking #${i.num} (${k+1} of ${ISSUES.length})… ${fixed.length} fixed so far`);
+    try{
+      const res=await fetch(pub(i.num+'/issue.pdf')+'?t='+Date.now());if(!res.ok)throw new Error('no PDF');
+      const r=await renderPdf(new File([await res.blob()],i.num+'.pdf',{type:'application/pdf'}));
+      if(!r.swapped)continue;
+      for(let n=0;n<r.pages.length;n++)await up(`${i.num}/p${n+1}.jpg`,r.pages[n],'image/jpeg');
+      await up(`${i.num}/cover.jpg`,r.cover,'image/jpeg');fixed.push(i.num);
+    }catch(err){failed.push(i.num)}
+  }
+  btn.disabled=false;
+  say('list-msg',(fixed.length?`Fixed ${fixed.length}: #${fixed.join(', #')}.`:'All covers were already right.')+(failed.length?` Could not check: #${failed.join(', #')}.`:'')+' Refresh in a minute to see the new thumbnails.',failed.length?'err':'ok');
+};
 
 start();
 </script>
