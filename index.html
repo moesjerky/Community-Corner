@@ -621,9 +621,12 @@ const $=id=>document.getElementById(id);
 const fmt=d=>new Date(d+'T12:00').toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
 let issues=[];
 
-let SITE={};
+let SITE={},GREETING='Good Shabbos from the Community Corner',LASTL=null;
 function ticker(L){
-  const extra=SITE.ticker&&SITE.ticker.length?SITE.ticker:['Ad deadline: Monday end of day','Over 1,000 readers every week','Chag Sameach from the Community Corner'];
+  if(L)LASTL=L;else L=LASTL;
+  // the greeting line switches by itself: Good Shabbos on regular weeks, Good Yom Tov on Yom Tov weeks
+  const extra=(SITE.ticker&&SITE.ticker.length?SITE.ticker:['Ad deadline: Monday end of day','Over 1,000 readers every week','Good Shabbos from the Community Corner'])
+    .map(t=>/^(chag sameach|good shabbos|good yom tov|gut shabbos|gut yom tov)\b.*community corner/i.test(t.trim())?GREETING:t);
   const items=[L?`Issue #${L.num} is out now`:'New issue every Friday',...extra];
   const one=items.map(t=>`<span>${String(t).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]))}<b>★</b></span>`).join('');
   $('ticker').innerHTML=one+one;
@@ -808,6 +811,7 @@ fetch('https://www.hebcal.com/shabbat?cfg=json&zip=10952&M=off&m=50&b=18&lg=a').
   const it=d.items||[],by=c=>it.find(x=>x.category===c);
   const par=by('parashat'),hol=it.find(x=>x.category==='holiday'&&x.subcat==='major'),c=by('candles'),h=by('havdalah');
   const time=x=>x?new Date(x.date).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/New_York'}):'';
+  if(it.some(x=>x.yomtov)){GREETING='Good Yom Tov from the Community Corner';ticker()}
   const name=par?par.title:(hol?hol.title:'');
   if(!name&&!c)return;
   const e=t=>String(t).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
