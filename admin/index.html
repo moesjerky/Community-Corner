@@ -789,6 +789,12 @@ const SITE_FIELDS=[
   ['adText','Advertise box text','Reach 1,000+ families every week. Ad deadline is Monday, end of day.'],
   ['contactIntro','Contact page intro',"Want to advertise, send in a submission, or just say hi? Fill this out and we'll get back to you."],
   ['topics','Contact form choices (one per line)','Advertising\nSubmit an article or photo\nSubscribe\nSomething else','list'],
+  ['aboutText','About page: main text','The Community Corner is a free weekly paper for the Jewish community in Pomona, Monsey, Wesley Hills and Montebello. Every week it brings a story, divrei Torah, an interview, games, a recipe and more, written by people from our own community. It is printed and dropped off at local shuls, and every issue is here online.'],
+  ['editor','About page: editor-in-chief','Doni Stern'],
+  ['writers','About page: writers (one per line, like: Name | Column)',"Zecharia Lipitz | Story of the Week\nGavriel Grodko | Parsha Question\nYoel Megadesh | Mega Vort\nRabbi Dr. Shaul Schwalb | Sheenayim Mikra\nAvi Hirsch | This Week in Jewish History\nKayla Stern | Song of the Week\nAriella Isaacs | State of the Week\nChanalee, The Challah Fairy | Recipe of the Week\nDaniel Moskovits | B'Kitzur\nGabriella and Mikayla | Crazy Animal Corner\nJonah & Zack Lenefsky | Super Cool Facts\nDovid Rosenberg | Safety Tip of the Week",'list'],
+  ['reps','About page: shul representatives (one per line)',"The Shul of Pomona Heights, 60 Halley Drive (Mickey Schlisser)\nAnshei Palisades, 11 Palisades Court, Pomona (Shlomo Yoblonsky)\nOhr Yaakov Shlomo, 43 Tamarack Lane, Pomona (Yackov Rosenthal)\nKehal Avreichim Pomona, 3 Chestnut Drive (Avi Hirsch)\n9 Ladentown Road, Pomona (Berry Nash)\n15 Woodfield Rd, Pomona (Doni Stern)\n34 N Ridge Rd, Pomona (Shaya Setton)\nBeis Medrash Torah u'Tfilah, 1 Klingher Court (Nochum Willner)\nShaarei Tefillah, New Hempstead\n56 Mayer Dr, Montebello (Shmuel Ganz)\nThe Village Green Shul, 4 Village Green, Wesley Hills (Shlomo Kertzner)\nAtsres Rosh, 16 Charlotte Drive (Avi Stern)\nKehilas Yeshorim of Wesley Hills, 1 Harriet Lane (Yoel Megadesh)\nCong Ohaiv Yisroel, 30 Blueberry Hill Road, Monsey (Yossie Becker)\nCongregation Ahavat Israel, Suffern\n84 Viola Road, Montebello (Yanky Reichman)\nKehilas Shaar Hashamayim, 71 East Willow Tree Rd (Moshe Brachfeld)",'list'],
+  ['adPageText','Advertise page: main text','Put your business in front of local families every week. The paper is printed and handed out at shuls across Pomona, Monsey, Wesley Hills and Montebello, and your ad also appears on our Sponsors page online.'],
+  ['adSteps','Advertise page: how it works (one step per line)',"Send us a message with your business name and what you want to advertise.\nWe reply with the ad sizes and rates.\nSend your ad by Monday, end of day.\nYour ad is printed in that week's paper and shown on our Sponsors page.",'list'],
   ['footer','Footer line','© 2026 The Community Corner is an imprint of The Community Corner. All rights reserved.'],
 ];
 let SITE_SAVED={};
@@ -796,7 +802,7 @@ function drawSiteFields(v){
   $('site-fields').innerHTML=SITE_FIELDS.map(([k,label,def,type])=>{
     const val=v[k]!==undefined?(type==='list'?v[k].join('\n'):v[k]):def;
     const big=type==='list'||def.length>60;
-    return `<label for="st-${k}">${esc(label)}${big?`<textarea id="st-${k}" rows="${type==='list'?4:2}">${esc(val)}</textarea>`:`<input id="st-${k}" value="${esc(val)}">`}</label>`;
+    return `<label for="st-${k}">${esc(label)}${big?`<textarea id="st-${k}" rows="${type==='list'?Math.min(12,Math.max(4,String(val).split('\n').length)):3}">${esc(val)}</textarea>`:`<input id="st-${k}" value="${esc(val)}">`}</label>`;
   }).join('');
 }
 function readSiteFields(){

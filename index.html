@@ -163,6 +163,27 @@ section.view{padding-block:40px 20px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (max-width:700px){.subbox{grid-template-columns:1fr}.subrow{flex-direction:column}.subgrid{grid-template-columns:1fr}}
 
+/* about + advertise */
+.prose{max-width:66ch}
+.about{display:grid;grid-template-columns:1.3fr 1fr;gap:36px;margin-top:18px;align-items:start}
+.about h3{font-size:22px;margin:22px 0 10px}
+.about .box h3{margin-top:0}
+.chips{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:8px}
+.chips li{background:var(--card);border:2px solid var(--ink);padding:5px 10px;font-size:14px;font-weight:600}
+.chips li span{font-weight:400;color:var(--muted)}
+.reps{margin:0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:5px}
+.adfacts{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+.adfacts div{background:var(--card);border:2px solid var(--ink);padding:16px}
+.adfacts b{display:block;font:400 30px var(--display);color:var(--red);line-height:1.1}
+.adfacts span{font-size:14px;color:var(--muted);font-weight:600}
+.steps{max-width:60ch;padding-left:22px;display:flex;flex-direction:column;gap:6px}
+.years{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.years button{font:700 14px var(--body);background:var(--card);color:var(--ink);border:2px solid var(--ink);padding:6px 14px;border-radius:999px;cursor:pointer}
+.years button.on{background:var(--ink);color:var(--paper)}
+.years button:hover,.years button:focus-visible{background:var(--gold);color:var(--ink);outline:none}
+.count{color:var(--muted);font-size:14px;margin:10px 0 0}
+@media (max-width:760px){.about{grid-template-columns:1fr}.adfacts{grid-template-columns:1fr}}
+
 /* contact */
 .cform{display:flex;flex-direction:column;gap:16px;max-width:640px;margin-top:20px}
 .cform .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -218,7 +239,7 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
 <header class="head"><div class="wrap">
   <a class="logo" href="#home"><img src="img/cc-logo.png" alt="Community Corner" width="688" height="286"></a>
   <nav class="menu" aria-label="Main">
-    <a href="#home" data-v="home">Home</a><a href="#past" data-v="past">Past Issues</a><a href="#fun" data-v="fun">Fun Stuff</a><a href="#sponsors" data-v="sponsors">Sponsors</a><a href="#contact" data-v="contact">Contact</a><a href="#subscribe" class="subnav" data-v="subscribe">Subscribe</a>
+    <a href="#home" data-v="home">Home</a><a href="#past" data-v="past">Past Issues</a><a href="#fun" data-v="fun">Fun Stuff</a><a href="#sponsors" data-v="sponsors">Sponsors</a><a href="#about" data-v="about">About</a><a href="#contact" data-v="contact">Contact</a><a href="#subscribe" class="subnav" data-v="subscribe">Subscribe</a>
   </nav>
 </div></header>
 <a class="subbar" id="subbar" href="#subscribe"><span>Get the Community Corner in your inbox every week</span><b>Subscribe</b></a>
@@ -240,6 +261,8 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
       <div><span class="eyebrow plum">Archive</span><h2 class="sec-h">Past Issues</h2></div>
       <input id="q" type="search" placeholder="Search issue # or title" aria-label="Search issues">
     </div>
+    <div class="years" id="years"></div>
+    <p class="count" id="past-count"></p>
     <div class="grid" id="grid"></div>
   </section>
 
@@ -267,6 +290,39 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
     <p class="meta">These businesses make the Community Corner possible. Please support them!</p>
     <div class="ads" id="ads"></div>
     <p class="print" id="print"></p>
+  </section>
+
+  <section class="view" id="v-about" hidden>
+    <span class="eyebrow">About</span>
+    <h2 class="sec-h">About the Community Corner</h2>
+    <div class="about">
+      <div class="prose">
+        <p data-t="aboutText">The Community Corner is a free weekly paper for the Jewish community in Pomona, Monsey, Wesley Hills and Montebello. Every week it brings a story, divrei Torah, an interview, games, a recipe and more, written by people from our own community. It is printed and dropped off at local shuls, and every issue is here online.</p>
+        <p><b>Editor-in-chief:</b> <span data-t="editor">Doni Stern</span></p>
+        <h3>Our writers</h3>
+        <ul class="chips" id="writers"></ul>
+        <p class="meta">Want to write for us or send in a photo? <a href="#contact">Get in touch</a>.</p>
+      </div>
+      <div class="box">
+        <h3>Where to find the paper</h3>
+        <p class="meta" style="margin:0 0 10px">Our shul representatives</p>
+        <ul class="reps" id="reps"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="v-advertise" hidden>
+    <span class="eyebrow red">Advertise</span>
+    <h2 class="sec-h">Advertise with the Community Corner</h2>
+    <p class="prose" data-t="adPageText">Put your business in front of local families every week. The paper is printed and handed out at shuls across Pomona, Monsey, Wesley Hills and Montebello, and your ad also appears on our Sponsors page online.</p>
+    <div class="adfacts">
+      <div><b data-t="adFact1">1,000+</b><span data-t="adFact1Label">readers every week</span></div>
+      <div><b data-t="adFact2">Monday</b><span data-t="adFact2Label">ad deadline, end of day</span></div>
+      <div><b data-t="adFact3">Print + online</b><span data-t="adFact3Label">in the paper and on this site</span></div>
+    </div>
+    <h3 style="margin-top:28px">How it works</h3>
+    <ol class="steps" id="adsteps"></ol>
+    <p><a class="btn" href="#contact" id="ad-contact">Ask about sizes and rates</a> <a class="btn" href="#sponsors" style="background:none;color:var(--ink);text-decoration:underline">See this week's sponsors</a></p>
   </section>
 
   <section class="view" id="v-subscribe" hidden>
@@ -319,7 +375,7 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
   <div class="cta">
     <div><h3 data-t="adTitle">Advertise with Community Corner</h3>
     <p data-t="adText">Reach 1,000+ families every week. Ad deadline is Monday, end of day.</p></div>
-    <a class="btn ctab" href="#contact">Contact us</a>
+    <span style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn ctab" href="#advertise">Learn more</a><a class="btn ctab" href="#contact">Contact us</a></span>
   </div>
 
 </main>
@@ -372,15 +428,21 @@ function renderHome(){
     <button class="btn">Read this issue</button> ${dl(L)} ${shareBtn(L)} <a class="btn" href="#past" style="background:none;color:var(--ink);text-decoration:underline">See past issues</a></div>`;
   $('latest').querySelectorAll('button:not([data-pdf]):not([data-share])').forEach(b=>b.onclick=()=>location.hash=L.num);
 }
+let YEAR='all';
 function renderPast(){
   const q=$('q').value.trim().toLowerCase(),g=$('grid');g.innerHTML='';
-  issues.filter(i=>!q||String(i.num).includes(q)||(i.title||'').toLowerCase().includes(q)).forEach((i,k)=>{const w=document.createElement('div');w.className='issue-wrap';w.append(card(i,!q&&k===0));w.insertAdjacentHTML('beforeend',dl(i));g.append(w)});
-  if(!g.children.length)g.innerHTML='<p class="meta">No issues match that search.</p>';
+  const yrs=[...new Set(issues.map(i=>(i.date||'').slice(0,4)).filter(Boolean))].sort().reverse();
+  $('years').innerHTML=yrs.length>1?['all',...yrs].map(y=>`<button type="button" data-y="${y}" class="${y===YEAR?'on':''}">${y==='all'?'All years':y}</button>`).join(''):'';
+  $('years').querySelectorAll('button').forEach(b=>b.onclick=()=>{YEAR=b.dataset.y;renderPast()});
+  const list=issues.filter(i=>(YEAR==='all'||(i.date||'').startsWith(YEAR))&&(!q||String(i.num).includes(q)||(i.title||'').toLowerCase().includes(q)));
+  list.forEach(i=>{const w=document.createElement('div');w.className='issue-wrap';w.append(card(i,i===issues[0]));w.insertAdjacentHTML('beforeend',dl(i));g.append(w)});
+  $('past-count').textContent=list.length?`${list.length} issue${list.length===1?'':'s'}`:'';
+  if(!list.length)g.innerHTML='<p class="meta">No issues match that search.</p>';
 }
 function route(){
   const h=location.hash.slice(1)||'home',n=+h,i=issues.find(x=>x.num===n);
-  const v=i?'issue':(['home','past','fun','sponsors','contact','subscribe'].includes(h)?h:'home');
-  ['home','past','issue','fun','sponsors','contact','subscribe'].forEach(x=>$('v-'+x).hidden=x!==v);
+  const v=i?'issue':(['home','past','fun','sponsors','contact','subscribe','about','advertise'].includes(h)?h:'home');
+  ['home','past','issue','fun','sponsors','contact','subscribe','about','advertise'].forEach(x=>$('v-'+x).hidden=x!==v);
   $('subpromo').hidden=v==='subscribe';$('subbar').hidden=v==='subscribe';
   i?track('read',String(i.num)):track('view',v);
   document.querySelectorAll('.menu a').forEach(a=>a.classList.toggle('on',a.dataset.v===(v==='issue'?'past':v)));
@@ -479,8 +541,18 @@ async function loadIssues(){
     return rows.concat(st.filter(i=>!nums.has(i.num)));
   }catch{return st}
 }
+const DEFAULT_WRITERS=['Zecharia Lipitz|Story of the Week','Gavriel Grodko|Parsha Question','Yoel Megadesh|Mega Vort','Rabbi Dr. Shaul Schwalb|Sheenayim Mikra','Avi Hirsch|This Week in Jewish History','Kayla Stern|Song of the Week','Ariella Isaacs|State of the Week','Chanalee, The Challah Fairy|Recipe of the Week','Daniel Moskovits|B\'Kitzur','Gabriella and Mikayla|Crazy Animal Corner','Jonah & Zack Lenefsky|Super Cool Facts','Dovid Rosenberg|Safety Tip of the Week'];
+const DEFAULT_REPS=['The Shul of Pomona Heights, 60 Halley Drive (Mickey Schlisser)','Anshei Palisades, 11 Palisades Court, Pomona (Shlomo Yoblonsky)','Ohr Yaakov Shlomo, 43 Tamarack Lane, Pomona (Yackov Rosenthal)','Kehal Avreichim Pomona, 3 Chestnut Drive (Avi Hirsch)','9 Ladentown Road, Pomona (Berry Nash)','15 Woodfield Rd, Pomona (Doni Stern)','34 N Ridge Rd, Pomona (Shaya Setton)','Beis Medrash Torah u\'Tfilah, 1 Klingher Court (Nochum Willner)','Shaarei Tefillah, New Hempstead','56 Mayer Dr, Montebello (Shmuel Ganz)','The Village Green Shul, 4 Village Green, Wesley Hills (Shlomo Kertzner)','Atsres Rosh, 16 Charlotte Drive (Avi Stern)','Kehilas Yeshorim of Wesley Hills, 1 Harriet Lane (Yoel Megadesh)','Cong Ohaiv Yisroel, 30 Blueberry Hill Road, Monsey (Yossie Becker)','Congregation Ahavat Israel, Suffern','84 Viola Road, Montebello (Yanky Reichman)','Kehilas Shaar Hashamayim, 71 East Willow Tree Rd (Moshe Brachfeld)'];
+const DEFAULT_ADSTEPS=['Send us a message with your business name and what you want to advertise.','We reply with the ad sizes and rates.','Send your ad by Monday, end of day.','Your ad is printed in that week\'s paper and shown on our Sponsors page.'];
+function renderLists(){
+  const h=t=>String(t).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+  const pick=(k,d)=>SITE[k]&&SITE[k].length?SITE[k]:d;
+  $('writers').innerHTML=pick('writers',DEFAULT_WRITERS).map(w=>{const [n,c]=w.split('|');return `<li>${h(n.trim())}${c?` <span>· ${h(c.trim())}</span>`:''}</li>`}).join('');
+  $('reps').innerHTML=pick('reps',DEFAULT_REPS).map(r=>`<li>${h(r)}</li>`).join('');
+  $('adsteps').innerHTML=pick('adSteps',DEFAULT_ADSTEPS).map(r=>`<li>${h(r)}</li>`).join('');
+}
 function applySite(v){
-  SITE=v||{};
+  SITE=v||{};renderLists();
   document.querySelectorAll('[data-t]').forEach(el=>{const t=SITE[el.dataset.t];if(typeof t==='string'&&t.trim())el.textContent=t});
   if(SITE.topics&&SITE.topics.length)$('c-topic').innerHTML=SITE.topics.map(t=>`<option>${esc(t)}</option>`).join('');
   if(SITE.bannerTitle)document.title=SITE.bannerTitle;
@@ -548,6 +620,7 @@ function pick(r,c){
   const left=items.filter(i=>!i.done).length;
   $('msg').textContent=left?`Found ${hit.li.textContent}! ${left} to go.`:'You found them all!';
 }
+renderLists();
 </script>
 </body>
 </html>
