@@ -261,7 +261,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
   <!-- INBOX -->
   <section id="v-inbox" hidden>
     <div class="row" style="justify-content:space-between;margin-bottom:14px">
-      <div><h2 style="font-size:30px">Inbox</h2><p class="hint" style="margin:0">Mazel tovs, photos and stories that readers sent in from the website.</p></div>
+      <div><h2 style="font-size:30px">Inbox</h2><p class="hint" style="margin:0">Columns, mazel tovs and photos that readers sent in from the website.</p></div>
       <label style="flex-direction:row;align-items:center;gap:8px;font-size:14px"><input type="checkbox" id="in-all" style="width:18px;height:18px"> Show finished ones too</label>
     </div>
     <p class="msg" id="in-msg" role="status"></p>
@@ -815,8 +815,10 @@ const SITE_FIELDS=[
   ['reps','About page: shul representatives (one per line)',"The Shul of Pomona Heights, 60 Halley Drive (Mickey Schlisser)\nAnshei Palisades, 11 Palisades Court, Pomona (Shlomo Yoblonsky)\nOhr Yaakov Shlomo, 43 Tamarack Lane, Pomona (Yackov Rosenthal)\nKehal Avreichim Pomona, 3 Chestnut Drive (Avi Hirsch)\n9 Ladentown Road, Pomona (Berry Nash)\n15 Woodfield Rd, Pomona (Doni Stern)\n34 N Ridge Rd, Pomona (Shaya Setton)\nBeis Medrash Torah u'Tfilah, 1 Klingher Court (Nochum Willner)\nShaarei Tefillah, New Hempstead\n56 Mayer Dr, Montebello (Shmuel Ganz)\nThe Village Green Shul, 4 Village Green, Wesley Hills (Shlomo Kertzner)\nAtsres Rosh, 16 Charlotte Drive (Avi Stern)\nKehilas Yeshorim of Wesley Hills, 1 Harriet Lane (Yoel Megadesh)\nCong Ohaiv Yisroel, 30 Blueberry Hill Road, Monsey (Yossie Becker)\nCongregation Ahavat Israel, Suffern\n84 Viola Road, Montebello (Yanky Reichman)\nKehilas Shaar Hashamayim, 71 East Willow Tree Rd (Moshe Brachfeld)",'list'],
   ['adPageText','Advertise page: main text','Put your business in front of local families every week. The paper is printed and handed out at shuls across Pomona, Monsey, Wesley Hills and Montebello, and your ad also appears on our Sponsors page online.'],
   ['adSteps','Advertise page: how it works (one step per line)',"Send us a message with your business name and what you want to advertise.\nWe reply with the ad sizes and rates.\nSend your ad by Monday, end of day.\nYour ad is printed in that week's paper and shown on our Sponsors page.",'list'],
-  ['submitTitle','Send-it-in page: title','Send us your mazel tov or photo'],
-  ['submitIntro','Send-it-in page: intro','Got a mazel tov, a great photo, or a story for the paper? Send it here and it might be in the next issue.'],
+  ['sendBoxTitle','Homepage "send it in" box: title','Want to write a column?'],
+  ['sendBoxText','Homepage "send it in" box: text',"Send it in with a picture of yourself to be featured in next week's issue!"],
+  ['submitTitle','Send-it-in page: title','Write a column for the paper'],
+  ['submitIntro','Send-it-in page: intro',"Want to write a column? Send it here with a picture of yourself to be featured in next week's issue!"],
   ['footer','Footer line','© 2026 The Community Corner is an imprint of The Community Corner. All rights reserved.'],
 ];
 let SITE_SAVED={};

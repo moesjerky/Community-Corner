@@ -338,7 +338,7 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
     <div class="shabbos" id="shabbos" hidden></div>
     <div class="latest" id="latest"></div>
     <div class="sendbox">
-      <div><h3>Have a mazel tov or a great photo?</h3><p>Send it in and it might be in the next issue.</p></div>
+      <div><h3 data-t="sendBoxTitle">Want to write a column?</h3><p data-t="sendBoxText">Send it in with a picture of yourself to be featured in next week's issue!</p></div>
       <a class="btn" href="#submit">Send it in</a>
     </div>
     <div class="recent" id="recent" hidden>
@@ -403,7 +403,7 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
         <p><b>Editor-in-chief:</b> <span data-t="editor">Doni Stern</span></p>
         <h3>Our writers</h3>
         <ul class="chips" id="writers"></ul>
-        <p class="meta">Want to write for us or send in a photo? <a href="#submit">Send it in here</a>.</p>
+        <p class="meta">Want to write a column? <a href="#submit">Send it in with a picture of yourself</a>.</p>
       </div>
       <div class="box">
         <h3>Where to find the paper</h3>
@@ -429,18 +429,18 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
 
   <section class="view" id="v-submit" hidden>
     <span class="eyebrow red">Send it in</span>
-    <h2 class="sec-h" data-t="submitTitle">Send us your mazel tov or photo</h2>
-    <p class="meta" data-t="submitIntro">Got a mazel tov, a great photo, or a story for the paper? Send it here and it might be in the next issue.</p>
+    <h2 class="sec-h" data-t="submitTitle">Write a column for the paper</h2>
+    <p class="meta" data-t="submitIntro">Want to write a column? Send it here with a picture of yourself to be featured in next week's issue!</p>
     <form class="cform" id="sform" novalidate>
       <label for="u-kind">What are you sending?
-        <select id="u-kind" name="kind"><option>Mazel Tov</option><option>Photo</option><option>Story or article</option><option>Other</option></select>
+        <select id="u-kind" name="kind"><option>Column</option><option>Mazel Tov</option><option>Photo</option><option>Other</option></select>
       </label>
       <div class="row">
         <label for="u-name">Your name *<input id="u-name" name="name" autocomplete="name" maxlength="120" required></label>
         <label for="u-contact">Phone or email (so we can reach you)<input id="u-contact" name="contact" maxlength="160"></label>
       </div>
-      <label for="u-msg">Message *<textarea id="u-msg" name="message" rows="5" maxlength="4000" required></textarea></label>
-      <label for="u-photo">Add a photo (optional)
+      <label for="u-msg">Your column or message *<textarea id="u-msg" name="message" rows="5" maxlength="4000" required></textarea></label>
+      <label for="u-photo">Add a picture of yourself (or another photo)
         <input id="u-photo" name="photo" type="file" accept="image/*">
       </label>
       <img id="u-preview" alt="Your photo" hidden>
