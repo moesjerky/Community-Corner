@@ -50,8 +50,7 @@ h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.1;text-wrap:ba
 .logo img{display:block;height:62px;width:auto;transition:opacity .2s,transform .2s}
 .head.attop .logo{pointer-events:none}
 .head.attop .logo img{opacity:0;transform:translateY(-6px)}
-.head.attop .wrap{justify-content:center}
-.head.attop .logo{position:absolute;visibility:hidden}
+.head.attop .logo{visibility:hidden}
 .head .wrap{position:relative}
 .menu{display:flex;gap:4px;overflow-x:auto;min-width:0}
 .menu a{font:700 15px var(--body);color:#fff;text-decoration:none;padding:9px 14px;border-radius:999px;white-space:nowrap}
@@ -712,7 +711,7 @@ $('sform').addEventListener('submit',async e=>{
 });
 /* small header logo only shows once the big ribbon logo has scrolled away */
 if('IntersectionObserver' in window){const hd=document.querySelector('.head');hd.classList.add('attop');
-  new IntersectionObserver(es=>hd.classList.toggle('attop',es[0].isIntersecting),{rootMargin:'-80px 0px 0px 0px'}).observe(document.querySelector('.hero-logo'))}
+  new IntersectionObserver(es=>hd.classList.toggle('attop',es[0].isIntersecting),{rootMargin:'-90px 0px 0px 0px',threshold:0}).observe(document.querySelector('.hero'))}
 /* ---------- printing ---------- */
 function doPrint(html,landscape){
   const pa=$('printarea');pa.innerHTML=html;
