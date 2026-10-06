@@ -17,14 +17,15 @@
 <meta name="theme-color" content="#C3262E">
 <link rel="icon" type="image/png" href="img/favicon.png">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Libre+Franklin:wght@400;600;800&family=Courier+Prime:wght@700&family=Frank+Ruhl+Libre:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Courier+Prime:wght@700&family=Frank+Ruhl+Libre:wght@500&display=swap">
 <style>
 :root{
   color-scheme:light;
   --red:#C3262E; --red-dk:#8E1B22; --plum:#4A2770; --blue:#0E4C8A; --schach:#3F6B34;
   --paper:#F5EEDC; --card:#FFFDF7; --ink:#24192E; --muted:#6A5D70; --line:#E0D2B4; --gold:#FFE7B8;
   --display:"Lilita One","Arial Black",Impact,sans-serif;
-  --body:"Libre Franklin",system-ui,-apple-system,sans-serif;
+  --body:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  --teal:#2FA58C; --orange:#E7792B; --sun:#F6E58D; --violet:#8A4FA3; --leaf:#5BAA46;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -50,7 +51,7 @@ h1,h2,h3{font-family:var(--display);font-weight:400;line-height:1.1;text-wrap:ba
 .head.attop .logo{pointer-events:none}
 .head.attop .logo img{opacity:0;transform:translateY(-6px)}
 .head.attop .wrap{justify-content:center}
-.head.attop .logo{position:absolute}
+.head.attop .logo{position:absolute;visibility:hidden}
 .head .wrap{position:relative}
 .menu{display:flex;gap:4px;overflow-x:auto;min-width:0}
 .menu a{font:700 15px var(--body);color:#fff;text-decoration:none;padding:9px 14px;border-radius:999px;white-space:nowrap}
@@ -304,6 +305,94 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
   .menu a{padding:8px 9px;font-size:14px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}.ticker .track{animation:none}}
+
+/* ===== closer to the printed paper: no heavy black frames or offset shadows ===== */
+.menu a{border-radius:0;padding:8px 12px;font:700 14px var(--body);letter-spacing:.04em;text-transform:uppercase;border-bottom:3px solid transparent}
+.menu a:hover,.menu a:focus-visible{background:none;border-bottom-color:var(--gold)}
+.menu a.on{background:none;color:#fff;border-bottom-color:#fff}
+.menu a.subnav{background:var(--sun);color:var(--plum);border-bottom-color:transparent}
+.menu a.subnav:hover,.menu a.subnav:focus-visible{background:#fff}
+.head{box-shadow:none}
+
+.subbar{background:var(--sun);border-bottom:0;font-weight:700;color:var(--plum)}
+.subbar b{border-radius:0;background:var(--plum);color:#fff;padding:4px 12px}
+
+.btn{border-radius:0;font:700 15px var(--body);letter-spacing:.02em}
+.eyebrow{font-size:14px;letter-spacing:.08em;text-transform:uppercase;padding:5px 12px}
+.sec-h{color:var(--plum)}
+
+/* orange times bar, like the cover */
+.shabbos{border:0;background:var(--orange);color:#fff;align-items:center;margin-bottom:34px}
+.shabbos>div{border-right:0;padding:10px 16px;flex:1 1 130px}
+.shabbos .lbl{color:#fff;font:800 13px var(--body);letter-spacing:.06em}
+.shabbos b{color:var(--sun);font:800 24px var(--body);letter-spacing:0}
+.shabbos small{color:#fff;opacity:.9;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:10px}
+.shabbos .par{background:var(--red);flex:1.6 1 220px;align-self:stretch;display:flex;flex-direction:column;justify-content:center}
+.shabbos .par .lbl{color:var(--sun)}
+.shabbos .par b{font:400 28px var(--display);color:#fff;text-transform:uppercase}
+
+/* this week's issue */
+.cover{border:0;box-shadow:0 2px 4px rgba(60,40,10,.25),0 14px 34px rgba(60,40,10,.28)}
+.stamp{background:none;border:0;box-shadow:none;padding:0;top:-22px;right:-8px;font-size:clamp(26px,3.6vw,40px);color:var(--red);text-transform:uppercase;
+  -webkit-text-stroke:7px #fff;paint-order:stroke fill;filter:drop-shadow(2px 3px 0 rgba(36,25,46,.45))}
+.latest h2{color:var(--plum)}
+.times div{border:0;border-left:4px solid var(--orange);background:none;padding:2px 12px}
+.times b{font:800 22px var(--body);color:var(--red)}
+
+/* issue covers: paper-on-table shadow, no frames */
+.issue img{border:0;box-shadow:0 1px 3px rgba(60,40,10,.3),0 6px 14px rgba(60,40,10,.16);transition:box-shadow .15s}
+.issue:hover img,.issue:focus-visible img{transform:none;box-shadow:0 2px 5px rgba(60,40,10,.35),0 12px 26px rgba(60,40,10,.26)}
+.issue b{color:var(--plum)}
+.new{background:var(--red)}
+.recent{border-top:2px solid var(--line)}
+.bar input,.cform input,.cform select,.cform textarea,.subgrid input,.subgrid select{border:1.5px solid #9C8F7A}
+.years button{border:1.5px solid var(--plum);color:var(--plum);border-radius:0;background:none}
+.years button.on{background:var(--plum);color:#fff}
+
+/* column boxes: thin colored border + colored header bar, like each column in print */
+.box{border:2px solid var(--teal);background:var(--card);padding:0 16px 16px;overflow:hidden}
+.box>h3:first-child,.box>.eyebrow:first-child{display:block;margin:0 -16px 12px;padding:7px 16px;background:var(--teal);color:#fff;font:400 19px var(--display);letter-spacing:.05em;text-transform:uppercase;clip-path:none}
+.box:nth-of-type(4n+2){border-color:var(--blue)} .box:nth-of-type(4n+2)>h3:first-child,.box:nth-of-type(4n+2)>.eyebrow:first-child{background:var(--blue)}
+.box:nth-of-type(4n+3){border-color:var(--violet)} .box:nth-of-type(4n+3)>h3:first-child,.box:nth-of-type(4n+3)>.eyebrow:first-child{background:var(--violet)}
+.box:nth-of-type(4n+4){border-color:var(--orange)} .box:nth-of-type(4n+4)>h3:first-child,.box:nth-of-type(4n+4)>.eyebrow:first-child{background:var(--orange)}
+.side .box:first-child{padding-top:16px}
+.board{border:2px solid var(--blue)}
+.board button.found{background:var(--leaf)}
+.words li.done{color:var(--leaf)}
+
+/* yellow subscribe banner, like the one printed in the paper */
+.subpromo{background:var(--sun);color:var(--ink);border:0;box-shadow:none;border-radius:14px}
+.subpromo h3{color:var(--plum);font-size:clamp(24px,3.6vw,34px);text-transform:uppercase;text-shadow:2px 2px 0 rgba(255,255,255,.9)}
+.subpromo p{font-weight:700}
+.subpromo .btn{background:var(--plum);color:#fff}
+.subpromo .btn:hover,.subpromo .btn:focus-visible{background:var(--red);color:#fff}
+.subbox{background:var(--sun);color:var(--ink);border:0;box-shadow:none;border-radius:14px}
+.subbox h3{color:var(--plum);text-transform:uppercase}
+.subgrid label{color:var(--plum)}
+.subgrid .btn{background:var(--plum);color:#fff}
+.subgrid .btn:hover,.subgrid .btn:focus-visible{background:var(--red);color:#fff}
+
+/* "advertise" banner, like the print ad: red + blue lettering on pale yellow */
+.cta{background:#FCF3B8;color:var(--ink);border-top:4px solid var(--red);border-bottom:4px solid var(--blue)}
+.cta h3{color:var(--red);font-size:clamp(22px,3.2vw,32px);text-transform:uppercase;line-height:1.12}
+.cta h3 em{font-style:normal;color:var(--blue)}
+.cta p{font-weight:700}
+.ctab{background:var(--red);color:#fff}
+.ctab:hover,.ctab:focus-visible{background:var(--blue);color:#fff}
+
+.sendbox{border:0;border-left:6px solid var(--teal);background:rgba(255,255,255,.55)}
+.sendbox h3{color:var(--plum)}
+.ad{border:1px solid var(--line)} .ad img{border-bottom:1px solid var(--line)}
+.ad:hover,.ad:focus-visible{transform:none;box-shadow:0 8px 20px rgba(60,40,10,.22)}
+.print{border:0;border-left:6px solid var(--blue);background:rgba(255,255,255,.55)}
+.pager{border:0}
+.chips li{border:0;background:rgba(255,255,255,.6);border-left:4px solid var(--teal)}
+.chips li:nth-child(4n+2){border-left-color:var(--blue)} .chips li:nth-child(4n+3){border-left-color:var(--violet)} .chips li:nth-child(4n+4){border-left-color:var(--orange)}
+.adlist{list-style:none;padding:0;margin:20px 0 0;display:flex;flex-direction:column;gap:8px;font-size:18px}
+.adlist b{font:400 24px var(--display);color:var(--red);margin-right:6px}
+.coverwrap:hover{transform:rotate(-2deg)}
+footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
+@media (max-width:760px){.menu a{padding:8px 8px;font-size:12.5px}}
 </style>
 <script>try{const c=JSON.parse(localStorage.getItem('cc_colors')||'{}');for(const k in c)document.documentElement.style.setProperty('--'+k,c[k])}catch{}</script>
 </head>
@@ -417,11 +506,12 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
     <span class="eyebrow red">Advertise</span>
     <h2 class="sec-h">Advertise with the Community Corner</h2>
     <p class="prose" data-t="adPageText">Put your business in front of local families every week. The paper is printed and handed out at shuls across Pomona, Monsey, Wesley Hills and Montebello, and your ad also appears on our Sponsors page online.</p>
-    <div class="adfacts">
-      <div><b data-t="adFact1">1,000+</b><span data-t="adFact1Label">readers every week</span></div>
-      <div><b data-t="adFact2">Monday</b><span data-t="adFact2Label">ad deadline, end of day</span></div>
-      <div><b data-t="adFact3">Print + online</b><span data-t="adFact3Label">in the paper and on this site</span></div>
-    </div>
+    <ul class="adlist">
+      <li><b data-t="adFact1">1,000+</b> <span data-t="adFact1Label">readers every week</span></li>
+      <li><b data-t="adFact2">Monday</b> <span data-t="adFact2Label">ad deadline, end of day</span></li>
+      <li><b data-t="adFact3">Print + online</b> <span data-t="adFact3Label">in the paper and on this site</span></li>
+    </ul>
+
     <h3 style="margin-top:28px">How it works</h3>
     <ol class="steps" id="adsteps"></ol>
     <p><a class="btn" href="#contact" id="ad-contact">Ask about sizes and rates</a> <a class="btn" href="#sponsors" style="background:none;color:var(--ink);text-decoration:underline">See this week's sponsors</a></p>
@@ -498,7 +588,7 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
 
 
   <div class="cta">
-    <div><h3 data-t="adTitle">Advertise with Community Corner</h3>
+    <div><h3><span data-t="adTitle">Advertise with Community Corner</span> <em data-t="adTitle2">&amp; reach the heart of our community</em></h3>
     <p data-t="adText">Reach 1,000+ families every week. Ad deadline is Monday, end of day.</p></div>
     <span style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn ctab" href="#advertise">Learn more</a><a class="btn ctab" href="#contact">Contact us</a></span>
   </div>
@@ -716,8 +806,11 @@ fetch('https://www.hebcal.com/shabbat?cfg=json&zip=10952&M=off&m=50&b=18&lg=a').
   if(!name&&!c)return;
   const e=t=>String(t).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
   $('shabbos').innerHTML=(name?`<div class="par"><span class="lbl">${par?'This Shabbos':'This week'}</span><b>${e(name)}</b></div>`:'')
-    +(c?`<div><span class="lbl">Candle lighting</span><b>${time(c)}</b><small>18 minutes</small></div>`:'')
-    +(h?`<div><span class="lbl">Shabbos ends</span><b>${time(h)}</b><small>50 minutes · Monsey times</small></div>`:'');
+    +(c?`<div><span class="lbl">Shabbos starts</span><b>${time(c)}</b><small>(18 minutes)</small></div>`:'')
+    +(h?`<div><span class="lbl">Shabbos ends</span><b>${time(h)}</b><small>(50 minutes)</small></div>`:'')
+    +`<div id="tzais72" hidden><span class="lbl">Tzais Hakochavim</span><b></b><small>(72 minutes)</small></div>`;
+  fetch('https://www.hebcal.com/shabbat?cfg=json&zip=10952&M=off&m=72&b=18&lg=a').then(r=>r.json()).then(d2=>{
+    const t=(d2.items||[]).find(x=>x.category==='havdalah');if(!t)return;const el=$('tzais72');el.querySelector('b').textContent=time(t);el.hidden=false}).catch(()=>{});
   $('shabbos').hidden=false;
 }).catch(()=>{});
 document.addEventListener('click',async e=>{
