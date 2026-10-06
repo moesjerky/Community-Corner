@@ -118,7 +118,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
         <div class="row"><button class="btn alt" id="bulk-open">Add many at once</button><button class="btn red" id="new-issue">+ New issue</button></div>
       </div>
       <div style="overflow-x:auto;margin-top:14px"><table>
-        <thead><tr><th></th><th>Issue</th><th>Date</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th></th><th>Issue</th><th>Date</th><th>Status</th><th>Email</th><th></th></tr></thead>
         <tbody id="list"></tbody>
       </table></div>
       <p class="msg" id="list-msg" role="status"></p>
@@ -309,7 +309,8 @@ document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>({list:loadList,
 /* ---------- list ---------- */
 async function loadList(){
   show('list');say('list-msg','Loading…');
-  const {data,error}=await sb.from('issues').select('num,title,date,published,pages,fun,sponsors').order('num',{ascending:false});
+  let {data,error}=await sb.from('issues').select('num,title,date,published,pages,fun,sponsors,emailed_at').order('num',{ascending:false});
+  if(error&&/emailed_at/.test(error.message))({data,error}=await sb.from('issues').select('num,title,date,published,pages,fun,sponsors').order('num',{ascending:false}));
   if(error){say('list-msg','Could not load issues: '+error.message,'err');return}
   ISSUES=data;say('list-msg',data.length?'':'No issues yet. Click "+ New issue" to add one.');
   $('list').innerHTML=data.map(i=>`<tr>
@@ -317,6 +318,8 @@ async function loadList(){
     <td><b>#${i.num}</b><br><span class="hint">${esc(i.title)}</span></td>
     <td>${fmt(i.date)}</td>
     <td><span class="pill ${i.published?'live':'draft'}">${i.published?'LIVE':'DRAFT'}</span></td>
+    <td>${i.emailed_at?`<span class="hint">Sent ${fmt(i.emailed_at.slice(0,10))}</span>`:(i.published&&i.num===data[0].num?`<button class="btn small" data-mail="${i.num}">Email subscribers</button>`:'<span class="hint">–</span>')}
+      <br><button class="btn alt small" data-test="${i.num}" style="margin-top:4px">Send test to me</button></td>
     <td><div class="row" style="justify-content:flex-end">
       <button class="btn small" data-edit="${i.num}">Edit</button>
       <button class="btn alt small" data-pub="${i.num}">${i.published?'Hide':'Publish'}</button>
@@ -328,7 +331,22 @@ async function loadList(){
     error?say('list-msg',error.message,'err'):loadList();
   });
   $('list').querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>confirmDelete(b));
+  $('list').querySelectorAll('[data-test]').forEach(b=>b.onclick=()=>mailIssue(+b.dataset.test,true,b));
+  $('list').querySelectorAll('[data-mail]').forEach(b=>b.onclick=()=>{
+    if(!b.dataset.armed){b.dataset.armed=1;b.textContent='Click again to send';b.classList.add('red');setTimeout(()=>{delete b.dataset.armed;b.textContent='Email subscribers';b.classList.remove('red')},4000);return}
+    mailIssue(+b.dataset.mail,false,b)});
   checkImports();
+}
+async function mailIssue(num,test,btn,quiet){
+  if(btn)btn.disabled=true;say('list-msg',test?'Sending a test email to you…':`Emailing issue #${num} to subscribers…`);
+  const {data,error}=await sb.functions.invoke('send-issue',{body:{num,test}});
+  let msg=data?.error;
+  if(error&&!msg){try{msg=(await error.context.json()).error}catch{msg=error.message}}
+  if(btn)btn.disabled=false;
+  if(msg){say('list-msg',/RESEND_API_KEY|not found|Failed to send|FunctionsFetchError/i.test(msg)?'Email robot is not set up yet ('+msg+').':msg,'err');return false}
+  say('list-msg',test?'Test sent. Check your inbox (and spam).':`Emailed #${num} to ${data.sent} subscriber${data.sent===1?'':'s'}. 📬`,'ok');
+  if(!test&&!quiet)loadList();
+  return true;
 }
 function confirmDelete(b){
   if(b.dataset.armed){deleteIssue(+b.dataset.del);return}
@@ -514,7 +532,14 @@ $('v-edit').onsubmit=async e=>{
     const {error}=await sb.from('issues').upsert(row);
     if(error)throw error;
     say('save-msg',row.published?'Saved! It is live on the website.':'Saved as a draft. Publish it when you are ready.','ok');
-    setTimeout(loadList,1200);
+    const top=Math.max(0,...ISSUES.map(i=>i.num));
+    const prev=ISSUES.find(i=>i.num===num);
+    if(row.published&&num>=top&&!prev?.emailed_at){
+      say('save-msg','Saved and live. Emailing subscribers…','ok');
+      const ok=await mailIssue(num,false,null,true);
+      say('save-msg',ok?'Saved, live, and emailed to subscribers. 📬':'Saved and live, but the email did not go out. Use "Email subscribers" on the list.',ok?'ok':'err');
+    }
+    setTimeout(loadList,1800);
   }catch(err){say('save-msg',(err.message||'Something went wrong')+'. Nothing is lost; try Save again.','err')}
   finally{$('save').disabled=false}
 };
