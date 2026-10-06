@@ -6,6 +6,8 @@
   "hebrew": "14 Tishrei 5787",
   "pages": 4,
   "yomtov": "6:30 PM",
-  "tzais": "8:00 PM"
+  "tzais": "8:00 PM",
+  "fun": true,
+  "sponsors": true
  }
 ]

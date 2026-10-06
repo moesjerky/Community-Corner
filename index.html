@@ -138,7 +138,8 @@ details summary{cursor:pointer;font-weight:700;color:var(--red-dk)}
 .cta h3{font-size:28px;color:var(--gold)}
 .cta p{margin:6px 0 0;max-width:52ch}
 .email{background:#fff;color:var(--ink);font-weight:700;padding:10px 14px;user-select:all;word-break:break-all}
-footer{padding-block:4px 32px;font-size:13px;color:var(--muted)}
+footer{padding-block:4px 32px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:16px}
+.credit-mark img{display:block;height:34px;width:auto;opacity:.75;mix-blend-mode:multiply}
 
 @media (max-width:760px){
   .latest,.fun{grid-template-columns:1fr}
@@ -237,7 +238,7 @@ footer{padding-block:4px 32px;font-size:13px;color:var(--muted)}
   <figure><img id="lb-img" alt=""><figcaption><b id="lb-name"></b><span id="lb-info"></span><br><small id="lb-count"></small></figcaption></figure>
   <button class="arr" id="lb-next" aria-label="Next sponsor">›</button>
 </div>
-<footer class="wrap">The Community Corner is an imprint of The Community Corner. All rights reserved.</footer>
+<footer class="wrap"><span>The Community Corner is an imprint of The Community Corner. All rights reserved.</span><div class="credit-mark" title="Site by Moe"><img src="img/credit-mark.png" alt="Site by Moe"></div></footer>
 
 <script>
 const dl=i=>`<button class="btn dl" data-pdf="${i.num}">Download PDF</button>`;
@@ -314,7 +315,7 @@ document.addEventListener('click',async e=>{
   finally{b.disabled=false;setTimeout(()=>b.textContent=old,2500)}
 },true);
 ticker();
-fetch('issues.json').then(r=>r.json()).then(d=>{issues=d.sort((a,b)=>b.num-a.num);ticker(issues[0]);renderHome();renderPast();renderFun(issues[0]);renderSponsors(issues[0]);route()})
+fetch('issues.json').then(r=>r.json()).then(d=>{issues=d.sort((a,b)=>b.num-a.num);ticker(issues[0]);renderHome();renderPast();renderFun(issues.find(i=>i.fun)||issues[0]);renderSponsors(issues.find(i=>i.sponsors)||issues[0]);route()})
   .catch(()=>{$('latest').innerHTML='<p class="meta">Issues could not load. Refresh the page to try again.</p>'});
 
 let ADS=[],adAt=0,lastFocus=null;
