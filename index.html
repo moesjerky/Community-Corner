@@ -252,6 +252,14 @@ section.view{padding-block:40px 20px}
 .count{color:var(--muted);font-size:14px;margin:10px 0 0}
 @media (max-width:760px){.about{grid-template-columns:1fr}.adfacts{grid-template-columns:1fr}}
 
+/* submit */
+#u-preview{max-width:220px;max-height:220px;border:2px solid var(--ink);background:var(--card)}
+.cform input[type=file]{padding:8px;font-size:14px}
+.sendbox{margin-top:36px;background:var(--card);border:2px dashed var(--ink);padding:18px 20px;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center}
+.sendbox h3{font-size:22px}
+.sendbox p{margin:4px 0 0;color:var(--muted)}
+.sendbox .btn{margin:0}
+
 /* contact */
 .cform{display:flex;flex-direction:column;gap:16px;max-width:640px;margin-top:20px}
 .cform .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -329,6 +337,10 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
   <section class="view" id="v-home">
     <div class="shabbos" id="shabbos" hidden></div>
     <div class="latest" id="latest"></div>
+    <div class="sendbox">
+      <div><h3>Have a mazel tov or a great photo?</h3><p>Send it in and it might be in the next issue.</p></div>
+      <a class="btn" href="#submit">Send it in</a>
+    </div>
     <div class="recent" id="recent" hidden>
       <div class="recent-h"><h3>Recent issues</h3><a href="#past" id="recent-all">See all issues</a></div>
       <div class="recent-grid" id="recent-grid"></div>
@@ -391,7 +403,7 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
         <p><b>Editor-in-chief:</b> <span data-t="editor">Doni Stern</span></p>
         <h3>Our writers</h3>
         <ul class="chips" id="writers"></ul>
-        <p class="meta">Want to write for us or send in a photo? <a href="#contact">Get in touch</a>.</p>
+        <p class="meta">Want to write for us or send in a photo? <a href="#submit">Send it in here</a>.</p>
       </div>
       <div class="box">
         <h3>Where to find the paper</h3>
@@ -413,6 +425,29 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
     <h3 style="margin-top:28px">How it works</h3>
     <ol class="steps" id="adsteps"></ol>
     <p><a class="btn" href="#contact" id="ad-contact">Ask about sizes and rates</a> <a class="btn" href="#sponsors" style="background:none;color:var(--ink);text-decoration:underline">See this week's sponsors</a></p>
+  </section>
+
+  <section class="view" id="v-submit" hidden>
+    <span class="eyebrow red">Send it in</span>
+    <h2 class="sec-h" data-t="submitTitle">Send us your mazel tov or photo</h2>
+    <p class="meta" data-t="submitIntro">Got a mazel tov, a great photo, or a story for the paper? Send it here and it might be in the next issue.</p>
+    <form class="cform" id="sform" novalidate>
+      <label for="u-kind">What are you sending?
+        <select id="u-kind" name="kind"><option>Mazel Tov</option><option>Photo</option><option>Story or article</option><option>Other</option></select>
+      </label>
+      <div class="row">
+        <label for="u-name">Your name *<input id="u-name" name="name" autocomplete="name" maxlength="120" required></label>
+        <label for="u-contact">Phone or email (so we can reach you)<input id="u-contact" name="contact" maxlength="160"></label>
+      </div>
+      <label for="u-msg">Message *<textarea id="u-msg" name="message" rows="5" maxlength="4000" required></textarea></label>
+      <label for="u-photo">Add a photo (optional)
+        <input id="u-photo" name="photo" type="file" accept="image/*">
+      </label>
+      <img id="u-preview" alt="Your photo" hidden>
+      <input type="text" id="u-web" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <button class="btn" type="submit">Send it in</button>
+      <p class="cnote" id="u-note" role="status"></p>
+    </form>
   </section>
 
   <section class="view" id="v-subscribe" hidden>
@@ -535,8 +570,8 @@ function renderPast(){
 }
 function route(){
   const h=location.hash.slice(1)||'home',n=+h,i=issues.find(x=>x.num===n);
-  const v=i?'issue':(['home','past','fun','sponsors','contact','subscribe','about','advertise'].includes(h)?h:'home');
-  ['home','past','issue','fun','sponsors','contact','subscribe','about','advertise'].forEach(x=>$('v-'+x).hidden=x!==v);
+  const v=i?'issue':(['home','past','fun','sponsors','contact','subscribe','about','advertise','submit'].includes(h)?h:'home');
+  ['home','past','issue','fun','sponsors','contact','subscribe','about','advertise','submit'].forEach(x=>$('v-'+x).hidden=x!==v);
   $('subpromo').hidden=v==='subscribe';$('subbar').hidden=v==='subscribe';
   i?track('read',String(i.num)):track('view',v);
   if(!i&&$('pager').classList.contains('full'))setFull(false);
@@ -550,6 +585,41 @@ function route(){
 }
 $('q').oninput=renderPast;
 addEventListener('hashchange',route);
+/* ---------- reader submissions ---------- */
+let UPHOTO=null;
+function shrinkPhoto(file){ // resize big phone photos so uploads are quick
+  return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);
+    im.onload=()=>{const k=Math.min(1,1800/Math.max(im.naturalWidth,im.naturalHeight)),c=document.createElement('canvas');
+      c.width=Math.round(im.naturalWidth*k);c.height=Math.round(im.naturalHeight*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+      URL.revokeObjectURL(u);c.toBlob(b=>b?res(b):rej(new Error('photo')),'image/jpeg',.85)};
+    im.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('photo'))};im.src=u});
+}
+$('u-photo').onchange=async e=>{
+  const f=e.target.files[0],n=$('u-note'),pv=$('u-preview');UPHOTO=null;pv.hidden=true;n.className='cnote';n.textContent='';
+  if(!f)return;
+  try{UPHOTO=await shrinkPhoto(f);pv.src=URL.createObjectURL(UPHOTO);pv.hidden=false}
+  catch{n.classList.add('err');n.textContent="We couldn't read that photo. Try a JPG or PNG.";e.target.value=''}
+};
+$('sform').addEventListener('submit',async e=>{
+  e.preventDefault();const f=e.target,n=$('u-note'),btn=f.querySelector('button');n.className='cnote';
+  if($('u-web').value)return;
+  if(!$('u-name').value.trim()){n.classList.add('err');n.textContent='Type your name.';$('u-name').focus();return}
+  if(!$('u-msg').value.trim()&&!UPHOTO){n.classList.add('err');n.textContent='Write a message or add a photo.';$('u-msg').focus();return}
+  if(!DB){n.classList.add('err');n.textContent="Submissions aren't open yet. Check back soon.";return}
+  btn.disabled=true;const H={apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey};
+  try{
+    let photo=null;
+    if(UPHOTO){n.textContent='Uploading your photo…';photo=crypto.randomUUID()+'.jpg';
+      const up=await fetch(`${CFG.supabaseUrl}/storage/v1/object/submissions/${photo}`,{method:'POST',headers:{...H,'Content-Type':'image/jpeg'},body:UPHOTO});
+      if(!up.ok)throw 0}
+    n.textContent='Sending…';
+    const r=await fetch(`${CFG.supabaseUrl}/rest/v1/submissions`,{method:'POST',headers:{...H,'Content-Type':'application/json',Prefer:'return=minimal'},
+      body:JSON.stringify({kind:$('u-kind').value,name:$('u-name').value.trim(),contact:$('u-contact').value.trim(),message:$('u-msg').value.trim(),photo})});
+    if(!r.ok)throw 0;
+    f.reset();UPHOTO=null;$('u-preview').hidden=true;n.textContent='Got it, thank you! We read everything that comes in.';
+  }catch{n.classList.add('err');n.textContent="That didn't go through. Please try again, or email submissions@ourcommunitycorner.com."}
+  finally{btn.disabled=false}
+});
 /* small header logo only shows once the big ribbon logo has scrolled away */
 if('IntersectionObserver' in window){const hd=document.querySelector('.head');hd.classList.add('attop');
   new IntersectionObserver(es=>hd.classList.toggle('attop',es[0].isIntersecting),{rootMargin:'-80px 0px 0px 0px'}).observe(document.querySelector('.hero-logo'))}
