@@ -66,3 +66,7 @@ insert into settings (key, value) values
 
 -- ⬇️ Put your email (and your friend's) here, then run
 insert into admins (email) values ('submissions@ourcommunitycorner.com'), ('moshbeils@gmail.com') on conflict do nothing;
+
+-- Uploads that replace files (upsert) also need permission to look up existing files
+drop policy if exists "admins read files" on storage.objects;
+create policy "admins read files" on storage.objects for select using (bucket_id = 'issues' and public.is_admin());
