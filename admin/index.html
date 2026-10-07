@@ -811,7 +811,8 @@ async function loadStats(){
   $('st-issues').innerHTML=barsHtml(countBy(data,x=>x.event==='read'||x.event==='pdf'?x.path:null).slice(0,8),k=>'Issue #'+k);
   $('st-pages').innerHTML=barsHtml(countBy(data,x=>x.event==='view'?x.path:null),k=>PAGE_NAMES[k]||k);
   const firsts=[...new Map(data.slice().reverse().map(x=>[x.vid,x])).values()];
-  $('st-refs').innerHTML=barsHtml(countBy(firsts,x=>x.ref||'Typed the address / bookmark').slice(0,8));
+  const REF_NAMES={'':'Typed the address or a bookmark',qr:'QR code in the paper',email:'The weekly email'};
+  $('st-refs').innerHTML=barsHtml(countBy(firsts,x=>x.ref||'').slice(0,8),k=>REF_NAMES[k]||k);
   $('st-dev').innerHTML=barsHtml(countBy(firsts,x=>x.mobile?'Phone':'Computer'));
 }
 $('st-range').onchange=loadStats;
