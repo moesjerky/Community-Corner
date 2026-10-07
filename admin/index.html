@@ -107,7 +107,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 </head>
 <body>
 <header class="head"><div class="wrap">
-  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v13</small></a>
+  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v14</small></a>
   <nav id="nav" hidden>
     <button data-go="list" class="on">Issues</button>
     <button data-go="inbox">Inbox <span id="inbox-n"></span></button>
@@ -763,7 +763,8 @@ $('sub-add').onsubmit=async e=>{
 };
 
 /* ---------- analytics ---------- */
-const PAGE_NAMES={home:'Home',past:'Past Issues',fun:'Fun Stuff',sponsors:'Sponsors',contact:'Contact'};
+// the database sends short codes (web filters react to some page names); old full names kept for older data
+const PAGE_NAMES={a:'Home',b:'Past Issues',c:'Fun Stuff',d:'Sponsors',e:'Contact',f:'Subscribe',g:'About',h:'Advertise',i:'Write a column',z:'Other',home:'Home',past:'Past Issues',fun:'Fun Stuff',sponsors:'Sponsors',contact:'Contact',subscribe:'Subscribe',about:'About',submit:'Write a column'};
 function barsHtml(rows,label){
   if(!rows.length)return '<p class="hint">Nothing yet.</p>';
   const max=Math.max(...rows.map(r=>r[1]));
@@ -821,7 +822,7 @@ async function loadStatsInner(){
   $('st-issues').innerHTML=barsHtml(countBy(data,x=>x.event==='read'||x.event==='pdf'?x.path:null).slice(0,8),k=>'Issue #'+k);
   $('st-pages').innerHTML=barsHtml(countBy(data,x=>x.event==='view'?x.path:null),k=>PAGE_NAMES[k]||k);
   const firsts=[...new Map(data.slice().reverse().map(x=>[x.vid,x])).values()];
-  const REF_NAMES={'':'Typed the address or a bookmark',qr:'QR code in the paper',email:'The weekly email'};
+  const REF_NAMES={'':'Typed the address or a bookmark',qr:'QR code in the paper',email:'The weekly email',w:'WhatsApp',g:'Google',s:'Other search',m:'Email app',o:'Another website'};
   $('st-refs').innerHTML=barsHtml(countBy(firsts,x=>x.ref||'').slice(0,8),k=>REF_NAMES[k]||k);
   $('st-dev').innerHTML=barsHtml(countBy(firsts,x=>x.mobile?'Phone':'Computer'));
 }
