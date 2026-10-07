@@ -250,6 +250,29 @@ footer .applink{margin-left:16px;margin-bottom:46px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (max-width:700px){.subbox{grid-template-columns:1fr}.subrow{flex-direction:column}.subgrid{grid-template-columns:1fr}}
 
+/* columns archive */
+.coltabs{display:flex;gap:8px;margin:16px 0 18px}
+.coltabs button{font:700 14px var(--body);background:none;color:var(--plum);border:1.5px solid var(--plum);padding:7px 16px;cursor:pointer}
+.coltabs button.on{background:var(--plum);color:#fff}
+.colgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.coltile{display:block;text-decoration:none;color:var(--ink);background:var(--card);border:2px solid var(--teal);transition:box-shadow .15s}
+.coltile b{display:block;background:var(--teal);color:#fff;font:400 19px/1.15 var(--display);letter-spacing:.04em;text-transform:uppercase;padding:9px 14px}
+.coltile span{display:block;padding:10px 14px 0;font-size:14px;color:var(--muted)}
+.coltile em{display:block;padding:2px 14px 12px;font:800 15px var(--body);color:var(--plum);font-style:normal}
+.coltile:nth-child(4n+2){border-color:var(--blue)} .coltile:nth-child(4n+2) b{background:var(--blue)}
+.coltile:nth-child(4n+3){border-color:var(--violet)} .coltile:nth-child(4n+3) b{background:var(--violet)}
+.coltile:nth-child(4n+4){border-color:var(--orange)} .coltile:nth-child(4n+4) b{background:var(--orange)}
+.coltile:hover,.coltile:focus-visible{box-shadow:0 8px 20px rgba(60,40,10,.22);outline:none}
+.backlink{font-weight:700;color:var(--red-dk)}
+.colfeed{columns:3 300px;column-gap:22px;margin-top:20px}
+.colitem{break-inside:avoid;margin:0 0 24px;display:block}
+.colitem a.pic{display:block;background:var(--card);box-shadow:0 1px 3px rgba(60,40,10,.3),0 6px 14px rgba(60,40,10,.16)}
+.colitem img{display:block;width:100%;height:auto}
+.colitem figcaption{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding-top:8px;font-size:14px}
+.colitem figcaption b{font:400 18px var(--display);color:var(--plum)}
+.colitem figcaption a{font-weight:700;color:var(--red-dk);white-space:nowrap}
+.colitem .who{display:block;font-size:13px;color:var(--muted)}
+
 /* about + advertise */
 .prose{max-width:66ch}
 .about{display:grid;grid-template-columns:1.3fr 1fr;gap:36px;margin-top:18px;align-items:start}
@@ -422,7 +445,7 @@ footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
 <header class="head"><div class="wrap">
   <a class="logo" href="#home"><img src="img/cc-logo.png" alt="Community Corner" width="688" height="286"></a>
   <nav class="menu" aria-label="Main">
-    <a href="#home" data-v="home">Home</a><a href="#past" data-v="past">Past Issues</a><a href="#fun" data-v="fun">Fun Stuff</a><a href="#sponsors" data-v="sponsors">Sponsors</a><a href="#about" data-v="about">About</a><a href="#contact" data-v="contact">Contact</a><a href="#subscribe" class="subnav" data-v="subscribe">Subscribe</a>
+    <a href="#home" data-v="home">Home</a><a href="#past" data-v="past">Past Issues</a><a href="#columns" data-v="columns">Columns</a><a href="#fun" data-v="fun">Fun Stuff</a><a href="#sponsors" data-v="sponsors">Sponsors</a><a href="#about" data-v="about">About</a><a href="#contact" data-v="contact">Contact</a><a href="#subscribe" class="subnav" data-v="subscribe">Subscribe</a>
   </nav>
 </div></header>
 <a class="subbar" id="subbar" href="#subscribe" hidden><span>Get the Community Corner in your inbox every week</span><b>Subscribe</b></a>
@@ -499,6 +522,23 @@ footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
     <p class="meta">These businesses make the Community Corner possible. Please support them!</p>
     <div class="ads" id="ads"></div>
     <p class="print" id="print"></p>
+  </section>
+
+  <section class="view" id="v-columns" hidden>
+    <span class="eyebrow plum">Archive</span>
+    <h2 class="sec-h">Columns</h2>
+    <p class="meta">Every column the paper has run. Pick one to see it from every issue.</p>
+    <div class="coltabs" role="tablist"><button type="button" class="on" data-ct="col">By column</button><button type="button" data-ct="who">By writer</button></div>
+    <div class="colgrid" id="col-list"></div>
+    <p class="meta" id="col-msg"></p>
+  </section>
+
+  <section class="view" id="v-col" hidden>
+    <p style="margin:0 0 6px"><a href="#columns" class="backlink">← All columns</a></p>
+    <h2 class="sec-h" id="cd-title"></h2>
+    <p class="meta" id="cd-meta"></p>
+    <div class="colfeed" id="cd-feed"></div>
+    <p style="text-align:center"><button type="button" class="btn" id="cd-more" hidden>Show more</button></p>
   </section>
 
   <section class="view" id="v-about" hidden>
@@ -701,12 +741,14 @@ function renderPast(){
 }
 function route(){
   const h=location.hash.slice(1)||'home',n=+h,i=issues.find(x=>x.num===n);
-  const v=i?'issue':(['home','past','fun','sponsors','contact','subscribe','about','advertise','submit'].includes(h)?h:'home');
-  ['home','past','issue','fun','sponsors','contact','subscribe','about','advertise','submit'].forEach(x=>$('v-'+x).hidden=x!==v);
+  const colHash=/^(c|w)-[a-z0-9-]+$/.test(h);
+  const v=i?'issue':colHash?'col':(['home','past','fun','sponsors','contact','subscribe','about','advertise','submit','columns'].includes(h)?h:'home');
+  ['home','past','issue','fun','sponsors','contact','subscribe','about','advertise','submit','columns','col'].forEach(x=>$('v-'+x).hidden=x!==v);
+  if(v==='columns')showColumns();if(v==='col')showColumn(h);
   $('subpromo').hidden=v==='subscribe';$('subbar').hidden=v==='subscribe'||v==='home';
-  i?track('read',String(i.num)):track('view',v);
+  i?track('read',String(i.num)):track('view',v==='col'?'columns':v);
   if(!i&&$('pager').classList.contains('full'))setFull(false);
-  document.querySelectorAll('.menu a').forEach(a=>a.classList.toggle('on',a.dataset.v===(v==='issue'?'past':v)));
+  document.querySelectorAll('.menu a').forEach(a=>a.classList.toggle('on',a.dataset.v===(v==='issue'?'past':v==='col'?'columns':v)));
   if(i){
     $('r-title').textContent=`Issue #${i.num}${i.title?': '+i.title:''}`;
     $('r-dl').innerHTML=dl(i);$('r-share').innerHTML=shareBtn(i);$('r-meta').textContent=fmt(i.date)+(i.hebrew?' · '+i.hebrew:'');
@@ -716,6 +758,56 @@ function route(){
 }
 $('q').oninput=renderPast;
 addEventListener('hashchange',route);
+/* ---------- columns archive: every column from every issue ---------- */
+let COLS=null,COLTAB='col',CD={list:[],shown:0};
+const slugify=t=>String(t).toLowerCase().replace(/['’]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+function loadColumns(){
+  if(COLS)return Promise.resolve(COLS);
+  return fetch('columns.json').then(r=>r.json()).then(d=>{
+    // entries from the files, plus any that newer issues carry in the database
+    const ent=d.entries.map(e=>({num:e[0],col:d.columns[e[1]],slug:d.slugs[e[1]],by:e[2],ar:e[3],src:`columns/${e[0]}/${d.slugs[e[1]]}.jpg`}));
+    const have=new Set(ent.map(e=>e.num+'/'+e.slug));
+    issues.forEach(i=>(i.columns||[]).forEach(c=>{const sl=slugify(c.name);if(!have.has(i.num+'/'+sl))ent.push({num:i.num,col:c.name,slug:sl,by:c.by||'',ar:c.ar||1,src:c.img})}));
+    ent.sort((a,b)=>b.num-a.num);COLS=ent;return ent}).catch(()=>{COLS=[];return COLS});
+}
+function showColumns(){
+  loadColumns().then(ent=>{
+    const h=t=>String(t).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+    if(!ent.length){$('col-list').innerHTML='';$('col-msg').textContent='The column archive could not load. Refresh to try again.';return}
+    $('col-msg').textContent='';
+    document.querySelectorAll('.coltabs button').forEach(b=>b.classList.toggle('on',b.dataset.ct===COLTAB));
+    const groups=new Map();
+    ent.forEach(e=>{const key=COLTAB==='col'?e.slug:slugify(e.by);if(!key)return;
+      if(!groups.has(key))groups.set(key,{name:COLTAB==='col'?e.col:e.by,n:0,other:new Map()});
+      const g=groups.get(key);g.n++;const o=COLTAB==='col'?e.by:e.col;if(o)g.other.set(o,(g.other.get(o)||0)+1)});
+    $('col-list').innerHTML=[...groups].sort((a,b)=>b[1].n-a[1].n).map(([key,g])=>{
+      const top=[...g.other].sort((a,b)=>b[1]-a[1]).slice(0,COLTAB==='col'?1:3).map(x=>x[0]).join(', ');
+      return `<a class="coltile" href="#${COLTAB==='col'?'c':'w'}-${key}"><b>${h(g.name)}</b><span>${COLTAB==='col'?(top?'By '+h(top):'&nbsp;'):h(top)}</span><em>${g.n} ${g.n===1?'issue':'issues'}</em></a>`}).join('');
+  });
+}
+document.querySelectorAll('.coltabs button').forEach(b=>b.onclick=()=>{COLTAB=b.dataset.ct;showColumns()});
+function drawColumnItems(){
+  const h=t=>String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+  const next=CD.list.slice(CD.shown,CD.shown+12);CD.shown+=next.length;
+  $('cd-feed').insertAdjacentHTML('beforeend',next.map(e=>{const i=issues.find(x=>x.num===e.num);
+    return `<figure class="colitem"><a class="pic" href="#${e.num}" aria-label="Open issue ${e.num}"><img loading="lazy" src="${h(e.src)}" alt="${h(e.col)}, issue ${e.num}" style="aspect-ratio:${e.ar}"></a>
+      <figcaption><span><b>#${e.num}</b>${i&&i.date?' · '+fmt(i.date):''}${CD.byWriter?`<span class="who">${h(e.col)}</span>`:(e.by&&e.by!==CD.mainBy?`<span class="who">By ${h(e.by)}</span>`:'')}</span><a href="#${e.num}">Open issue</a></figcaption></figure>`}).join(''));
+  $('cd-more').hidden=CD.shown>=CD.list.length;
+}
+function showColumn(hash){
+  loadColumns().then(ent=>{
+    const byWriter=hash[0]==='w',key=hash.slice(2);
+    const list=ent.filter(e=>(byWriter?slugify(e.by):e.slug)===key);
+    if(!list.length){location.hash='columns';return}
+    const count=m=>[...m].sort((a,b)=>b[1]-a[1]);
+    const bys=new Map(),cols=new Map();list.forEach(e=>{if(e.by)bys.set(e.by,(bys.get(e.by)||0)+1);cols.set(e.col,(cols.get(e.col)||0)+1)});
+    const mainBy=count(bys)[0]?count(bys)[0][0]:'';
+    $('cd-title').textContent=byWriter?mainBy:list[0].col;
+    $('cd-meta').textContent=(byWriter?count(cols).map(x=>x[0]).join(', '):(mainBy?'By '+mainBy:''))+` · ${list.length} ${list.length===1?'issue':'issues'}, newest first`;
+    CD={list,shown:0,byWriter,mainBy};$('cd-feed').innerHTML='';drawColumnItems();
+  });
+}
+$('cd-more').onclick=drawColumnItems;
 /* ---------- save this week's pictures on the device so the issue opens fast ---------- */
 const SW_READY=('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='127.0.0.1'||location.hostname==='localhost'))
   ?navigator.serviceWorker.register('sw.js').then(()=>navigator.serviceWorker.ready).catch(()=>null):Promise.resolve(null);
