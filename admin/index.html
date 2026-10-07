@@ -773,7 +773,10 @@ const countBy=(arr,f)=>{const m=new Map();arr.forEach(x=>{const k=f(x);if(k!==nu
 async function loadStats(){
   show('stats');say('st-msg','Loading…');
   const days=+$('st-range').value,since=new Date(Date.now()-days*864e5);
-  const {data,error}=await sb.from('visits').select('at,event,path,ref,vid,mobile').gte('at',since.toISOString()).order('at',{ascending:false}).limit(50000);
+  // read through a plain-named helper (ad blockers and filters block addresses containing "visits")
+  let {data,error}=await sb.rpc('site_numbers',{since:since.toISOString()});
+  if(error&&/site_numbers|schema cache|404/i.test(error.message||''))({data,error}=await sb.from('visits').select('at,event,path,ref,vid,mobile').gte('at',since.toISOString()).order('at',{ascending:false}).limit(50000));
+  if(error&&/Failed to fetch/i.test(error.message||'')){say('st-msg','Your browser or web filter blocked this page from loading the numbers. Run analytics-names.sql in Supabase, or turn off the ad blocker for this site.','err');return}
   if(error){say('st-msg',/does not exist/.test(error.message)?'Analytics is not set up yet. Run analytics.sql in Supabase.':error.message,'err');return}
   say('st-msg',data.length?'':'No visits recorded yet. Numbers show up as people use the site.');
   const uniq=a=>new Set(a.map(x=>x.vid)).size;
