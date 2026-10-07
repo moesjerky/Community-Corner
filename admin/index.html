@@ -780,11 +780,18 @@ async function loadStats(){
     // self-test: figure out what exactly is being stopped, and show it
     const t=[];
     const probe=async(label,fn)=>{const t0=Date.now();try{const r=await fn();t.push(`${label}: ${r.error?'FAILED ('+(r.error.message||'').slice(0,60)+')':'ok'+(r.data&&r.data.length!==undefined?' ('+r.data.length+' rows)':'')} ${Date.now()-t0}ms`)}catch(e){t.push(`${label}: CRASHED (${String(e.message).slice(0,60)}) ${Date.now()-t0}ms`)}};
-    await probe('A empty request',()=>sb.rpc('site_numbers',{since:new Date(Date.now()+864e5).toISOString()}));
-    await probe('B last hour',()=>sb.rpc('site_numbers',{since:new Date(Date.now()-36e5).toISOString()}));
-    await probe('C last day',()=>sb.rpc('site_numbers',{since:new Date(Date.now()-864e5).toISOString()}));
-    await probe('D full range',()=>sb.rpc('site_numbers',{since:since.toISOString()}));
-    await probe('E other table',()=>sb.from('settings').select('key'));
+    const day=new Date(Date.now()-864e5).toISOString();
+    await probe('A empty',()=>sb.rpc('site_numbers',{since:new Date(Date.now()+864e5).toISOString()}));
+    const rb=await sb.rpc('site_numbers',{since:new Date(Date.now()-36e5).toISOString()});
+    t.push('B last hour: '+(rb.error?'FAILED':'ok ('+rb.data.length+' rows)')+', clean version installed: '+(rb.data&&rb.data[0]?(String(rb.data[0].vid).length===32?'YES':'NO'):'unknown'));
+    // which column of the last day is being stopped?
+    for(const col of ['at','event','path','ref','vid','mobile'])
+      await probe('col '+col,()=>sb.from('visits').select(col).gte('at',day).limit(5000));
+    // how far back can we go before it breaks?
+    let lo=1,hi=24,okRows=rb.data?rb.data.length:0;
+    for(let k=0;k<6;k++){const mid=(lo+hi)/2,r=await sb.rpc('site_numbers',{since:new Date(Date.now()-mid*36e5).toISOString()}).catch(()=>({error:1}));
+      if(r.error)hi=mid;else{lo=mid;okRows=r.data.length}}
+    t.push(`works back to ${lo.toFixed(1)}h ago (${okRows} rows), breaks by ${hi.toFixed(1)}h ago, around ${new Date(Date.now()-hi*36e5).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}`);
     say('st-msg','Analytics could not load. Self-test results (send these to Claude): '+t.join(' | '),'err');return}
   if(error){say('st-msg',/does not exist/.test(error.message)?'Analytics is not set up yet. Run analytics.sql in Supabase.':error.message,'err');return}
   say('st-msg',data.length?'':'No visits recorded yet. Numbers show up as people use the site.');
