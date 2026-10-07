@@ -216,6 +216,11 @@ footer .applink{margin-left:16px;margin-bottom:46px}
 .lb figcaption{color:#fff;text-align:center;margin-top:12px}
 .lb figcaption b{display:block;font:400 24px var(--display);color:var(--gold)}
 .lb figcaption small{opacity:.7}
+.lb .lbgo{display:inline-block;margin-left:14px;color:var(--gold);font-weight:700;text-decoration:underline}
+.lb.tall{align-items:flex-start;overflow-y:auto}
+.lb.tall img{height:auto;width:min(760px,100%)}
+.lb.tall .arr{position:sticky;top:45vh}
+.colitem .pic{cursor:zoom-in;border:0;padding:0;width:100%}
 .lb .arr,.lb .x{background:var(--gold);color:var(--ink);border:0;font:400 28px var(--display);width:52px;height:52px;border-radius:50%;cursor:pointer;flex:none}
 .lb .arr:hover,.lb .x:hover,.lb .arr:focus-visible,.lb .x:focus-visible{background:#fff;outline:none}
 .lb .x{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:16px;width:44px;height:44px;font-size:22px}
@@ -266,7 +271,7 @@ footer .applink{margin-left:16px;margin-bottom:46px}
 .backlink{font-weight:700;color:var(--red-dk)}
 .colfeed{columns:3 300px;column-gap:22px;margin-top:20px}
 .colitem{break-inside:avoid;margin:0 0 24px;display:block}
-.colitem a.pic{display:block;background:var(--card);box-shadow:0 1px 3px rgba(60,40,10,.3),0 6px 14px rgba(60,40,10,.16)}
+.colitem .pic{display:block;background:var(--card);box-shadow:0 1px 3px rgba(60,40,10,.3),0 6px 14px rgba(60,40,10,.16)}
 .colitem img{display:block;width:100%;height:auto}
 .colitem figcaption{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding-top:8px;font-size:14px}
 .colitem figcaption b{font:400 18px var(--display);color:var(--plum)}
@@ -665,7 +670,7 @@ footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Sponsor ad">
   <button class="x" id="lb-x" aria-label="Close">✕</button>
   <button class="arr" id="lb-prev" aria-label="Previous sponsor">‹</button>
-  <figure><img id="lb-img" alt=""><figcaption><b id="lb-name"></b><span id="lb-info"></span><br><small id="lb-count"></small></figcaption></figure>
+  <figure><img id="lb-img" alt=""><figcaption><b id="lb-name"></b><span id="lb-info"></span><br><small id="lb-count"></small><a id="lb-go" class="lbgo" hidden>Open the whole issue</a></figcaption></figure>
   <button class="arr" id="lb-next" aria-label="Next sponsor">›</button>
 </div>
 <footer><span class="wrap" data-t="footer" style="display:block;margin:0 auto;padding-right:110px">© 2026 The Community Corner is an imprint of The Community Corner. All rights reserved.</span><button type="button" class="applink" id="applink" hidden><img src="img/icon-192.png" alt="">Add to your home screen</button>
@@ -792,8 +797,12 @@ function drawColumnItems(){
   const h=t=>String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
   const next=CD.list.slice(CD.shown,CD.shown+12);CD.shown+=next.length;
   $('cd-feed').insertAdjacentHTML('beforeend',next.map(e=>{const i=issues.find(x=>x.num===e.num);
-    return `<figure class="colitem"><a class="pic" href="#${e.num}" aria-label="Open issue ${e.num}"><img loading="lazy" src="${h(e.src)}" alt="${h(e.col)}, issue ${e.num}" style="aspect-ratio:${e.ar}"></a>
+    return `<figure class="colitem"><button type="button" class="pic" data-ci="${CD.list.indexOf(e)}" aria-label="Make it bigger"><img loading="lazy" src="${h(e.src)}" alt="${h(e.col)}, issue ${e.num}" style="aspect-ratio:${e.ar}"></button>
       <figcaption><span><b>#${e.num}</b>${i&&i.date?' · '+fmt(i.date):''}${CD.byWriter?`<span class="who">${h(e.col)}</span>`:(e.by&&e.by!==CD.mainBy?`<span class="who">By ${h(e.by)}</span>`:'')}</span><a href="#${e.num}">Open issue</a></figcaption></figure>`}).join(''));
+  // click a column: it opens big, with arrows to flip through the rest
+  $('cd-feed').querySelectorAll('[data-ci]').forEach(b=>b.onclick=()=>{
+    const list=CD.list.map(e=>{const i=issues.find(x=>x.num===e.num);return {src:e.src,name:e.col,info:(e.by?'By '+e.by+' · ':'')+'Issue #'+e.num+(i&&i.date?' · '+fmt(i.date):''),num:e.num}});
+    $('lb').classList.add('tall');openAd(+b.dataset.ci,list)});
   $('cd-more').hidden=CD.shown>=CD.list.length;
 }
 function showColumn(hash){
@@ -1104,11 +1113,11 @@ loadIssues().then(d=>{
   renderFun(issues.find(i=>i.fun)||issues[0]);renderSponsors(issues.find(i=>i.sponsors)||issues[0]);route();
 });
 
-let ADS=[],adAt=0,lastFocus=null;
-function showAd(){const a=ADS[adAt];$('lb-img').src=a.src;$('lb-img').alt=a.name;$('lb-name').textContent=a.name;$('lb-info').textContent=a.info||'';$('lb-count').textContent=`${adAt+1} of ${ADS.length}`}
-function openAd(k){adAt=k;lastFocus=document.activeElement;showAd();$('lb').hidden=false;document.body.style.overflow='hidden';$('lb-next').focus()}
-function closeAd(){$('lb').hidden=true;document.body.style.overflow='';lastFocus&&lastFocus.focus()}
-function stepAd(d){adAt=(adAt+d+ADS.length)%ADS.length;showAd()}
+let ADS=[],LB=[],adAt=0,lastFocus=null;
+function showAd(){const a=LB[adAt];$('lb-img').src=a.src;$('lb-img').alt=a.name;$('lb-name').textContent=a.name;$('lb-info').textContent=a.info||'';$('lb-count').textContent=`${adAt+1} of ${LB.length}`;$('lb-go').hidden=!a.num;if(a.num)$('lb-go').href='#'+a.num}
+function openAd(k,list){LB=list||ADS;adAt=k;lastFocus=document.activeElement;showAd();$('lb').hidden=false;document.body.style.overflow='hidden';$('lb-next').focus()}
+function closeAd(){$('lb').hidden=true;$('lb').classList.remove('tall');document.body.style.overflow='';lastFocus&&lastFocus.focus()}
+function stepAd(d){adAt=(adAt+d+LB.length)%LB.length;showAd()}
 function renderSponsors(L){
   $('s-from').textContent=`Issue #${L.num} sponsors`;
   (typeof L.sponsors==='object'?Promise.resolve(L.sponsors):fetch(F(L,'sponsors.json')).then(r=>r.json())).then(d=>{
