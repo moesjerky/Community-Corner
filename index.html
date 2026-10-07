@@ -686,6 +686,7 @@ function renderHome(){
   }
   const rec=issues.slice(1,5),rg=$('recent-grid');rg.innerHTML='';rec.forEach(i=>rg.append(card(i,false)));
   $('recent').hidden=!rec.length;$('recent-all').textContent=`See all ${issues.length} issues`;
+  saveIssueForLater(L);
 }
 let YEAR='all';
 function renderPast(){
@@ -715,6 +716,15 @@ function route(){
 }
 $('q').oninput=renderPast;
 addEventListener('hashchange',route);
+/* ---------- save this week's pictures on the device so the issue opens fast ---------- */
+const SW_READY=('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='127.0.0.1'||location.hostname==='localhost'))
+  ?navigator.serviceWorker.register('sw.js').then(()=>navigator.serviceWorker.ready).catch(()=>null):Promise.resolve(null);
+function saveIssueForLater(i){
+  if(!i||(navigator.connection&&navigator.connection.saveData))return;   // respect "data saver" phones
+  const urls=[F(i,'cover.jpg'),...Array.from({length:i.pages},(_,k)=>F(i,'p'+(k+1)+'.jpg'))].map(u=>new URL(u,location.href).href);
+  const go=()=>SW_READY.then(reg=>{if(reg&&reg.active)reg.active.postMessage({type:'save-issue',urls})});
+  ('requestIdleCallback' in window)?requestIdleCallback(go,{timeout:4000}):setTimeout(go,2500);
+}
 /* ---------- add to home screen helper ---------- */
 {
   const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
