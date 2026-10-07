@@ -17,6 +17,11 @@
 <meta name="theme-color" content="#C3262E">
 <link rel="icon" type="image/png" href="img/favicon.png">
 <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Comm. Corner">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Courier+Prime:wght@700&family=Frank+Ruhl+Libre:wght@500&display=swap">
 <style>
 :root{
@@ -136,6 +141,20 @@ section.view{padding-block:40px 20px}
 .share{background:#1F7A4D}
 .share:hover,.share:focus-visible{background:#16603C} .issue-wrap .dl{margin-top:8px;padding:7px 12px;font-size:13px}
 .new{display:inline-block;background:var(--red);color:#fff;font:700 11px var(--body);padding:2px 6px;margin-left:6px;vertical-align:middle;letter-spacing:.06em}
+
+/* add to home screen */
+.applink{display:inline-flex;align-items:center;gap:10px;margin:14px 0 0;background:var(--plum);color:#fff;border:0;padding:12px 18px;font:700 17px var(--body);cursor:pointer}
+.applink:hover,.applink:focus-visible{background:var(--red);outline:none}
+.applink img{width:30px;height:30px;border-radius:7px;display:block}
+footer .applink{margin-left:16px;margin-bottom:46px}
+.apphelp{position:fixed;inset:0;z-index:70;background:rgba(36,25,46,.6);display:flex;align-items:flex-end;justify-content:center;padding:16px}
+.apphelp-in{background:var(--card);max-width:460px;width:100%;padding:26px 24px;font-size:18px;border-top:6px solid var(--red);margin-bottom:env(safe-area-inset-bottom,0px)}
+.apphelp-in img{width:84px;height:84px;border-radius:18px;display:block;margin-bottom:12px}
+.apphelp-in h3{font-size:27px;color:var(--plum);margin-bottom:8px}
+.apphelp-in ol{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:10px}
+.apphelp-btns{display:flex;gap:10px;align-items:center;margin-top:14px}
+.apphelp-btns .btn{margin:0}
+@media (min-width:700px){.apphelp{align-items:center}}
 
 /* printing */
 .row-between{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
@@ -593,6 +612,14 @@ footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
   </div>
 
 </main>
+<div class="apphelp" id="apphelp" hidden role="dialog" aria-modal="true" aria-labelledby="apphelp-h">
+  <div class="apphelp-in">
+    <img src="img/icon-192.png" alt="" width="64" height="64">
+    <h3 id="apphelp-h">Put the Community Corner on your home screen</h3>
+    <div id="apphelp-steps"></div>
+    <div class="apphelp-btns"><button type="button" class="btn" id="apphelp-go" hidden>Add it now</button><button type="button" class="btn" id="apphelp-x" style="background:none;color:var(--ink);text-decoration:underline">Close</button></div>
+  </div>
+</div>
 <div id="printarea" aria-hidden="true"></div>
 <div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Sponsor ad">
   <button class="x" id="lb-x" aria-label="Close">✕</button>
@@ -600,7 +627,8 @@ footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
   <figure><img id="lb-img" alt=""><figcaption><b id="lb-name"></b><span id="lb-info"></span><br><small id="lb-count"></small></figcaption></figure>
   <button class="arr" id="lb-next" aria-label="Next sponsor">›</button>
 </div>
-<footer><span class="wrap" data-t="footer" style="display:block;margin:0 auto;padding-right:110px">© 2026 The Community Corner is an imprint of The Community Corner. All rights reserved.</span><div class="credit-mark" title="Admin"><a href="admin/" aria-label="Admin"><img src="img/credit-mark.png" alt="Admin"></a></div></footer>
+<footer><span class="wrap" data-t="footer" style="display:block;margin:0 auto;padding-right:110px">© 2026 The Community Corner is an imprint of The Community Corner. All rights reserved.</span><button type="button" class="applink" id="applink" hidden><img src="img/icon-192.png" alt="">Add to your home screen</button>
+<div class="credit-mark" title="Admin"><a href="admin/" aria-label="Admin"><img src="img/credit-mark.png" alt="Admin"></a></div></footer>
 
 <script src="config.js"></script>
 <script>
@@ -686,6 +714,23 @@ function route(){
 }
 $('q').oninput=renderPast;
 addEventListener('hashchange',route);
+/* ---------- add to home screen helper ---------- */
+{
+  const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  const ua=navigator.userAgent,isIOS=/iPhone|iPad|iPod/i.test(ua),isAndroid=/Android/i.test(ua);
+  let deferred=null;
+  addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;$('applink').hidden=false});
+  if(!standalone&&(isIOS||isAndroid))$('applink').hidden=false;
+  const steps=()=>isIOS
+    ?'<ol><li>Tap the <b>Share</b> button (the square with an arrow) at the bottom of Safari.</li><li>Scroll down and tap <b>Add to Home Screen</b>.</li><li>Tap <b>Add</b>.</li></ol>'
+    :(deferred?'<p style="margin:0">Tap <b>Add it now</b> and confirm. The icon will show up with your other apps.</p>'
+      :'<ol><li>Tap the <b>menu</b> (three dots) at the top of your browser.</li><li>Tap <b>Add to Home screen</b> or <b>Install app</b>.</li><li>Tap <b>Add</b>.</li></ol>');
+  $('applink').onclick=()=>{$('apphelp-steps').innerHTML=steps();$('apphelp-go').hidden=!deferred;$('apphelp').hidden=false;$('apphelp-x').focus()};
+  $('apphelp-x').onclick=()=>$('apphelp').hidden=true;
+  $('apphelp').onclick=e=>{if(e.target.id==='apphelp')$('apphelp').hidden=true};
+  $('apphelp-go').onclick=async()=>{if(!deferred)return;deferred.prompt();await deferred.userChoice.catch(()=>{});deferred=null;$('apphelp').hidden=true;$('applink').hidden=true};
+  addEventListener('appinstalled',()=>{$('applink').hidden=true;$('apphelp').hidden=true});
+}
 /* ---------- reader submissions ---------- */
 let UPHOTO=null;
 function shrinkPhoto(file){ // resize big phone photos so uploads are quick
