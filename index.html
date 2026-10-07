@@ -598,7 +598,7 @@ footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
     </form>
   </section>
 
-  <div class="subpromo" id="subpromo">
+  <div class="subpromo" id="subpromo" hidden>
     <div><h3 data-t="subTitle">Get the paper in your inbox</h3>
     <p data-t="subText">Every Friday we'll email you the new issue. Free, and you can unsubscribe anytime.</p></div>
     <a class="btn" href="#subscribe">Subscribe</a>
@@ -701,7 +701,7 @@ function route(){
   const h=location.hash.slice(1)||'home',n=+h,i=issues.find(x=>x.num===n);
   const v=i?'issue':(['home','past','fun','sponsors','contact','subscribe','about','advertise','submit'].includes(h)?h:'home');
   ['home','past','issue','fun','sponsors','contact','subscribe','about','advertise','submit'].forEach(x=>$('v-'+x).hidden=x!==v);
-  $('subpromo').hidden=v==='subscribe';$('subbar').hidden=v==='subscribe';
+  $('subpromo').hidden=v==='subscribe'||v==='home';$('subbar').hidden=v==='subscribe';
   i?track('read',String(i.num)):track('view',v);
   if(!i&&$('pager').classList.contains('full'))setFull(false);
   document.querySelectorAll('.menu a').forEach(a=>a.classList.toggle('on',a.dataset.v===(v==='issue'?'past':v)));
