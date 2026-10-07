@@ -776,7 +776,16 @@ async function loadStats(){
   // read through a plain-named helper (ad blockers and filters block addresses containing "visits")
   let {data,error}=await sb.rpc('site_numbers',{since:since.toISOString()});
   if(error&&/site_numbers|schema cache|404/i.test(error.message||''))({data,error}=await sb.from('visits').select('at,event,path,ref,vid,mobile').gte('at',since.toISOString()).order('at',{ascending:false}).limit(50000));
-  if(error&&/Failed to fetch/i.test(error.message||'')){say('st-msg','Your browser or web filter blocked this page from loading the numbers. Run analytics-names.sql in Supabase, or turn off the ad blocker for this site.','err');return}
+  if(error&&/Failed to fetch/i.test(error.message||'')){
+    // self-test: figure out what exactly is being stopped, and show it
+    const t=[];
+    const probe=async(label,fn)=>{const t0=Date.now();try{const r=await fn();t.push(`${label}: ${r.error?'FAILED ('+(r.error.message||'').slice(0,60)+')':'ok'+(r.data&&r.data.length!==undefined?' ('+r.data.length+' rows)':'')} ${Date.now()-t0}ms`)}catch(e){t.push(`${label}: CRASHED (${String(e.message).slice(0,60)}) ${Date.now()-t0}ms`)}};
+    await probe('A empty request',()=>sb.rpc('site_numbers',{since:new Date(Date.now()+864e5).toISOString()}));
+    await probe('B last hour',()=>sb.rpc('site_numbers',{since:new Date(Date.now()-36e5).toISOString()}));
+    await probe('C last day',()=>sb.rpc('site_numbers',{since:new Date(Date.now()-864e5).toISOString()}));
+    await probe('D full range',()=>sb.rpc('site_numbers',{since:since.toISOString()}));
+    await probe('E other table',()=>sb.from('settings').select('key'));
+    say('st-msg','Analytics could not load. Self-test results (send these to Claude): '+t.join(' | '),'err');return}
   if(error){say('st-msg',/does not exist/.test(error.message)?'Analytics is not set up yet. Run analytics.sql in Supabase.':error.message,'err');return}
   say('st-msg',data.length?'':'No visits recorded yet. Numbers show up as people use the site.');
   const uniq=a=>new Set(a.map(x=>x.vid)).size;
