@@ -425,7 +425,7 @@ footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
     <a href="#home" data-v="home">Home</a><a href="#past" data-v="past">Past Issues</a><a href="#fun" data-v="fun">Fun Stuff</a><a href="#sponsors" data-v="sponsors">Sponsors</a><a href="#about" data-v="about">About</a><a href="#contact" data-v="contact">Contact</a><a href="#subscribe" class="subnav" data-v="subscribe">Subscribe</a>
   </nav>
 </div></header>
-<a class="subbar" id="subbar" href="#subscribe"><span>Get the Community Corner in your inbox every week</span><b>Subscribe</b></a>
+<a class="subbar" id="subbar" href="#subscribe" hidden><span>Get the Community Corner in your inbox every week</span><b>Subscribe</b></a>
 
 <div class="hero">
   <svg class="ribbon" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
@@ -598,7 +598,7 @@ footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
     </form>
   </section>
 
-  <div class="subpromo" id="subpromo" hidden>
+  <div class="subpromo" id="subpromo">
     <div><h3 data-t="subTitle">Get the paper in your inbox</h3>
     <p data-t="subText">Every Friday we'll email you the new issue. Free, and you can unsubscribe anytime.</p></div>
     <a class="btn" href="#subscribe">Subscribe</a>
@@ -701,7 +701,7 @@ function route(){
   const h=location.hash.slice(1)||'home',n=+h,i=issues.find(x=>x.num===n);
   const v=i?'issue':(['home','past','fun','sponsors','contact','subscribe','about','advertise','submit'].includes(h)?h:'home');
   ['home','past','issue','fun','sponsors','contact','subscribe','about','advertise','submit'].forEach(x=>$('v-'+x).hidden=x!==v);
-  $('subpromo').hidden=v==='subscribe'||v==='home';$('subbar').hidden=v==='subscribe';
+  $('subpromo').hidden=v==='subscribe';$('subbar').hidden=v==='subscribe'||v==='home';
   i?track('read',String(i.num)):track('view',v);
   if(!i&&$('pager').classList.contains('full'))setFull(false);
   document.querySelectorAll('.menu a').forEach(a=>a.classList.toggle('on',a.dataset.v===(v==='issue'?'past':v)));
