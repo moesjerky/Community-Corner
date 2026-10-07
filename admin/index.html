@@ -107,7 +107,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 </head>
 <body>
 <header class="head"><div class="wrap">
-  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v15</small></a>
+  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v16</small></a>
   <nav id="nav" hidden>
     <button data-go="list" class="on">Issues</button>
     <button data-go="inbox">Inbox <span id="inbox-n"></span></button>
@@ -339,6 +339,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 <script src="../config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="columns.js?v=16"></script>
 <script>
 const $=id=>document.getElementById(id);
 const CFG=window.CC_CONFIG||{};
@@ -539,7 +540,7 @@ function mastheadRed(c){
   for(let i=0;i<d.length;i+=4*7){n++;if(d[i]>150&&d[i+1]<95&&d[i+2]<95)r++}
   return n?r/n:0;
 }
-async function renderPdf(file,onPage){
+async function renderPdf(file,onPage,wantCols=true){
   const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
   const pages=[],keep=[];
   for(let n=1;n<=doc.numPages;n++){
@@ -560,17 +561,20 @@ async function renderPdf(file,onPage){
   const cc=document.createElement('canvas');cc.width=Math.round(sw*scale);cc.height=Math.round(first.height*scale);
   cc.getContext('2d').drawImage(first,land?first.width/2:0,0,sw,first.height,0,0,cc.width,cc.height);
   const cover=await toBlob(cc,.82);keep.forEach(c=>{c.width=c.height=0});
-  return {pages,cover,swapped};
+  // cut out every column (Story of the Week, Recipe of the Week, ...) for the Columns archive; never blocks an upload
+  let columns=null;
+  if(wantCols){try{onPage&&onPage(doc.numPages,doc.numPages,'Finding the columns…');columns=await findColumns(doc)}catch(e){columns=null}}
+  return {pages,cover,swapped,columns};
 }
 async function readPdf(file){
   if(!/pdf$/i.test(file.type)&&!/\.pdf$/i.test(file.name)){say('pdf-msg','That file is not a PDF.','err');return}
   PDF_FILE=file;PAGES=null;$('thumbs').innerHTML='';$('save').disabled=true;
   const m=file.name.match(/(\d+)(?!.*\d)/);if(m&&!$('e-num').disabled&&!$('e-num').value)$('e-num').value=m[1];
   try{
-    const r=await renderPdf(file,(n,t)=>say('pdf-msg',`Making page pictures… ${n} of ${t}`));
-    PAGES={pages:r.pages,cover:r.cover};
+    const r=await renderPdf(file,(n,t,x)=>say('pdf-msg',x||`Making page pictures… ${n} of ${t}`));
+    PAGES={pages:r.pages,cover:r.cover,columns:r.columns};
     [r.cover,...r.pages].forEach((b,k)=>{const t=document.createElement('img');t.src=URL.createObjectURL(b);t.alt=k?`Page ${k}`:'Cover';$('thumbs').append(t)});
-    say('pdf-msg',`Ready: ${r.pages.length} pages.${r.swapped?' (The cover was on page 2, so I put it first.)':''} The first picture is the cover. Fill in the info below and click Save.`,'ok');
+    say('pdf-msg',`Ready: ${r.pages.length} pages.${r.swapped?' (The cover was on page 2, so I put it first.)':''}${r.columns&&r.columns.length?` Found ${r.columns.length} columns for the Columns archive: ${r.columns.map(c=>c.name).join(', ')}.`:''} The first picture is the cover. Fill in the info below and click Save.`,'ok');
   }catch(err){PDF_FILE=null;say('pdf-msg',"Couldn't read that PDF. Try exporting it again.",'err')}
   finally{$('save').disabled=false}
 }
@@ -579,6 +583,22 @@ async function readPdf(file){
 async function up(path,body,type){
   const {error}=await sb.storage.from(BUCKET).upload(path,body,{upsert:true,contentType:type,cacheControl:'60'});
   if(error)throw new Error(`Upload failed (${path}): ${error.message}`);
+}
+async function upColumns(num,cols,tell){
+  const out=[];
+  for(const [k,c] of cols.entries()){
+    tell&&tell(`Uploading column ${k+1} of ${cols.length}…`);
+    const path=`${num}/col/${colSlug(c.name)}.jpg`;await up(path,c.blob,'image/jpeg');
+    out.push({name:c.name,by:c.by,ar:c.ar,img:pub(path)});
+  }
+  return out;
+}
+// saves an issue row; if the database doesn't have the "columns" field yet, saves everything else anyway
+async function saveIssueRow(row){
+  let {error}=await sb.from('issues').upsert(row);
+  if(error&&'columns' in row&&/columns/.test(error.message||'')){const {columns,...rest}=row;({error}=await sb.from('issues').upsert(rest));if(!error)return 'nocols'}
+  if(error)throw error;
+  return 'ok';
 }
 $('v-edit').onsubmit=async e=>{
   e.preventDefault();
@@ -591,13 +611,14 @@ $('v-edit').onsubmit=async e=>{
   if(!checkGrid()){say('save-msg','Fix the word search grid first.','err');return}
   $('save').disabled=true;
   try{
-    let pages=EDIT.pages||0;
+    let pages=EDIT.pages||0,newCols=null;
     if(PAGES){
       for(let k=0;k<PAGES.pages.length;k++){say('save-msg',`Uploading page ${k+1} of ${PAGES.pages.length}…`);await up(`${num}/p${k+1}.jpg`,PAGES.pages[k],'image/jpeg')}
       say('save-msg','Uploading cover and PDF…');
       await up(`${num}/cover.jpg`,PAGES.cover,'image/jpeg');
       await up(`${num}/issue.pdf`,PDF_FILE,'application/pdf');
       pages=PAGES.pages.length;
+      if(PAGES.columns&&PAGES.columns.length)newCols=await upColumns(num,PAGES.columns,t=>say('save-msg',t));
     }
     const ads=[];
     for(const a of ADS){
@@ -609,9 +630,9 @@ $('v-edit').onsubmit=async e=>{
     const pn=$('s-pname').value.trim();
     const sponsors=ads.length||pn?{ads,...(pn?{print:{name:pn,info:$('s-pinfo').value.trim()}}:{})}:null;
     const row={num,title:$('e-title').value.trim(),date:$('e-date').value,hebrew:$('e-hebrew').value.trim(),yomtov:$('e-yomtov').value.trim(),tzais:$('e-tzais').value.trim(),pages,published:$('e-pub').checked,fun:readFun(),sponsors};
+    if(newCols)row.columns=newCols;
     say('save-msg','Saving…');
-    const {error}=await sb.from('issues').upsert(row);
-    if(error)throw error;
+    await saveIssueRow(row);
     say('save-msg',row.published?'Saved! It is live on the website.':'Saved as a draft. Publish it when you are ready.','ok');
     const top=Math.max(0,...ISSUES.map(i=>i.num));
     const prev=ISSUES.find(i=>i.num===num);
@@ -740,13 +761,14 @@ $('bgo').onclick=async()=>{
   for(const [k,b] of todo.entries()){
     try{
       b.status='Making pages…';drawBulk();
-      const r=await renderPdf(b.file,(n,t)=>{b.status=`Page ${n} of ${t}…`;drawBulk()});
+      const r=await renderPdf(b.file,(n,t,x)=>{b.status=x||`Page ${n} of ${t}…`;drawBulk()});
       for(let i=0;i<r.pages.length;i++){b.status=`Uploading ${i+1} of ${r.pages.length}…`;drawBulk();await up(`${b.num}/p${i+1}.jpg`,r.pages[i],'image/jpeg')}
       b.status='Uploading PDF…';drawBulk();
       await up(`${b.num}/cover.jpg`,r.cover,'image/jpeg');
       await up(`${b.num}/issue.pdf`,b.file,'application/pdf');
-      const {error}=await sb.from('issues').upsert({num:b.num,date:b.date,pages:r.pages.length,published:true});
-      if(error)throw error;
+      const brow={num:b.num,date:b.date,pages:r.pages.length,published:true};
+      if(r.columns&&r.columns.length)brow.columns=await upColumns(b.num,r.columns,t=>{b.status=t;drawBulk()});
+      await saveIssueRow(brow);
       b.status='Done ✓';b.state='done';ok++;
     }catch(err){b.status='Failed: '+(err.message||'error');b.state='bad'}
     drawBulk();say('bmsg',`${k+1} of ${todo.length} finished…`);
@@ -944,7 +966,7 @@ $('fix-covers').onclick=async()=>{
     say('fix-msg',`Checking #${i.num} (${k+1} of ${ISSUES.length})… ${fixed.length} fixed so far`);
     try{
       const res=await fetch(pub(i.num+'/issue.pdf')+'?t='+Date.now());if(!res.ok)throw new Error('no PDF');
-      const r=await renderPdf(new File([await res.blob()],i.num+'.pdf',{type:'application/pdf'}));
+      const r=await renderPdf(new File([await res.blob()],i.num+'.pdf',{type:'application/pdf'}),null,false);
       if(!r.swapped)continue;
       for(let n=0;n<r.pages.length;n++)await up(`${i.num}/p${n+1}.jpg`,r.pages[n],'image/jpeg');
       await up(`${i.num}/cover.jpg`,r.cover,'image/jpeg');fixed.push(i.num);

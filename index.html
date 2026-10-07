@@ -763,11 +763,13 @@ let COLS=null,COLTAB='col',CD={list:[],shown:0};
 const slugify=t=>String(t).toLowerCase().replace(/['’]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 function loadColumns(){
   if(COLS)return Promise.resolve(COLS);
-  return fetch('columns.json').then(r=>r.json()).then(d=>{
-    // entries from the files, plus any that newer issues carry in the database
+  // newer issues keep their columns in the database; asked for separately so a blocked reply can never cost us the issue list
+  const fromDb=DB?fetch(`${CFG.supabaseUrl}/rest/v1/issues?select=num,columns&published=eq.true&columns=not.is.null`,{headers:{apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey}})
+    .then(r=>r.ok?r.json():[]).catch(()=>[]):Promise.resolve([]);
+  return Promise.all([fetch('columns.json').then(r=>r.json()),fromDb]).then(([d,rows])=>{
     const ent=d.entries.map(e=>({num:e[0],col:d.columns[e[1]],slug:d.slugs[e[1]],by:e[2],ar:e[3],src:`columns/${e[0]}/${d.slugs[e[1]]}.jpg`}));
     const have=new Set(ent.map(e=>e.num+'/'+e.slug));
-    issues.forEach(i=>(i.columns||[]).forEach(c=>{const sl=slugify(c.name);if(!have.has(i.num+'/'+sl))ent.push({num:i.num,col:c.name,slug:sl,by:c.by||'',ar:c.ar||1,src:c.img})}));
+    rows.forEach(i=>(i.columns||[]).forEach(c=>{if(!c||!c.name||!c.img)return;const sl=slugify(c.name);if(!have.has(i.num+'/'+sl))ent.push({num:i.num,col:c.name,slug:sl,by:c.by||'',ar:c.ar||1,src:c.img})}));
     ent.sort((a,b)=>b.num-a.num);COLS=ent;return ent}).catch(()=>{COLS=[];return COLS});
 }
 function showColumns(){
@@ -1055,7 +1057,7 @@ async function loadIssues(){
   if(!DB)return st;
   const h={apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey};
   try{
-    const rows=await fetch(`${CFG.supabaseUrl}/rest/v1/issues?select=*&published=eq.true&order=num.desc`,{headers:h}).then(r=>r.ok?r.json():[]);
+    const rows=await fetch(`${CFG.supabaseUrl}/rest/v1/issues?select=num,title,date,hebrew,yomtov,tzais,pages,published,fun,sponsors&published=eq.true&order=num.desc`,{headers:h}).then(r=>r.ok?r.json():[]);
     rows.forEach(i=>{
       i.base=`${CFG.supabaseUrl}/storage/v1/object/public/issues/${i.num}/`;
       // a few old PDFs were saved with the inside pages first; the corrected page files live with the site
