@@ -107,10 +107,11 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 </head>
 <body>
 <header class="head"><div class="wrap">
-  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v16</small></a>
+  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v17</small></a>
   <nav id="nav" hidden>
     <button data-go="list" class="on">Issues</button>
     <button data-go="inbox">Inbox <span id="inbox-n"></span></button>
+    <button data-go="spons">Sponsors</button>
     <button data-go="stats">Analytics</button>
     <button data-go="subs">Subscribers</button>
     <button data-go="settings">Settings</button>
@@ -225,7 +226,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" hidden>
       <div class="row" style="justify-content:space-between"><h3>Sponsors <span class="hint" style="font:600 13px var(--body)">· optional, only shows for the newest issue</span></h3><button type="button" class="btn alt small" id="copy-ads">Copy from last issue</button></div>
       <p class="hint">Click a picture to upload or change the ad. Use ↑ ↓ to change the order.</p>
       <div class="ads" id="ads"></div>
@@ -263,6 +264,19 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
   </section>
 
   <!-- INBOX -->
+  <section id="v-spons" class="card" hidden>
+    <h2>Sponsors</h2>
+    <p class="hint">These show on the website's Sponsors page every week until you change them. Click a picture to upload or swap the ad. Use ↑ ↓ to change the order. Nothing changes on the website until you click Save.</p>
+    <div class="ads" id="sp-ads"></div>
+    <p><button type="button" class="btn alt small" id="sp-add">+ Add sponsor</button></p>
+    <div class="grid2">
+      <label for="sp-pname">Printing sponsored by<input id="sp-pname" placeholder="e.g. Mailway"></label>
+      <label for="sp-pinfo">Their info<input id="sp-pinfo"></label>
+    </div>
+    <input type="file" id="sp-file" accept="image/*" hidden>
+    <div class="row" style="margin-top:14px"><button type="button" class="btn" id="sp-save" disabled>Save sponsors</button><span class="msg" id="sp-msg"></span></div>
+  </section>
+
   <section id="v-inbox" hidden>
     <div class="row" style="justify-content:space-between;margin-bottom:14px">
       <div><h2 style="font-size:30px">Inbox</h2><p class="hint" style="margin:0">Columns, mazel tovs and photos that readers sent in from the website.</p></div>
@@ -343,7 +357,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 <script>
 const $=id=>document.getElementById(id);
 const CFG=window.CC_CONFIG||{};
-const views=['login','reset','list','edit','settings','bulk','subs','stats','inbox'];
+const views=['login','reset','list','edit','settings','bulk','subs','stats','inbox','spons'];
 function show(v){views.forEach(x=>$('v-'+x).hidden=x!==v);document.querySelectorAll('[data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===v||(v==='edit'&&b.dataset.go==='list')));scrollTo(0,0)}
 function say(id,text,kind){const m=$(id);m.textContent=text||'';m.className='msg'+(kind?' '+kind:'')}
 const esc=t=>String(t??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
@@ -384,7 +398,7 @@ $('v-reset').onsubmit=async e=>{
   say('r-msg','Password saved.','ok');setTimeout(start,800);
 };
 $('logout').onclick=async()=>{await sb.auth.signOut();location.reload()};
-document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>({list:loadList,settings:openSettings,subs:loadSubs,stats:loadStats,inbox:loadInbox})[b.dataset.go]());
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>({list:loadList,settings:openSettings,subs:loadSubs,stats:loadStats,inbox:loadInbox,spons:loadSpons})[b.dataset.go]());
 
 /* ---------- list ---------- */
 async function loadList(){
@@ -578,6 +592,60 @@ async function readPdf(file){
   }catch(err){PDF_FILE=null;say('pdf-msg',"Couldn't read that PDF. Try exporting it again.",'err')}
   finally{$('save').disabled=false}
 }
+
+/* ---------- sponsors tab: one list that stays up every week (settings key "sponsors") ---------- */
+let SP=[],spSlot=null,SP_OK=false;
+function drawSp(){
+  $('sp-ads').innerHTML=SP.map((a,k)=>`<div class="ad">
+    ${a.img||a.file?`<img src="${esc(adSrc(a))}" alt="" data-pic="${k}" style="cursor:pointer">`:`<div class="ph" data-pic="${k}">Click to add picture</div>`}
+    <label>Business name<input data-k="${k}" data-f="name" value="${esc(a.name)}"></label>
+    <label>Phone, email, website<input data-k="${k}" data-f="info" value="${esc(a.info)}"></label>
+    <div class="tools"><button type="button" data-mv="${k}" data-d="-1" aria-label="Move up">↑</button><button type="button" data-mv="${k}" data-d="1" aria-label="Move down">↓</button><button type="button" data-rm="${k}">Remove</button></div>
+  </div>`).join('')||'<p class="hint">No sponsors yet.</p>';
+  $('sp-ads').querySelectorAll('[data-f]').forEach(i=>i.oninput=()=>SP[i.dataset.k][i.dataset.f]=i.value);
+  $('sp-ads').querySelectorAll('[data-pic]').forEach(p=>p.onclick=()=>{spSlot=+p.dataset.pic;$('sp-file').click()});
+  $('sp-ads').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{SP.splice(+b.dataset.rm,1);drawSp()});
+  $('sp-ads').querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{const k=+b.dataset.mv,j=k+ +b.dataset.d;if(j<0||j>=SP.length)return;[SP[k],SP[j]]=[SP[j],SP[k]];drawSp()});
+}
+$('sp-file').onchange=e=>{const f=e.target.files[0];if(f&&spSlot!==null){SP[spSlot].file=f;drawSp()}e.target.value=''};
+$('sp-add').onclick=()=>{SP.push({name:'',info:''});drawSp()};
+async function loadSpons(){
+  show('spons');SP_OK=false;$('sp-save').disabled=true;say('sp-msg','Loading…');
+  const r=await sb.from('settings').select('value').eq('key','sponsors').maybeSingle();
+  // a list that failed to load must never be saved back as blanks
+  if(r.error){SP=[];drawSp();say('sp-msg','Could not load the sponsors (your internet filter may be blocking it). Saving is switched off so nothing gets wiped. Try another network.','err');return}
+  let v=r.data&&r.data.value,note='';
+  if(!v){   // first time: start from the sponsors that are on the website now
+    const prev=ISSUES.find(i=>i.sponsors&&i.sponsors.ads&&i.sponsors.ads.length);
+    if(prev)v=prev.sponsors;
+    else try{
+      const st=await fetch('../issues.json').then(x=>x.json()),top=st.sort((a,b)=>b.num-a.num)[0];
+      const d=await fetch(`../issues/${top.num}/sponsors.json`).then(x=>x.json());
+      v={...d,ads:(d.ads||[]).map(a=>({...a,img:/^https?:/.test(a.img)?a.img:new URL(`../issues/${top.num}/ads/${a.img}`,/^(localhost|127\.)/.test(location.hostname)?'https://community-corner.org/admin/':location.href).href}))};
+    }catch(e){v={ads:[]}}
+    note='These are the sponsors on the website now. Click Save once to move them here.';
+  }
+  SP=(v.ads||[]).map(a=>({...a}));$('sp-pname').value=v.print?.name||'';$('sp-pinfo').value=v.print?.info||'';
+  drawSp();SP_OK=true;$('sp-save').disabled=false;say('sp-msg',note);
+}
+$('sp-save').onclick=async()=>{
+  if(!SP_OK)return;$('sp-save').disabled=true;
+  try{
+    const ads=[];
+    for(const a of SP){
+      if(!a.name&&!a.file&&!a.img)continue;
+      let img=a.img;
+      if(a.file){say('sp-msg',`Uploading: ${a.name||'sponsor'}…`);const ext=(a.file.name.split('.').pop()||'jpg').toLowerCase();const path=`sp/${Date.now()}-${Math.random().toString(36).slice(2,7)}.${ext}`;await up(path,a.file,a.file.type||'image/jpeg');img=pub(path)}
+      if(!img){say('sp-msg',`"${a.name}" needs a picture.`,'err');$('sp-save').disabled=false;return}
+      ads.push({img,name:a.name||'',info:a.info||''});
+    }
+    const pn=$('sp-pname').value.trim();
+    const {error}=await sb.from('settings').upsert({key:'sponsors',value:{ads,...(pn?{print:{name:pn,info:$('sp-pinfo').value.trim()}}:{})}});
+    if(error)throw error;
+    SP=ads.map(a=>({...a}));drawSp();say('sp-msg','Saved! The Sponsors page is updated.','ok');
+  }catch(err){say('sp-msg',(err.message||'Something went wrong')+'. Nothing is lost; try Save again.','err')}
+  finally{$('sp-save').disabled=false}
+};
 
 /* save */
 async function up(path,body,type){
