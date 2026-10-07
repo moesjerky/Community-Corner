@@ -969,9 +969,10 @@ async function loadIssues(){
       // a few old PDFs were saved with the inside pages first; the corrected page files live with the site
       const fx=st.find(x=>x.num===i.num&&x.coverFixed);if(fx){i.base=fx.base;i.pages=fx.pages}
     });
-    const sets=await fetch(`${CFG.supabaseUrl}/rest/v1/settings?key=in.(zchus,site)&select=key,value`,{headers:h}).then(r=>r.ok?r.json():[]);
-    const zz=sets.find(x=>x.key==='zchus');if(zz)renderZchus(zz.value);
-    const ss=sets.find(x=>x.key==='site');if(ss)applySite(ss.value);
+    // settings load on their own, each separately: some web filters block these replies, and that must never cost us the issue list
+    const getSetting=k=>fetch(`${CFG.supabaseUrl}/rest/v1/settings?key=eq.${k}&select=value`,{headers:h}).then(r=>r.ok?r.json():[]).then(x=>x[0]&&x[0].value).catch(()=>null);
+    getSetting('zchus').then(v=>{if(v)renderZchus(v)});
+    getSetting('site').then(v=>{if(v){applySite(v);ticker()}});
     const nums=new Set(rows.map(r=>r.num));
     return rows.concat(st.filter(i=>!nums.has(i.num)));
   }catch{return st}
@@ -988,7 +989,8 @@ function renderLists(){
 }
 function applySite(v){
   SITE=v||{};renderLists();
-  document.querySelectorAll('[data-t]').forEach(el=>{const t=SITE[el.dataset.t];if(typeof t==='string'&&t.trim())el.textContent=t});
+  document.querySelectorAll('[data-t]').forEach(el=>{if(el.id==='hero-title'&&!$('hero-kick').hidden)return; // headline already shows this week's issue
+    const t=SITE[el.dataset.t];if(typeof t==='string'&&t.trim())el.textContent=t});
   if(SITE.topics&&SITE.topics.length)$('c-topic').innerHTML=SITE.topics.map(t=>`<option>${esc(t)}</option>`).join('');
   if(SITE.bannerTitle)document.title=SITE.bannerTitle;
   const c=SITE.colors||{},root=document.documentElement.style;
