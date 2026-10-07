@@ -107,7 +107,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 </head>
 <body>
 <header class="head"><div class="wrap">
-  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v12</small></a>
+  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v13</small></a>
   <nav id="nav" hidden>
     <button data-go="list" class="on">Issues</button>
     <button data-go="inbox">Inbox <span id="inbox-n"></span></button>
@@ -771,6 +771,9 @@ function barsHtml(rows,label){
 }
 const countBy=(arr,f)=>{const m=new Map();arr.forEach(x=>{const k=f(x);if(k!==null)m.set(k,(m.get(k)||0)+1)});return [...m].sort((a,b)=>b[1]-a[1])};
 async function loadStats(){
+  try{await loadStatsInner()}catch(e){say('st-msg','Analytics hit an error: '+(e&&e.message||e),'err')}
+}
+async function loadStatsInner(){
   show('stats');say('st-msg','Loading…');
   const days=+$('st-range').value,since=new Date(Date.now()-days*864e5);
   // read through a plain-named helper (ad blockers and filters block addresses containing "visits")
@@ -782,14 +785,14 @@ async function loadStats(){
     const probe=async(label,fn)=>{const t0=Date.now();try{const r=await fn();t.push(`${label}: ${r.error?'FAILED ('+(r.error.message||'').slice(0,60)+')':'ok'+(r.data&&r.data.length!==undefined?' ('+r.data.length+' rows)':'')} ${Date.now()-t0}ms`)}catch(e){t.push(`${label}: CRASHED (${String(e.message).slice(0,60)}) ${Date.now()-t0}ms`)}};
     const day=new Date(Date.now()-864e5).toISOString();
     await probe('A empty',()=>sb.rpc('site_numbers',{since:new Date(Date.now()+864e5).toISOString()}));
-    const rb=await sb.rpc('site_numbers',{since:new Date(Date.now()-36e5).toISOString()});
+    let rb;try{rb=await sb.rpc('site_numbers',{since:new Date(Date.now()-36e5).toISOString()})}catch(e){rb={error:1}}
     t.push('B last hour: '+(rb.error?'FAILED':'ok ('+rb.data.length+' rows)')+', clean version installed: '+(rb.data&&rb.data[0]?(String(rb.data[0].vid).length===32?'YES':'NO'):'unknown'));
     // which column of the last day is being stopped?
     for(const col of ['at','event','path','ref','vid','mobile'])
       await probe('col '+col,()=>sb.from('visits').select(col).gte('at',day).limit(5000));
     // how far back can we go before it breaks?
     let lo=1,hi=24,okRows=rb.data?rb.data.length:0;
-    for(let k=0;k<6;k++){const mid=(lo+hi)/2,r=await sb.rpc('site_numbers',{since:new Date(Date.now()-mid*36e5).toISOString()}).catch(()=>({error:1}));
+    for(let k=0;k<6;k++){const mid=(lo+hi)/2;let r;try{r=await sb.rpc('site_numbers',{since:new Date(Date.now()-mid*36e5).toISOString()})}catch(e){r={error:1}}
       if(r.error)hi=mid;else{lo=mid;okRows=r.data.length}}
     t.push(`works back to ${lo.toFixed(1)}h ago (${okRows} rows), breaks by ${hi.toFixed(1)}h ago, around ${new Date(Date.now()-hi*36e5).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}`);
     say('st-msg','Analytics could not load. Self-test results (send these to Claude): '+t.join(' | '),'err');return}
