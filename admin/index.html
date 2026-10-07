@@ -107,7 +107,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 </head>
 <body>
 <header class="head"><div class="wrap">
-  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v14</small></a>
+  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v15</small></a>
   <nav id="nav" hidden>
     <button data-go="list" class="on">Issues</button>
     <button data-go="inbox">Inbox <span id="inbox-n"></span></button>
@@ -626,19 +626,43 @@ $('v-edit').onsubmit=async e=>{
 };
 
 /* ---------- settings ---------- */
+// Settings are loaded piece by piece. Some web filters block the full settings reply, and a page that
+// failed to load must never be allowed to save blanks over the real values.
+let SET_OK={zchus:false,site:false};
+async function loadSetting(key,fields){
+  const whole=await sb.from('settings').select('value').eq('key',key).maybeSingle();
+  if(!whole.error)return {ok:true,value:whole.data?whole.data.value:null};
+  // blocked as a whole: ask for each field on its own
+  const out={};let got=0,exists=false;
+  for(const f of fields){
+    const r=await sb.from('settings').select('v:value->'+f).eq('key',key).maybeSingle();
+    if(r.error)return {ok:false,value:null};
+    if(r.data){exists=true;if(r.data.v!==null&&r.data.v!==undefined){out[f]=r.data.v;got++}}
+  }
+  return {ok:true,value:exists?out:null};
+}
 async function openSettings(){
-  show('settings');say('z-msg','');
-  const {data}=await sb.from('settings').select('key,value').in('key',['zchus','site']);
-  const v=data?.find(x=>x.key==='zchus')?.value||{};$('z-text').value=v.text||'';$('z-names').value=(v.names||[]).join('\n');
-  SITE_SAVED=data?.find(x=>x.key==='site')?.value||{};drawSiteFields(SITE_SAVED);drawColors(SITE_SAVED.colors||{});
+  show('settings');say('z-msg','Loading…');
+  const z=await loadSetting('zchus',['text','names']);
+  const st=await loadSetting('site',[...SITE_FIELDS.map(f=>f[0]),'colors']);
+  SET_OK={zchus:z.ok,site:st.ok};
+  const v=z.value||{};$('z-text').value=v.text||'';$('z-names').value=(v.names||[]).join('\n');
+  SITE_SAVED=st.value||{};drawSiteFields(SITE_SAVED);drawColors(SITE_SAVED.colors||{});
+  $('z-text').disabled=$('z-names').disabled=!z.ok;
+  document.querySelectorAll('#site-fields input,#site-fields textarea,#colors input').forEach(e=>e.disabled=!st.ok);
+  const bad=[!z.ok&&'the dedication bar',!st.ok&&'the website text and colors'].filter(Boolean);
+  say('z-msg',bad.length?`Could not load ${bad.join(' and ')} (your internet filter may be blocking it). That part is locked so nothing gets overwritten. Try from another network.`:'',bad.length?'err':'');
 }
 $('v-settings').onsubmit=async e=>{
   e.preventDefault();
-  const value={text:$('z-text').value.trim(),names:$('z-names').value.split('\n').map(s=>s.trim()).filter(Boolean)};
-  const site={...readSiteFields(),colors:readColors()};
-  const {error}=await sb.from('settings').upsert([{key:'zchus',value},{key:'site',value:site}]);
-  if(!error)SITE_SAVED=site;
-  say('z-msg',error?error.message:'Saved. The website shows it now.',error?'err':'ok');
+  const rows=[];
+  if(SET_OK.zchus)rows.push({key:'zchus',value:{text:$('z-text').value.trim(),names:$('z-names').value.split('\n').map(s=>s.trim()).filter(Boolean)}});
+  let site=null;
+  if(SET_OK.site){site={...readSiteFields(),colors:readColors()};rows.push({key:'site',value:site})}
+  if(!rows.length){say('z-msg','Nothing was saved, because the settings could not be loaded first.','err');return}
+  const {error}=await sb.from('settings').upsert(rows);
+  if(!error&&site)SITE_SAVED=site;
+  say('z-msg',error?error.message:'Saved. The website shows it now.'+(rows.length<2?' (Only the part that loaded was saved.)':''),error?'err':'ok');
 };
 
 /* ---------- import issues that only exist as files on the site ---------- */
