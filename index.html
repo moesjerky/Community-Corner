@@ -543,6 +543,7 @@ footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
       <label for="u-kind">What are you sending?
         <select id="u-kind" name="kind"><option>Column</option><option>Mazel Tov</option><option>Photo</option><option>Other</option></select>
       </label>
+      <label for="u-other" id="u-other-wrap" hidden>What is it? *<input id="u-other" name="other" maxlength="32" placeholder="For example: a recipe, a joke, a question"></label>
       <div class="row">
         <label for="u-name">Your name *<input id="u-name" name="name" autocomplete="name" maxlength="120" required></label>
         <label for="u-contact">Phone or email (so we can reach you)<input id="u-contact" name="contact" maxlength="160"></label>
@@ -746,9 +747,12 @@ $('u-photo').onchange=async e=>{
   try{UPHOTO=await shrinkPhoto(f);pv.src=URL.createObjectURL(UPHOTO);pv.hidden=false}
   catch{n.classList.add('err');n.textContent="We couldn't read that photo. Try a JPG or PNG.";e.target.value=''}
 };
+$('u-kind').onchange=()=>{const o=$('u-kind').value==='Other';$('u-other-wrap').hidden=!o;if(o)$('u-other').focus()};
 $('sform').addEventListener('submit',async e=>{
   e.preventDefault();const f=e.target,n=$('u-note'),btn=f.querySelector('button');n.className='cnote';
   if($('u-web').value)return;
+  const isOther=$('u-kind').value==='Other',otherTxt=$('u-other').value.trim();
+  if(isOther&&!otherTxt){n.classList.add('err');n.textContent='Tell us what you are sending.';$('u-other').focus();return}
   if(!$('u-name').value.trim()){n.classList.add('err');n.textContent='Type your name.';$('u-name').focus();return}
   if(!$('u-msg').value.trim()&&!UPHOTO){n.classList.add('err');n.textContent='Write a message or add a photo.';$('u-msg').focus();return}
   if(!DB){n.classList.add('err');n.textContent="Submissions aren't open yet. Check back soon.";return}
@@ -760,9 +764,9 @@ $('sform').addEventListener('submit',async e=>{
       if(!up.ok)throw 0}
     n.textContent='Sending…';
     const r=await fetch(`${CFG.supabaseUrl}/rest/v1/submissions`,{method:'POST',headers:{...H,'Content-Type':'application/json',Prefer:'return=minimal'},
-      body:JSON.stringify({kind:$('u-kind').value,name:$('u-name').value.trim(),contact:$('u-contact').value.trim(),message:$('u-msg').value.trim(),photo})});
+      body:JSON.stringify({kind:isOther?('Other: '+otherTxt).slice(0,40):$('u-kind').value,name:$('u-name').value.trim(),contact:$('u-contact').value.trim(),message:$('u-msg').value.trim(),photo})});
     if(!r.ok)throw 0;
-    f.reset();UPHOTO=null;$('u-preview').hidden=true;n.textContent='Got it, thank you! We read everything that comes in.';
+    f.reset();UPHOTO=null;$('u-preview').hidden=true;$('u-other-wrap').hidden=true;n.textContent='Got it, thank you! We read everything that comes in.';
   }catch{n.classList.add('err');n.textContent="That didn't go through. Please try again, or email submissions@ourcommunitycorner.com."}
   finally{btn.disabled=false}
 });
