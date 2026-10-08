@@ -80,6 +80,8 @@ async function findColumns(doc,onStep){
       let who=colTidy(line.slice(cut).replace(/^By\s*:/,'')).replace(/[\s\-–]*\(?\d{3}\)?[\s.\-]\d{3}[\s.\-]\d{4}.*$/,'').replace(/\s+By\s*:.*$/,'').replace(/\s+\d{1,2}$/,'');
       if(head.length<3||head.length>60||who.length<3)continue;
       who=who.slice(0,60);if(who in COL_WRITERS)who=COL_WRITERS[who];
+      // the joke crew changes a little week to week: keep them as one writer in the archive
+      if(/joke of the week/i.test(head)&&/Yitz Fine/i.test(who))who='Yitz Fine, Mesh Fine & friends';
       cols.push({x:minX/PW,y:minY/PH,w:bw/PW,h:bh/PH,name:colName(head),by:who});
     }
     c.width=c.height=0;
