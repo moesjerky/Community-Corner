@@ -110,7 +110,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 </head>
 <body>
 <header class="head"><div class="wrap">
-  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v21</small></a>
+  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v22</small></a>
   <nav id="nav" hidden>
     <button data-go="list" class="on">Issues</button>
     <button data-go="inbox">Inbox <span id="inbox-n"></span></button>
@@ -625,6 +625,9 @@ async function readPdf(file){
    value = {print, issue, hide:[sig], ads:[{img,name,info,sig,mode,until,issue}]}
    mode "week": shows only while the ad is in the newest issue (issue === value.issue). "perm": always. "until": through a date. */
 let SP=[],spSlot=null,SP_OK=false,SP_ISSUE=null,SP_HIDE=[];
+// the sponsor list is stored scrambled (base64): some web filters drop replies that contain business names
+const spEnc=v=>({z:btoa(unescape(encodeURIComponent(JSON.stringify(v))))});
+const spDec=v=>{try{return v&&v.z?JSON.parse(decodeURIComponent(escape(atob(v.z)))):v}catch(e){return null}};
 const spToday=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
 function spLive(a){const m=a.mode||'week';return m==='perm'||(m==='until'&&(a.until||'')>=spToday())||(m==='week'&&(SP_ISSUE==null||a.issue===SP_ISSUE))}
 function drawSp(){
@@ -680,7 +683,7 @@ async function loadSpons(){
   const r=await sb.from('settings').select('value').eq('key','sponsors').maybeSingle();
   // a list that failed to load must never be saved back as blanks
   if(r.error){SP=[];drawSp();say('sp-msg','Could not load the sponsors (your internet filter may be blocking it). Saving is switched off so nothing gets wiped. Try another network.','err');return}
-  let v=r.data&&r.data.value,note='';
+  let v=spDec(r.data&&r.data.value),note='';
   if(!v){   // first time: start from the sponsors that are on the website now
     const prev=ISSUES.find(i=>i.sponsors&&i.sponsors.ads&&i.sponsors.ads.length);
     if(prev)v=prev.sponsors;
@@ -714,7 +717,7 @@ $('sp-save').onclick=async()=>{
   try{
     const ads=await spUpload(SP,t=>say('sp-msg',t));
     const pn=$('sp-pname').value.trim();
-    const {error}=await sb.from('settings').upsert({key:'sponsors',value:{ads,hide:SP_HIDE.slice(-60),...(SP_ISSUE!=null?{issue:SP_ISSUE}:{}),...(pn?{print:{name:pn,info:$('sp-pinfo').value.trim()}}:{})}});
+    const {error}=await sb.from('settings').upsert({key:'sponsors',value:spEnc({ads,hide:SP_HIDE.slice(-60),...(SP_ISSUE!=null?{issue:SP_ISSUE}:{}),...(pn?{print:{name:pn,info:$('sp-pinfo').value.trim()}}:{})})});
     if(error)throw error;
     SP=ads.map(a=>({...a}));drawSp();say('sp-msg','Saved! The Sponsors page is updated.','ok');
   }catch(err){say('sp-msg',(err.message||'Something went wrong')+'. Nothing is lost; try Save again.','err')}
@@ -726,10 +729,11 @@ async function autoSponsors(num,found){
   try{
     const r=await sb.from('settings').select('value').eq('key','sponsors').maybeSingle();
     if(r.error||!r.data)return '';                       // never write over a list we could not read
-    const v=r.data.value||{},list=(v.ads||[]).map(a=>({...a}));
+    const v=spDec(r.data.value);if(!v)return '';
+    const list=(v.ads||[]).map(a=>({...a}));
     if(v.issue!=null&&num<v.issue)return '';
     const m=await spMerge(list,v.hide||[],num,found),ads=await spUpload(list);
-    const {error}=await sb.from('settings').upsert({key:'sponsors',value:{...v,ads,issue:num}});
+    const {error}=await sb.from('settings').upsert({key:'sponsors',value:spEnc({...v,ads,issue:num})});
     if(error)return '';
     return ` Sponsors updated from this issue (${m.inPaper} ads${m.added?`, ${m.added} new: add their names in the Sponsors tab`:''}).`;
   }catch(e){return ''}
