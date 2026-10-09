@@ -110,7 +110,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 </head>
 <body>
 <header class="head"><div class="wrap">
-  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v23</small></a>
+  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v24</small></a>
   <nav id="nav" hidden>
     <button data-go="list" class="on">Issues</button>
     <button data-go="inbox">Inbox <span id="inbox-n"></span></button>
@@ -160,6 +160,9 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
       <p style="margin:14px 0 0"><button class="btn alt small" type="button" id="fix-covers">Check cover order on all issues</button>
       <span class="hint">Fixes issues where the thumbnail shows an inside page instead of the cover.</span></p>
       <p class="msg" id="fix-msg" role="status"></p>
+      <p style="margin:10px 0 0"><button class="btn alt small" type="button" id="fix-meta">Read real dates and titles off every cover</button>
+      <span class="hint">Fills in the date, title and Hebrew date printed on each issue. Only empty boxes and guessed dates change.</span></p>
+      <p class="msg" id="meta-msg" role="status"></p>
       <div style="overflow-x:auto;margin-top:14px"><table>
         <thead><tr><th></th><th>Issue</th><th>Date</th><th>Status</th><th>Email</th><th></th></tr></thead>
         <tbody id="list"></tbody>
@@ -361,8 +364,11 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 <script src="columns.js?v=18"></script>
 <script src="fun.js?v=19"></script>
 <script src="ads.js?v=23"></script>
+<script src="meta.js?v=24"></script>
 <script>
 const $=id=>document.getElementById(id);
+{const raf=window.requestAnimationFrame.bind(window);
+  window.requestAnimationFrame=cb=>{if(!document.hidden)return raf(cb);const c=new MessageChannel();c.port1.onmessage=()=>cb(performance.now());c.port2.postMessage(0);return 0}}
 const CFG=window.CC_CONFIG||{};
 const views=['login','reset','list','edit','settings','bulk','subs','stats','inbox','spons'];
 function show(v){views.forEach(x=>$('v-'+x).hidden=x!==v);document.querySelectorAll('[data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===v||(v==='edit'&&b.dataset.go==='list')));scrollTo(0,0)}
@@ -576,7 +582,8 @@ function mastheadRed(c){
   for(let i=0;i<d.length;i+=4*7){n++;if(d[i]>150&&d[i+1]<95&&d[i+2]<95)r++}
   return n?r/n:0;
 }
-async function renderPdf(file,onPage,wantCols=true){
+async function renderPdf(file,onPage,want=true){
+  const wantCols=want===true||!!(want&&want.cols),wantFun=want===true||!!(want&&want.fun),wantAds=want===true||!!(want&&want.ads),wantMeta=want!==false;
   const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
   const pages=[],keep=[];
   for(let n=1;n<=doc.numPages;n++){
@@ -602,10 +609,11 @@ async function renderPdf(file,onPage,wantCols=true){
   if(wantCols){try{onPage&&onPage(doc.numPages,doc.numPages,'Finding the columns…');columns=await findColumns(doc)}catch(e){columns=null}}
   // read the Fun Stuff (word search, parsha question, word of the week, fact) so nobody has to type it; never blocks an upload
   let fun=null;
-  if(wantCols){try{onPage&&onPage(doc.numPages,doc.numPages,'Reading the Fun Stuff…');fun=await readFunFromPdf(doc,t=>onPage&&onPage(doc.numPages,doc.numPages,t))}catch(e){fun=null}}
+  if(wantFun){try{onPage&&onPage(doc.numPages,doc.numPages,'Reading the Fun Stuff…');fun=await readFunFromPdf(doc,t=>onPage&&onPage(doc.numPages,doc.numPages,t))}catch(e){fun=null}}
   let ads=null;
-  if(wantCols){try{onPage&&onPage(doc.numPages,doc.numPages,'Finding the ads…');ads=await findAds(doc)}catch(e){ads=null}}
-  return {pages,cover,swapped,columns,fun,ads};
+  if(wantAds){try{onPage&&onPage(doc.numPages,doc.numPages,'Finding the ads…');ads=await findAds(doc)}catch(e){ads=null}}
+  let meta={};if(wantMeta){try{meta=await readMeta(doc)}catch(e){meta={}}}
+  return {pages,cover,swapped,columns,fun,ads,meta};
 }
 async function readPdf(file){
   if(!/pdf$/i.test(file.type)&&!/\.pdf$/i.test(file.name)){say('pdf-msg','That file is not a PDF.','err');return}
@@ -614,6 +622,9 @@ async function readPdf(file){
   try{
     const r=await renderPdf(file,(n,t,x)=>say('pdf-msg',x||`Making page pictures… ${n} of ${t}`));
     PAGES={pages:r.pages,cover:r.cover,columns:r.columns,ads:r.ads};
+    {const m=r.meta||{},fresh=!$('e-num').disabled,put=(id,v)=>{if(v&&(!$(id).value||(fresh&&id==='e-date')))$(id).value=v};
+      if(fresh&&m.num&&!$('e-num').value)$('e-num').value=m.num;
+      put('e-date',m.date);put('e-title',m.title);put('e-hebrew',m.hebrew);put('e-yomtov',m.yomtov);put('e-tzais',m.tzais)}
     if(r.fun&&r.fun.fun&&!readFun()){fillFun(r.fun.fun);checkGrid();say('fun-msg','I filled in the Fun Stuff from the PDF. Give it a quick look. '+r.fun.notes.join(' '),/Check|Could not|Type/.test(r.fun.notes.join(' '))?'err':'ok')}
     [r.cover,...r.pages].forEach((b,k)=>{const t=document.createElement('img');t.src=URL.createObjectURL(b);t.alt=k?`Page ${k}`:'Cover';$('thumbs').append(t)});
     say('pdf-msg',`Ready: ${r.pages.length} pages.${r.swapped?' (The cover was on page 2, so I put it first.)':''}${r.columns&&r.columns.length?` Found ${r.columns.length} columns for the Columns archive: ${r.columns.map(c=>c.name).join(', ')}.`:''} The first picture is the cover. Fill in the info below and click Save.`,'ok');
@@ -745,13 +756,11 @@ async function up(path,body,type){
   if(error)throw new Error(`Upload failed (${path}): ${error.message}`);
 }
 async function upColumns(num,cols,tell){
-  const out=[];
-  for(const [k,c] of cols.entries()){
-    tell&&tell(`Uploading column ${k+1} of ${cols.length}…`);
+  tell&&tell(`Uploading ${cols.length} columns…`);
+  return Promise.all(cols.map(async c=>{
     const path=`${num}/col/${colSlug(c.name)}.jpg`;await up(path,c.blob,'image/jpeg');
-    out.push({name:c.name,by:c.by,ar:c.ar,img:pub(path)});
-  }
-  return out;
+    return {name:c.name,by:c.by,ar:c.ar,img:pub(path)};
+  }));
 }
 // saves an issue row; if the database doesn't have the "columns" field yet, saves everything else anyway
 async function saveIssueRow(row){
@@ -773,10 +782,8 @@ $('v-edit').onsubmit=async e=>{
   try{
     let pages=EDIT.pages||0,newCols=null;
     if(PAGES){
-      for(let k=0;k<PAGES.pages.length;k++){say('save-msg',`Uploading page ${k+1} of ${PAGES.pages.length}…`);await up(`${num}/p${k+1}.jpg`,PAGES.pages[k],'image/jpeg')}
-      say('save-msg','Uploading cover and PDF…');
-      await up(`${num}/cover.jpg`,PAGES.cover,'image/jpeg');
-      await up(`${num}/issue.pdf`,PDF_FILE,'application/pdf');
+      say('save-msg','Uploading the pages, cover and PDF…');
+      await Promise.all([...PAGES.pages.map((pg,k)=>up(`${num}/p${k+1}.jpg`,pg,'image/jpeg')),up(`${num}/cover.jpg`,PAGES.cover,'image/jpeg'),up(`${num}/issue.pdf`,PDF_FILE,'application/pdf')]);
       pages=PAGES.pages.length;
       if(PAGES.columns&&PAGES.columns.length)newCols=await upColumns(num,PAGES.columns,t=>say('save-msg',t));
     }
@@ -837,7 +844,7 @@ async function openSettings(){
   const z=await loadSetting('zchus',['text','names']);
   const st=await loadSetting('site',[...SITE_FIELDS.map(f=>f[0]),'colors']);
   SET_OK={zchus:z.ok,site:st.ok};
-  const v=z.value||{};$('z-text').value=v.text||'';$('z-names').value=(v.names||[]).join('\n');
+  const v=spDec(z.value)||{};$('z-text').value=v.text||'';$('z-names').value=(v.names||[]).join('\n');
   SITE_SAVED=st.value||{};drawSiteFields(SITE_SAVED);drawColors(SITE_SAVED.colors||{});
   $('z-text').disabled=$('z-names').disabled=!z.ok;
   document.querySelectorAll('#site-fields input,#site-fields textarea,#colors input').forEach(e=>e.disabled=!st.ok);
@@ -847,7 +854,7 @@ async function openSettings(){
 $('v-settings').onsubmit=async e=>{
   e.preventDefault();
   const rows=[];
-  if(SET_OK.zchus)rows.push({key:'zchus',value:{text:$('z-text').value.trim(),names:$('z-names').value.split('\n').map(s=>s.trim()).filter(Boolean)}});
+  if(SET_OK.zchus)rows.push({key:'zchus',value:spEnc({text:$('z-text').value.trim(),names:$('z-names').value.split('\n').map(s=>s.trim()).filter(Boolean)})});
   let site=null;
   if(SET_OK.site){site={...readSiteFields(),colors:readColors()};rows.push({key:'site',value:site})}
   if(!rows.length){say('z-msg','Nothing was saved, because the settings could not be loaded first.','err');return}
@@ -928,22 +935,33 @@ $('bgo').onclick=async()=>{
   const todo=BULK.filter(b=>b.state==='ready');
   if(todo.some(b=>!b.date)){say('bmsg','Every issue needs a date.','err');return}
   $('bgo').disabled=true;$('bcancel').disabled=true;let ok=0;
-  for(const [k,b] of todo.entries()){
+  const batchTop=Math.max(...todo.map(b=>b.num)),newestNum=batchTop>=Math.max(0,...ISSUES.map(i=>i.num))?batchTop:-1;
+  // make the next issue's pages while the last one is still uploading (two uploads in the air at most)
+  const sending=[];let finished=0;
+  for(const b of todo){
+    let r;
     try{
       b.status='Making pages…';drawBulk();
-      const r=await renderPdf(b.file,(n,t,x)=>{b.status=x||`Page ${n} of ${t}…`;drawBulk()});
-      for(let i=0;i<r.pages.length;i++){b.status=`Uploading ${i+1} of ${r.pages.length}…`;drawBulk();await up(`${b.num}/p${i+1}.jpg`,r.pages[i],'image/jpeg')}
-      b.status='Uploading PDF…';drawBulk();
-      await up(`${b.num}/cover.jpg`,r.cover,'image/jpeg');
-      await up(`${b.num}/issue.pdf`,b.file,'application/pdf');
-      const brow={num:b.num,date:b.date,pages:r.pages.length,published:true};
-      if(r.fun&&r.fun.fun)brow.fun=r.fun.fun;
-      if(r.columns&&r.columns.length)brow.columns=await upColumns(b.num,r.columns,t=>{b.status=t;drawBulk()});
-      await saveIssueRow(brow);b.ads=r.ads;
-      b.status='Done ✓';b.state='done';ok++;
-    }catch(err){b.status='Failed: '+(err.message||'error');b.state='bad'}
-    drawBulk();say('bmsg',`${k+1} of ${todo.length} finished…`);
+      // Fun Stuff and ads only matter for the newest issue, so older ones skip that work
+      r=await renderPdf(b.file,(n,t,x)=>{b.status=x||`Page ${n} of ${t}…`;drawBulk()},{cols:true,fun:b.num===newestNum,ads:b.num===newestNum});
+    }catch(err){b.status='Failed: '+(err.message||'error');b.state='bad';drawBulk();say('bmsg',`${++finished} of ${todo.length} finished…`);continue}
+    const job=(async()=>{
+      try{
+        b.status='Uploading…';drawBulk();
+        await Promise.all([...r.pages.map((pg,i)=>up(`${b.num}/p${i+1}.jpg`,pg,'image/jpeg')),up(`${b.num}/cover.jpg`,r.cover,'image/jpeg'),up(`${b.num}/issue.pdf`,b.file,'application/pdf')]);
+        const m=r.meta||{};
+        const brow={num:b.num,date:b.dateTouched?b.date:(m.date||b.date),pages:r.pages.length,published:true,...(m.title?{title:m.title}:{}),...(m.hebrew?{hebrew:m.hebrew}:{}),...(m.yomtov?{yomtov:m.yomtov}:{}),...(m.tzais?{tzais:m.tzais}:{})};
+        if(r.fun&&r.fun.fun)brow.fun=r.fun.fun;
+        if(r.columns&&r.columns.length)brow.columns=await upColumns(b.num,r.columns);
+        await saveIssueRow(brow);b.ads=r.ads;
+        b.status='Done ✓';b.state='done';ok++;
+      }catch(err){b.status='Failed: '+(err.message||'error');b.state='bad'}
+      r=null;drawBulk();say('bmsg',`${++finished} of ${todo.length} finished…`);
+    })();
+    sending.push(job);job.finally(()=>sending.splice(sending.indexOf(job),1));
+    if(sending.length>=2)await Promise.race(sending);
   }
+  await Promise.all(sending);
   let bulkAds='';
   {const newest=todo.filter(b=>b.state==='done'&&b.ads&&b.ads.length).sort((a,b)=>b.num-a.num)[0];
     if(newest&&newest.num>=Math.max(0,...ISSUES.map(i=>i.num)))bulkAds=await autoSponsors(newest.num,newest.ads)}
@@ -1148,6 +1166,40 @@ $('fix-covers').onclick=async()=>{
   }
   btn.disabled=false;
   say('fix-msg',(fixed.length?`Fixed ${fixed.length}: #${fixed.join(', #')}.`:'All covers were already right.')+(failed.length?` Could not check: #${failed.join(', #')}.`:'')+' Refresh in a minute to see the new thumbnails.',failed.length?'err':'ok');
+};
+
+/* ---------- repair: real date, title and Hebrew date from each issue's own cover ---------- */
+$('fix-meta').onclick=async()=>{
+  const btn=$('fix-meta');btn.disabled=true;let fixed=[],failed=[];
+  const full=await sb.from('issues').select('num,title,date,hebrew,yomtov,tzais');
+  if(full.error){say('meta-msg','Could not load the issues. Try again.','err');btn.disabled=false;return}
+  const todo=full.data.sort((a,b)=>b.num-a.num);
+  // step 1: read every cover, four at a time (only the text is read, no pictures are made)
+  let at=0,done=0;const meta={};
+  const work=async()=>{while(at<todo.length){const i=todo[at++];
+    try{
+      const res=await fetch(pub(i.num+'/issue.pdf'));if(!res.ok)throw new Error('no PDF');
+      meta[i.num]=await readMeta(await pdfjsLib.getDocument({data:await res.arrayBuffer()}).promise);
+    }catch(err){failed.push(i.num)}
+    say('meta-msg',`Read ${++done} of ${todo.length} covers…`)}};
+  await Promise.all([work(),work(),work(),work()]);
+  // step 2: save. A printed date that lands out of order with the issues around it is a typo on the cover: skip it.
+  const odd=[];
+  for(const i of todo){
+    const m=meta[i.num];if(!m)continue;
+    const ch={},before=meta[i.num-1]&&meta[i.num-1].date,after=meta[i.num+1]&&meta[i.num+1].date;
+    if(m.date&&m.date!==i.date){if((before&&m.date<=before)||(after&&m.date>=after))odd.push(i.num);else ch.date=m.date}
+    if(m.title&&!i.title)ch.title=m.title;
+    if(m.hebrew&&!i.hebrew)ch.hebrew=m.hebrew;
+    if(m.yomtov&&!i.yomtov)ch.yomtov=m.yomtov;
+    if(m.tzais&&!i.tzais&&m.yomtov)ch.tzais=m.tzais;
+    if(!Object.keys(ch).length)continue;
+    const {error}=await sb.from('issues').update(ch).eq('num',i.num);
+    error?failed.push(i.num):fixed.push(i.num);
+  }
+  btn.disabled=false;
+  say('meta-msg',(fixed.length?`Updated ${fixed.length} issues.`:'Everything was already right.')+(odd.length?` Date left alone (the cover's date looks like a typo): #${odd.sort((a,b)=>a-b).join(', #')}.`:'')+(failed.length?` Could not read: #${failed.sort((a,b)=>a-b).join(', #')}.`:''),failed.length?'err':'ok');
+  if(fixed.length)setTimeout(loadList,4000);
 };
 
 start();

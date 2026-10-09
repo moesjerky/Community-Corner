@@ -1111,6 +1111,7 @@ function applySite(v){
   try{localStorage.setItem('cc_colors',JSON.stringify(c))}catch{}
 }
 function renderZchus(v){
+  try{if(v&&v.z)v=JSON.parse(decodeURIComponent(escape(atob(v.z))))}catch(e){v=null}   // stored scrambled so web filters don't drop it
   if(!v||!v.names||!v.names.length){document.querySelector('.zchus').hidden=true;return}
   const n=v.names.map(x=>`<bdi class="he" lang="he" dir="rtl">${esc(x)}</bdi>`).join('<span class="and">and</span>');
   document.querySelector('.zchus').innerHTML=`${esc(v.text||'')}<div class="names">${n}</div>`;
