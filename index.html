@@ -131,6 +131,18 @@ section.view{padding-block:40px 20px}
 /* past issues */
 .bar{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:end}
 .bar input{font:15px var(--body);padding:9px 12px;border:2px solid var(--ink);background:var(--card);width:min(260px,100%)}
+.finder{display:flex;gap:0;margin-top:16px}
+.finder input{flex:1;min-width:0;font:600 18px var(--body);padding:14px 16px;border:2.5px solid var(--plum);background:var(--card);color:var(--ink);border-radius:0;-webkit-appearance:none;appearance:none}
+.finder input:focus{outline:none;border-color:var(--red);box-shadow:4px 4px 0 var(--gold)}
+.finder .btn{border-radius:0;margin:0;background:var(--plum);padding-inline:26px;font-size:17px}
+.finder .btn:hover,.finder .btn:focus-visible{background:var(--red)}
+.finder.home{margin:34px 0 6px}
+.qcols{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px}
+.qcols span{font:700 13px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.qcols a{font:700 14px var(--body);color:#fff;background:var(--plum);padding:7px 12px;text-decoration:none}
+.qcols a.w{background:none;color:var(--plum);border:1.5px solid var(--plum)}
+.qcols a:hover,.qcols a:focus-visible{background:var(--red);color:#fff;border-color:var(--red);outline:none}
+.qcols a em{font-style:normal;opacity:.75;font-weight:600;margin-left:6px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:22px;padding-block:24px}
 .issue{display:block;width:100%;background:none;border:0;padding:0;text-align:left;cursor:pointer;font:inherit;color:inherit}
 .issue img{width:100%;aspect-ratio:3/4;object-fit:cover;object-position:top;border:2px solid var(--ink);background:var(--card);transition:transform .15s}
@@ -482,6 +494,7 @@ footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
       <div><h3 data-t="sendBoxTitle">Want to write a column?</h3><p data-t="sendBoxText">Send it in with a picture of yourself to be featured in next week's issue!</p></div>
       <a class="btn" href="#submit">Send it in</a>
     </div>
+    <form class="finder home" id="hq-form" role="search"><input id="hq" type="search" placeholder="Search every issue: parsha, issue #, column or writer" aria-label="Search the archive" autocomplete="off"><button class="btn" type="submit">Search</button></form>
     <div class="recent" id="recent" hidden>
       <div class="recent-h"><h3>Recent issues</h3><a href="#past" id="recent-all">See all issues</a></div>
       <div class="recent-grid" id="recent-grid"></div>
@@ -491,8 +504,9 @@ footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
   <section class="view" id="v-past" hidden>
     <div class="bar">
       <div><span class="eyebrow plum">Archive</span><h2 class="sec-h">Past Issues</h2></div>
-      <input id="q" type="search" placeholder="Search issue # or title" aria-label="Search issues">
     </div>
+    <div class="finder"><input id="q" type="search" placeholder="Search a parsha, issue #, month, column or writer" aria-label="Search the archive" autocomplete="off"><button type="button" class="btn" id="q-clear" hidden>Clear</button></div>
+    <div class="qcols" id="q-cols" hidden></div>
     <div class="years" id="years"></div>
     <p class="count" id="past-count"></p>
     <div class="grid" id="grid"></div>
@@ -745,10 +759,28 @@ function renderPast(){
   const yrs=[...new Set(issues.map(i=>(i.date||'').slice(0,4)).filter(Boolean))].sort().reverse();
   $('years').innerHTML=yrs.length>1?['all',...yrs].map(y=>`<button type="button" data-y="${y}" class="${y===YEAR?'on':''}">${y==='all'?'All years':y}</button>`).join(''):'';
   $('years').querySelectorAll('button').forEach(b=>b.onclick=()=>{YEAR=b.dataset.y;renderPast()});
-  const list=issues.filter(i=>(YEAR==='all'||(i.date||'').startsWith(YEAR))&&(!q||String(i.num).includes(q)||(i.title||'').toLowerCase().includes(q)));
+  // every word typed has to show up somewhere in the issue's number, title, date or Hebrew date
+  const words=q.replace(/#/g,'').split(/\s+/).filter(Boolean);
+  const hay=i=>`${i.num} ${i.title||''} ${i.date?fmt(i.date):''} ${i.date||''} ${i.hebrew||''}`.toLowerCase().replace(/[\u2019']/g,'');
+  const list=issues.filter(i=>(YEAR==='all'||(i.date||'').startsWith(YEAR))&&words.every(w=>hay(i).includes(w.replace(/[\u2019']/g,''))));
+  $('q-clear').hidden=!q;
+  // columns and writers that match get their own shortcuts
+  const box=$('q-cols');
+  if(q.length<2){box.hidden=true;box.innerHTML=''}
+  else loadColumns().then(ent=>{
+    if($('q').value.trim().toLowerCase()!==q)return;
+    const cols=new Map(),wr=new Map(),has=t=>words.every(w=>t.toLowerCase().includes(w));
+    ent.forEach(e=>{if(has(e.col)){const c=cols.get(e.slug)||{name:e.col,n:0};c.n++;cols.set(e.slug,c)}
+      if(e.by&&has(e.by)){const k=slugify(e.by),c=wr.get(k)||{name:e.by,n:0};c.n++;wr.set(k,c)}});
+    const h=t=>String(t).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+    const chips=[...[...cols].sort((a,b)=>b[1].n-a[1].n).slice(0,5).map(([k,c])=>`<a href="#c-${k}">${h(c.name)}<em>${c.n}</em></a>`),
+      ...[...wr].sort((a,b)=>b[1].n-a[1].n).slice(0,5).map(([k,c])=>`<a class="w" href="#w-${k}">${h(c.name)}<em>${c.n}</em></a>`)];
+    box.hidden=!chips.length;box.innerHTML=chips.length?'<span>Columns and writers</span>'+chips.join(''):'';
+    if(chips.length&&!list.length)g.innerHTML='<p class="meta">No issue is named that, but it matches the columns and writers above.</p>';
+  });
   list.forEach(i=>{const w=document.createElement('div');w.className='issue-wrap';w.append(card(i,i===issues[0]));w.insertAdjacentHTML('beforeend',dl(i));g.append(w)});
   $('past-count').textContent=list.length?`${list.length} issue${list.length===1?'':'s'}`:'';
-  if(!list.length)g.innerHTML='<p class="meta">No issues match that search.</p>';
+  if(!list.length)g.innerHTML=`<p class="meta">No issues match that search.${YEAR!=='all'?' Try "All years".':''}</p>`;
 }
 function route(){
   const h=location.hash.slice(1)||'home',n=+h,i=issues.find(x=>x.num===n);
@@ -768,6 +800,9 @@ function route(){
   if(i)$('v-issue').scrollIntoView();else if(location.hash)scrollTo({top:0});
 }
 $('q').oninput=renderPast;
+$('q-clear').onclick=()=>{$('q').value='';renderPast();$('q').focus()};
+// the search box on the home page hands off to the Past Issues page
+$('hq-form').onsubmit=e=>{e.preventDefault();$('q').value=$('hq').value;YEAR='all';renderPast();location.hash='past';setTimeout(()=>{$('v-past').scrollIntoView();$('q').focus()},60)};
 addEventListener('hashchange',route);
 /* ---------- columns archive: every column from every issue ---------- */
 let COLS=null,COLTAB='col',CD={list:[],shown:0};
