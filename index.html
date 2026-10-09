@@ -220,6 +220,12 @@ footer .applink{margin-left:16px;margin-bottom:46px}
 .lb.tall{align-items:flex-start;overflow-y:auto}
 .lb.tall img{height:auto;width:min(760px,100%)}
 .lb.tall .arr{position:sticky;top:45vh}
+.lb.tall img{cursor:zoom-in}
+.lb.tall.zoom{display:block;overflow:auto}
+.lb.tall.zoom figure{max-width:none;width:max(200%,900px);align-items:flex-start}
+.lb.tall.zoom img{width:100%;max-width:none;cursor:zoom-out}
+.lb.tall.zoom .arr{display:none}
+.lb.tall.zoom .x{position:fixed}
 .colitem .pic{cursor:zoom-in;border:0;padding:0;width:100%}
 .lb .arr,.lb .x{background:var(--gold);color:var(--ink);border:0;font:400 28px var(--display);width:52px;height:52px;border-radius:50%;cursor:pointer;flex:none}
 .lb .arr:hover,.lb .x:hover,.lb .arr:focus-visible,.lb .x:focus-visible{background:#fff;outline:none}
@@ -1044,6 +1050,8 @@ $('cform').addEventListener('submit',async e=>{
 });
 $('lb-prev').onclick=()=>stepAd(-1);$('lb-next').onclick=()=>stepAd(1);$('lb-x').onclick=closeAd;
 $('lb').onclick=e=>{if(e.target.id==='lb')closeAd()};
+// a column opened big: tap the picture to zoom in for reading (handy on phones), tap again to zoom back out
+$('lb-img').onclick=()=>{if($('lb').classList.contains('tall'))$('lb').classList.toggle('zoom')};
 addEventListener('keydown',e=>{if($('lb').hidden)return;if(e.key==='ArrowLeft')stepAd(-1);else if(e.key==='ArrowRight')stepAd(1);else if(e.key==='Escape')closeAd()});
 let tx=null;$('lb').addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
 $('lb').addEventListener('touchend',e=>{if(tx===null)return;const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50)stepAd(d<0?1:-1);tx=null});
@@ -1126,8 +1134,8 @@ loadIssues().then(d=>{
 let ADS=[],LB=[],adAt=0,lastFocus=null;
 function showAd(){const a=LB[adAt];$('lb-img').src=a.src;$('lb-img').alt=a.name;$('lb-name').textContent=a.name;$('lb-info').textContent=a.info||'';$('lb-count').textContent=`${adAt+1} of ${LB.length}`;$('lb-go').hidden=!a.num;if(a.num)$('lb-go').href='#'+a.num}
 function openAd(k,list){LB=list||ADS;adAt=k;lastFocus=document.activeElement;showAd();$('lb').hidden=false;document.body.style.overflow='hidden';$('lb-next').focus()}
-function closeAd(){$('lb').hidden=true;$('lb').classList.remove('tall');document.body.style.overflow='';lastFocus&&lastFocus.focus()}
-function stepAd(d){adAt=(adAt+d+LB.length)%LB.length;showAd()}
+function closeAd(){$('lb').hidden=true;$('lb').classList.remove('tall','zoom');document.body.style.overflow='';lastFocus&&lastFocus.focus()}
+function stepAd(d){$('lb').classList.remove('zoom');adAt=(adAt+d+LB.length)%LB.length;showAd()}
 function renderSponsors(L){
   $('s-from').textContent=L.num?`Issue #${L.num} sponsors`:'Thank you to our sponsors';$('print').hidden=false;
   (typeof L.sponsors==='object'?Promise.resolve(L.sponsors):fetch(F(L,'sponsors.json')).then(r=>r.json())).then(d=>{
