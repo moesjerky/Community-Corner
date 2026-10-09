@@ -110,7 +110,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 </head>
 <body>
 <header class="head"><div class="wrap">
-  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v20</small></a>
+  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v21</small></a>
   <nav id="nav" hidden>
     <button data-go="list" class="on">Issues</button>
     <button data-go="inbox">Inbox <span id="inbox-n"></span></button>
@@ -419,7 +419,7 @@ async function loadList(){
     <td><b>#${i.num}</b><br><span class="hint">${esc(i.title)}</span></td>
     <td>${fmt(i.date)}</td>
     <td><span class="pill ${i.published?'live':'draft'}">${i.published?'LIVE':'DRAFT'}</span></td>
-    <td>${i.emailed_at?`<span class="hint">Sent ${fmt(i.emailed_at.slice(0,10))}</span>`:(i.published&&i.num===data[0].num?`<button class="btn small" data-mail="${i.num}">Email subscribers</button>`:'<span class="hint">–</span>')}
+    <td>${i.emailed_at?`<span class="hint">${new Date(i.emailed_at)>new Date()?'Emails '+new Date(i.emailed_at).toLocaleString('en-US',{weekday:'short',hour:'numeric',minute:'2-digit'}):'Sent '+fmt(i.emailed_at.slice(0,10))}</span>`:(i.published&&i.num===data[0].num?`<button class="btn small" data-mail="${i.num}">Email subscribers</button>`:'<span class="hint">–</span>')}
       <br><button class="btn alt small" data-test="${i.num}" style="margin-top:4px">Send test to me</button></td>
     <td><div class="row" style="justify-content:flex-end">
       <button class="btn small" data-edit="${i.num}">Edit</button>
@@ -438,16 +438,16 @@ async function loadList(){
     mailIssue(+b.dataset.mail,false,b)});
   checkImports();
 }
-async function mailIssue(num,test,btn,quiet){
+async function mailIssue(num,test,btn,quiet,when){
   if(btn)btn.disabled=true;say('list-msg',test?'Sending a test email to you…':`Emailing issue #${num} to subscribers…`);
-  const {data,error}=await sb.functions.invoke('send-issue',{body:{num,test}});
+  const {data,error}=await sb.functions.invoke('send-issue',{body:{num,test,...(when?{when}:{})}});
   let msg=data?.error;
   if(error&&!msg){try{msg=(await error.context.json()).error}catch{msg=error.message}}
   if(btn)btn.disabled=false;
   if(msg){say('list-msg',/RESEND_API_KEY|not found|Failed to send|FunctionsFetchError/i.test(msg)?'Email robot is not set up yet ('+msg+').':msg,'err');return false}
   say('list-msg',test?'Test sent. Check your inbox (and spam).':`Emailed #${num} to ${data.sent} subscriber${data.sent===1?'':'s'}. 📬`,'ok');
   if(!test&&!quiet)loadList();
-  return true;
+  return data&&data.scheduled?{scheduled:data.scheduled}:true;
 }
 function confirmDelete(b){
   if(b.dataset.armed){deleteIssue(+b.dataset.del);return}
@@ -795,9 +795,17 @@ $('v-edit').onsubmit=async e=>{
     say('save-msg',(row.published?'Saved! It is live on the website.':'Saved as a draft. Publish it when you are ready.')+adNote,'ok');
     const prev=ISSUES.find(i=>i.num===num);
     if(row.published&&num>=top&&!prev?.emailed_at&&(isNew||!prev?.published)){
-      say('save-msg','Saved and live. Emailing subscribers…','ok');
-      const ok=await mailIssue(num,false,null,true);
-      say('save-msg',(ok?'Saved, live, and emailed to subscribers.':'Saved and live, but the email did not go out. Use "Email subscribers" on the list.')+adNote,ok?'ok':'err');
+      // the weekly email waits for Friday 8 AM. Only an up-to-date email robot knows how to wait, so check first:
+      // an old copy would send right away.
+      const robot=await sb.functions.invoke('send-issue',{body:{ping:true}});
+      if(robot.error||robot.data?.version!==2){
+        say('save-msg','Saved and live.'+adNote+' The email was NOT sent: the email robot needs its one-time update before it can wait for Friday. Until then, click "Email subscribers" on the list when you want it to go out.','err');
+      }else{
+        say('save-msg','Saved and live. Setting up the email…','ok');
+        const ok=await mailIssue(num,false,null,true,'friday');
+        const at=ok&&ok.scheduled?new Date(ok.scheduled).toLocaleString('en-US',{weekday:'long',hour:'numeric',minute:'2-digit'}):'';
+        say('save-msg',(ok?(at?`Saved and live. The email will go out ${at}.`:'Saved, live, and emailed to subscribers.'):'Saved and live, but the email did not get set up. Use "Email subscribers" on the list.')+adNote,ok?'ok':'err');
+      }
     }
     setTimeout(loadList,1800);
   }catch(err){say('save-msg',(err.message||'Something went wrong')+'. Nothing is lost; try Save again.','err')}

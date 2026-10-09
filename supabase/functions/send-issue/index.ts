@@ -38,6 +38,21 @@ You're getting this because you subscribed at community-corner.org. <a href="${u
 </td></tr></table></td></tr></table></body></html>`;
 }
 
+// When should an automatic send go out?  Friday 8:00 AM New York time.
+// Returns null when it's already Friday morning or later that day (send now), otherwise the upcoming Friday 8 AM.
+function fridayMorning(): Date | null {
+  const now = new Date();
+  const p: Record<string, string> = {};
+  for (const x of new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", hour12: false }).formatToParts(now)) p[x.type] = x.value;
+  const dow = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(p.weekday), hour = +p.hour % 24;
+  if (dow === 5 && hour >= 8) return null;
+  const wallAsUtc = Date.UTC(+p.year, +p.month - 1, +p.day, hour, +p.minute);
+  const offset = wallAsUtc - Math.floor(now.getTime() / 60000) * 60000;          // New York's distance from UTC right now
+  const ahead = (5 - dow + 7) % 7;
+  return new Date(Date.UTC(+p.year, +p.month - 1, +p.day + ahead, 8, 0) - offset);
+}
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
@@ -54,7 +69,10 @@ Deno.serve(async (req) => {
     const { data: admin } = await db.from("admins").select("email").ilike("email", me).maybeSingle();
     if (!admin) return json({ error: "Not an admin" }, 403);
 
-    const { num, test } = await req.json();
+    const { num, test, when, ping } = await req.json();
+    if (ping) return json({ version: 2 });           // lets /admin check this copy knows how to wait for Friday
+    // when === "friday": hold the email until Friday 8 AM (New York). Anything else sends right now.
+    const sendAt = !test && when === "friday" ? fridayMorning() : null;
     const { data: issue } = await db.from("issues").select("*").eq("num", num).single();
     if (!issue) return json({ error: "Issue not found" }, 404);
     if (!test && !issue.published) return json({ error: "Publish the issue first" }, 400);
@@ -68,6 +86,30 @@ Deno.serve(async (req) => {
     const base = `${url}/storage/v1/object/public/issues/${num}`;
     const subject = `${test ? "[TEST] " : ""}Community Corner #${num}${issue.title ? ": " + issue.title : ""}`;
     let sent = 0;
+    if (sendAt) {
+      // scheduled emails go one at a time (Resend's bulk endpoint can't schedule)
+      for (const s of subs as any[]) {
+        const unsub = `${SITE}/unsubscribe.html?t=${s.token}`;
+        const r = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: FROM, to: [s.email], reply_to: REPLY_TO, subject, scheduled_at: sendAt.toISOString(),
+            html: emailHtml(issue, `${base}/cover.jpg`, `${base}/issue.pdf`, unsub),
+            headers: { "List-Unsubscribe": `<${unsub}>` },
+          }),
+        });
+        if (!r.ok) {
+          // nothing scheduled yet: report it so /admin can say so. Some scheduled: mark it so nobody gets it twice.
+          if (sent) await db.from("issues").update({ emailed_at: sendAt.toISOString() }).eq("num", num);
+          return json({ error: `Resend said: ${await r.text()}`, sent }, 502);
+        }
+        sent++;
+        await sleep(550);                              // Resend allows 2 requests a second
+      }
+      await db.from("issues").update({ emailed_at: sendAt.toISOString() }).eq("num", num);
+      return json({ sent, scheduled: sendAt.toISOString() });
+    }
     for (let i = 0; i < subs.length; i += 100) {
       const batch = subs.slice(i, i + 100).map((s: any) => {
         const unsub = `${SITE}/unsubscribe.html?t=${s.token}`;
