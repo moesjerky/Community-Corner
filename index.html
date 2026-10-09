@@ -1129,7 +1129,7 @@ function renderSponsors(L){
   $('s-from').textContent=L.num?`Issue #${L.num} sponsors`:'Thank you to our sponsors';$('print').hidden=false;
   (typeof L.sponsors==='object'?Promise.resolve(L.sponsors):fetch(F(L,'sponsors.json')).then(r=>r.json())).then(d=>{
     ADS=d.ads.map(a=>({...a,src:/^https?:/.test(a.img)?a.img:F(L,'ads/'+a.img)}));
-    $('ads').innerHTML=ADS.map((a,k)=>`<button class="ad" data-ad="${k}" aria-label="View ${esc(a.name)} ad bigger"><img loading="lazy" src="${esc(a.src)}" alt="${esc(a.name)}"><div><b>${esc(a.name)}</b><span>${esc(a.info||'')}</span></div></button>`).join('');
+    $('ads').innerHTML=ADS.map((a,k)=>`<button class="ad" data-ad="${k}" aria-label="View ${esc(a.name||'sponsor')} ad bigger"><img loading="lazy" src="${esc(a.src)}" alt="${esc(a.name)}">${a.name||a.info?`<div><b>${esc(a.name)}</b><span>${esc(a.info||'')}</span></div>`:''}</button>`).join('');
     $('ads').querySelectorAll('[data-ad]').forEach(b=>b.onclick=()=>openAd(+b.dataset.ad));
     if(d.print)$('print').innerHTML=`<b>Printing sponsored by ${esc(d.print.name)}</b> · ${esc(d.print.info)}`;else $('print').hidden=true;
   }).catch(()=>{$('ads').innerHTML='<p class="meta">Sponsor list coming soon.</p>';$('print').hidden=true});
