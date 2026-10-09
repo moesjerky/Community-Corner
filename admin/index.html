@@ -107,7 +107,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 </head>
 <body>
 <header class="head"><div class="wrap">
-  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v18</small></a>
+  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v19</small></a>
   <nav id="nav" hidden>
     <button data-go="list" class="on">Issues</button>
     <button data-go="inbox">Inbox <span id="inbox-n"></span></button>
@@ -201,7 +201,8 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
     </div>
 
     <div class="card">
-      <div class="row" style="justify-content:space-between"><h3>Fun Stuff <span class="hint" style="font:600 13px var(--body)">· optional, only shows for the newest issue</span></h3><button type="button" class="btn alt small" id="copy-fun">Copy from last issue</button></div>
+      <div class="row" style="justify-content:space-between"><h3>Fun Stuff <span class="hint" style="font:600 13px var(--body)">· optional, only shows for the newest issue</span></h3><button type="button" class="btn alt small" id="read-fun">Read it from the PDF</button> <button type="button" class="btn alt small" id="copy-fun">Copy from last issue</button></div>
+      <p class="msg" id="fun-msg"></p>
       <p class="hint">Leave a box empty to hide that part.</p>
       <div class="grid2">
         <label for="f-wstitle">Word search title<input id="f-wstitle" placeholder="e.g. Succos Word Search"></label>
@@ -354,6 +355,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="columns.js?v=18"></script>
+<script src="fun.js?v=19"></script>
 <script>
 const $=id=>document.getElementById(id);
 const CFG=window.CC_CONFIG||{};
@@ -511,6 +513,21 @@ function checkGrid(){
   return !bad;
 }
 $('f-grid').oninput=checkGrid;
+$('read-fun').onclick=async()=>{
+  const btn=$('read-fun'),num=+$('e-num').value;btn.disabled=true;
+  try{
+    say('fun-msg','Opening the PDF…');
+    let data;
+    if(PDF_FILE)data=await PDF_FILE.arrayBuffer();
+    else{if(!num)throw new Error('Add the PDF first');const res=await fetch(pub(num+'/issue.pdf')+'?t='+Date.now());if(!res.ok)throw new Error('This issue has no PDF saved');data=await res.arrayBuffer()}
+    const doc=await pdfjsLib.getDocument({data}).promise;
+    const r=await readFunFromPdf(doc,t=>say('fun-msg',t));
+    if(!r.fun){say('fun-msg','I could not find any Fun Stuff in this PDF.','err');return}
+    fillFun(r.fun);checkGrid();
+    say('fun-msg','Filled in from the PDF. Give it a quick look, then click Save. '+r.notes.join(' '),/Check|Could not|Type/.test(r.notes.join(' '))?'err':'ok');
+  }catch(err){say('fun-msg',(err.message||'Could not read the PDF')+'.','err')}
+  finally{btn.disabled=false}
+};
 $('copy-fun').onclick=async()=>{
   const prev=ISSUES.find(i=>i.fun&&i.num!==+$('e-num').value);
   prev?fillFun(prev.fun):say('grid-msg','No earlier issue has Fun Stuff yet.','err');
@@ -578,7 +595,10 @@ async function renderPdf(file,onPage,wantCols=true){
   // cut out every column (Story of the Week, Recipe of the Week, ...) for the Columns archive; never blocks an upload
   let columns=null;
   if(wantCols){try{onPage&&onPage(doc.numPages,doc.numPages,'Finding the columns…');columns=await findColumns(doc)}catch(e){columns=null}}
-  return {pages,cover,swapped,columns};
+  // read the Fun Stuff (word search, parsha question, word of the week, fact) so nobody has to type it; never blocks an upload
+  let fun=null;
+  if(wantCols){try{onPage&&onPage(doc.numPages,doc.numPages,'Reading the Fun Stuff…');fun=await readFunFromPdf(doc,t=>onPage&&onPage(doc.numPages,doc.numPages,t))}catch(e){fun=null}}
+  return {pages,cover,swapped,columns,fun};
 }
 async function readPdf(file){
   if(!/pdf$/i.test(file.type)&&!/\.pdf$/i.test(file.name)){say('pdf-msg','That file is not a PDF.','err');return}
@@ -587,6 +607,7 @@ async function readPdf(file){
   try{
     const r=await renderPdf(file,(n,t,x)=>say('pdf-msg',x||`Making page pictures… ${n} of ${t}`));
     PAGES={pages:r.pages,cover:r.cover,columns:r.columns};
+    if(r.fun&&r.fun.fun&&!readFun()){fillFun(r.fun.fun);checkGrid();say('fun-msg','I filled in the Fun Stuff from the PDF. Give it a quick look. '+r.fun.notes.join(' '),/Check|Could not|Type/.test(r.fun.notes.join(' '))?'err':'ok')}
     [r.cover,...r.pages].forEach((b,k)=>{const t=document.createElement('img');t.src=URL.createObjectURL(b);t.alt=k?`Page ${k}`:'Cover';$('thumbs').append(t)});
     say('pdf-msg',`Ready: ${r.pages.length} pages.${r.swapped?' (The cover was on page 2, so I put it first.)':''}${r.columns&&r.columns.length?` Found ${r.columns.length} columns for the Columns archive: ${r.columns.map(c=>c.name).join(', ')}.`:''} The first picture is the cover. Fill in the info below and click Save.`,'ok');
   }catch(err){PDF_FILE=null;say('pdf-msg',"Couldn't read that PDF. Try exporting it again.",'err')}
@@ -835,6 +856,7 @@ $('bgo').onclick=async()=>{
       await up(`${b.num}/cover.jpg`,r.cover,'image/jpeg');
       await up(`${b.num}/issue.pdf`,b.file,'application/pdf');
       const brow={num:b.num,date:b.date,pages:r.pages.length,published:true};
+      if(r.fun&&r.fun.fun)brow.fun=r.fun.fun;
       if(r.columns&&r.columns.length)brow.columns=await upColumns(b.num,r.columns,t=>{b.status=t;drawBulk()});
       await saveIssueRow(brow);
       b.status='Done ✓';b.state='done';ok++;
