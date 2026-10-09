@@ -82,7 +82,7 @@ async function findColumns(doc,onStep){
       who=who.slice(0,60);if(who in COL_WRITERS)who=COL_WRITERS[who];
       // the joke crew changes a little week to week: keep them as one writer in the archive
       if(/joke of the week/i.test(head)&&/Yitz Fine/i.test(who))who='Yitz Fine, Mesh Fine & friends';
-      cols.push({x:minX/PW,y:minY/PH,w:bw/PW,h:bh/PH,name:colName(head),by:who});
+      cols.push({x:minX/PW,y:minY/PH,w:bw/PW,h:bh/PH,name:colName(head),by:who,seed});
     }
     c.width=c.height=0;
     if(!cols.length)continue;
@@ -91,10 +91,29 @@ async function findColumns(doc,onStep){
     const big=await colRender(pg,3400),BW=big.c.width,BH=big.c.height;
     for(const col of cols){
       let {x,y,w,h}=col;
-      if(h<.09){   // only the bar was traced: run the box down to the next column underneath (or a sensible height)
-        const below=cols.filter(d=>d.y>y+.03&&d.x<x+w-.02&&d.x+d.w>x+.02).map(d=>d.y);
-        const bottom=below.length?Math.min(...below)-.008:.955;
-        h=Math.max(.10,Math.min(bottom-y,.32));w=Math.max(w,.205);
+      // did the trace stop partway down a box whose colour fades out (no paper showing right under where it stopped)?
+      let faded=false;
+      if(h>=.09&&h<.14){const yy=Math.min(PH-1,Math.round((y+h)*PH)+7),fx0=Math.round((x+w*.15)*PW),fx1=Math.round((x+w*.85)*PW);let pap=0,n=0;
+        for(let xx=fx0;xx<fx1;xx+=2){const o=(yy*PW+xx)*4,r=px[o],g=px[o+1],b=px[o+2];n++;if(r>232&&g>215&&r-b>=9&&r-b<=75)pap++}
+        faded=pap<n*.5}
+      if(h<.09||faded){   // only the bar (or the top of the box) was traced: run it down to whatever comes next underneath (or a sensible height)
+        // the next column below it. A big box that merely wraps around this one (a story with this box set into it) doesn't count
+        const below=cols.filter(d=>d!==col&&d.y>y+.03&&d.x<x+w-.02&&d.x+d.w>x+.02&&d.x>x-.03&&d.w<w*1.6).map(d=>d.y);
+        let bottom=below.length?Math.min(...below)-.008:.955;
+        // ...or the box's own bottom border: a thin straight line in the bar's colour
+        {const lx0=Math.round((x+w*.1)*PW),lx1=Math.round((x+w*.9)*PW),sd=col.seed;
+          for(let yy=Math.round((y+Math.max(h,.03)+.012)*PH);yy<Math.min(PH-1,Math.round(Math.min(bottom,y+.33)*PH));yy++){
+            let k=0;for(let xx=lx0;xx<lx1;xx+=2){const o=(yy*PW+xx)*4;if(Math.abs(px[o]-sd[0])+Math.abs(px[o+1]-sd[1])+Math.abs(px[o+2]-sd[2])<90)k++}
+            if(k>(lx1-lx0)/2*.7){bottom=Math.min(bottom,(yy+3)/PH);break}
+          }}
+        // ...or the next coloured header bar, even one with no "By:" on it (Tefillah of the Week)
+        const bx0=Math.round((x+w*.08)*PW),bx1=Math.round((x+w*.7)*PW);
+        let run=0;
+        for(let yy=Math.round((y+h+.025)*PH);yy<Math.min(PH-1,Math.round((y+.33)*PH));yy++){
+          let k=0;for(let xx=bx0;xx<bx1;xx+=2){const o=(yy*PW+xx)*4,r=px[o],g=px[o+1],b=px[o+2];if(Math.max(r,g,b)-Math.min(r,g,b)>70&&(r*3+g*6+b)/10<190)k++}
+          if(k>(bx1-bx0)/2*.6){if(++run>=8){bottom=Math.min(bottom,(yy-run)/PH-.016);break}}else run=0;
+        }
+        h=Math.max(Math.min(h,.10),Math.min(bottom-y,.32));w=Math.max(w,.205);
       }
       const pad=.004;x=Math.max(0,x-pad);y=Math.max(0,y-pad);w=Math.min(1-x,w+2*pad);h=Math.min(1-y,h+2*pad);
       const sw=Math.round(w*BW),sh=Math.round(h*BH),k=Math.min(1,1000/sw);

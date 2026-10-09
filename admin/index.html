@@ -110,7 +110,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 </head>
 <body>
 <header class="head"><div class="wrap">
-  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v24</small></a>
+  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v25</small></a>
   <nav id="nav" hidden>
     <button data-go="list" class="on">Issues</button>
     <button data-go="inbox">Inbox <span id="inbox-n"></span></button>
@@ -163,6 +163,9 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
       <p style="margin:10px 0 0"><button class="btn alt small" type="button" id="fix-meta">Read real dates and titles off every cover</button>
       <span class="hint">Fills in the date, title and Hebrew date printed on each issue. Only empty boxes and guessed dates change.</span></p>
       <p class="msg" id="meta-msg" role="status"></p>
+      <p style="margin:10px 0 0"><button class="btn alt small" type="button" id="fix-cols">Redo the column cut-outs on every issue</button>
+      <span class="hint">Cuts the columns out again with the newest, most careful method. Takes a while; keep this tab in front.</span></p>
+      <p class="msg" id="cols-msg" role="status"></p>
       <div style="overflow-x:auto;margin-top:14px"><table>
         <thead><tr><th></th><th>Issue</th><th>Date</th><th>Status</th><th>Email</th><th></th></tr></thead>
         <tbody id="list"></tbody>
@@ -361,7 +364,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 <script src="../config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="columns.js?v=18"></script>
+<script src="columns.js?v=25"></script>
 <script src="fun.js?v=19"></script>
 <script src="ads.js?v=23"></script>
 <script src="meta.js?v=24"></script>
@@ -1166,6 +1169,25 @@ $('fix-covers').onclick=async()=>{
   }
   btn.disabled=false;
   say('fix-msg',(fixed.length?`Fixed ${fixed.length}: #${fixed.join(', #')}.`:'All covers were already right.')+(failed.length?` Could not check: #${failed.join(', #')}.`:'')+' Refresh in a minute to see the new thumbnails.',failed.length?'err':'ok');
+};
+
+/* ---------- repair: cut every issue's columns out again ---------- */
+$('fix-cols').onclick=async()=>{
+  const btn=$('fix-cols');btn.disabled=true;let done=0,failed=[],total=0;
+  const todo=ISSUES.slice().sort((a,b)=>b.num-a.num);
+  for(const [k,i] of todo.entries()){
+    say('cols-msg',`Issue #${i.num} (${k+1} of ${todo.length})… ${total} columns so far`);
+    try{
+      const res=await fetch(pub(i.num+'/issue.pdf'));if(!res.ok)throw new Error('no PDF');
+      const found=await findColumns(await pdfjsLib.getDocument({data:await res.arrayBuffer()}).promise);
+      if(!found.length)continue;
+      const columns=await upColumns(i.num,found);
+      const {error}=await sb.from('issues').update({columns}).eq('num',i.num);if(error)throw error;
+      done++;total+=found.length;
+    }catch(err){failed.push(i.num)}
+  }
+  btn.disabled=false;
+  say('cols-msg',`Redid ${total} columns on ${done} issues.`+(failed.length?` Could not do: #${failed.join(', #')}.`:''),failed.length?'err':'ok');
 };
 
 /* ---------- repair: real date, title and Hebrew date from each issue's own cover ---------- */
