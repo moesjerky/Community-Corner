@@ -64,6 +64,9 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 .ad img{width:90px;height:100px;object-fit:contain;background:var(--paper);border:1px solid var(--line)}
 .ad .ph{width:90px;height:100px;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);border:1px dashed var(--line);text-align:center;cursor:pointer}
 .ad .tools{display:flex;flex-direction:column;gap:4px}
+#sp-ads .ad{grid-template-columns:90px 1fr 1fr 170px auto}
+#sp-ads .ad .when{display:flex;flex-direction:column;gap:6px}
+#sp-ads .ad .hint{grid-column:1/-1}
 .ad .tools button{font:700 12px var(--body);border:1px solid var(--ink);background:var(--card);padding:4px 8px;cursor:pointer}
 .sticky{position:sticky;bottom:0;background:var(--paper);border-top:2px solid var(--ink);padding-block:12px;margin-top:10px;z-index:2}
 .login{max-width:400px;margin:40px auto}
@@ -102,12 +105,12 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 .two{display:grid;grid-template-columns:1fr 1fr;gap:22px}
 @media (max-width:700px){.tiles{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-@media (max-width:700px){.grid,.grid2{grid-template-columns:1fr}.ad{grid-template-columns:70px 1fr}.ad img,.ad .ph{width:70px;height:80px}.ad .tools{flex-direction:row;grid-column:1/-1}}
+@media (max-width:700px){.grid,.grid2{grid-template-columns:1fr}.ad,#sp-ads .ad{grid-template-columns:70px 1fr}.ad img,.ad .ph{width:70px;height:80px}.ad .tools{flex-direction:row;grid-column:1/-1}}
 </style>
 </head>
 <body>
 <header class="head"><div class="wrap">
-  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v19</small></a>
+  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v20</small></a>
   <nav id="nav" hidden>
     <button data-go="list" class="on">Issues</button>
     <button data-go="inbox">Inbox <span id="inbox-n"></span></button>
@@ -267,7 +270,8 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
   <!-- INBOX -->
   <section id="v-spons" class="card" hidden>
     <h2>Sponsors</h2>
-    <p class="hint">These show on the website's Sponsors page every week until you change them. Click a picture to upload or swap the ad. Use ↑ ↓ to change the order. Nothing changes on the website until you click Save.</p>
+    <p class="hint">Every new issue you upload, the ads are cut out of the PDF and this list updates by itself. An ad set to <b>This week's paper</b> shows only while it is in the newest issue. Set one to <b>Permanent</b> to keep it up no matter what, or <b>Until a date</b> for an ad that is not in the paper. Nothing you change here goes live until you click Save.</p>
+    <p><button type="button" class="btn alt small" id="sp-scan">Update from the newest issue's PDF</button></p>
     <div class="ads" id="sp-ads"></div>
     <p><button type="button" class="btn alt small" id="sp-add">+ Add sponsor</button></p>
     <div class="grid2">
@@ -356,6 +360,7 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="columns.js?v=18"></script>
 <script src="fun.js?v=19"></script>
+<script src="ads.js?v=20"></script>
 <script>
 const $=id=>document.getElementById(id);
 const CFG=window.CC_CONFIG||{};
@@ -598,7 +603,9 @@ async function renderPdf(file,onPage,wantCols=true){
   // read the Fun Stuff (word search, parsha question, word of the week, fact) so nobody has to type it; never blocks an upload
   let fun=null;
   if(wantCols){try{onPage&&onPage(doc.numPages,doc.numPages,'Reading the Fun Stuff…');fun=await readFunFromPdf(doc,t=>onPage&&onPage(doc.numPages,doc.numPages,t))}catch(e){fun=null}}
-  return {pages,cover,swapped,columns,fun};
+  let ads=null;
+  if(wantCols){try{onPage&&onPage(doc.numPages,doc.numPages,'Finding the ads…');ads=await findAds(doc)}catch(e){ads=null}}
+  return {pages,cover,swapped,columns,fun,ads};
 }
 async function readPdf(file){
   if(!/pdf$/i.test(file.type)&&!/\.pdf$/i.test(file.name)){say('pdf-msg','That file is not a PDF.','err');return}
@@ -606,7 +613,7 @@ async function readPdf(file){
   const m=file.name.match(/(\d+)(?!.*\d)/);if(m&&!$('e-num').disabled&&!$('e-num').value)$('e-num').value=m[1];
   try{
     const r=await renderPdf(file,(n,t,x)=>say('pdf-msg',x||`Making page pictures… ${n} of ${t}`));
-    PAGES={pages:r.pages,cover:r.cover,columns:r.columns};
+    PAGES={pages:r.pages,cover:r.cover,columns:r.columns,ads:r.ads};
     if(r.fun&&r.fun.fun&&!readFun()){fillFun(r.fun.fun);checkGrid();say('fun-msg','I filled in the Fun Stuff from the PDF. Give it a quick look. '+r.fun.notes.join(' '),/Check|Could not|Type/.test(r.fun.notes.join(' '))?'err':'ok')}
     [r.cover,...r.pages].forEach((b,k)=>{const t=document.createElement('img');t.src=URL.createObjectURL(b);t.alt=k?`Page ${k}`:'Cover';$('thumbs').append(t)});
     say('pdf-msg',`Ready: ${r.pages.length} pages.${r.swapped?' (The cover was on page 2, so I put it first.)':''}${r.columns&&r.columns.length?` Found ${r.columns.length} columns for the Columns archive: ${r.columns.map(c=>c.name).join(', ')}.`:''} The first picture is the cover. Fill in the info below and click Save.`,'ok');
@@ -614,22 +621,60 @@ async function readPdf(file){
   finally{$('save').disabled=false}
 }
 
-/* ---------- sponsors tab: one list that stays up every week (settings key "sponsors") ---------- */
-let SP=[],spSlot=null,SP_OK=false;
+/* ---------- sponsors tab (settings key "sponsors") ----------
+   value = {print, issue, hide:[sig], ads:[{img,name,info,sig,mode,until,issue}]}
+   mode "week": shows only while the ad is in the newest issue (issue === value.issue). "perm": always. "until": through a date. */
+let SP=[],spSlot=null,SP_OK=false,SP_ISSUE=null,SP_HIDE=[];
+const spToday=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+function spLive(a){const m=a.mode||'week';return m==='perm'||(m==='until'&&(a.until||'')>=spToday())||(m==='week'&&(SP_ISSUE==null||a.issue===SP_ISSUE))}
 function drawSp(){
-  $('sp-ads').innerHTML=SP.map((a,k)=>`<div class="ad">
+  $('sp-ads').innerHTML=SP.map((a,k)=>{const m=a.mode||'week',live=spLive(a);return `<div class="ad"${live?'':' style="opacity:.55"'}>
     ${a.img||a.file?`<img src="${esc(adSrc(a))}" alt="" data-pic="${k}" style="cursor:pointer">`:`<div class="ph" data-pic="${k}">Click to add picture</div>`}
-    <label>Business name<input data-k="${k}" data-f="name" value="${esc(a.name)}"></label>
+    <label>Business name<input data-k="${k}" data-f="name" value="${esc(a.name)}" placeholder="${a.name?'':'New ad: type its name'}"></label>
     <label>Phone, email, website<input data-k="${k}" data-f="info" value="${esc(a.info)}"></label>
+    <div class="when"><label>Show it<select data-k="${k}" data-f="mode"><option value="week"${m==='week'?' selected':''}>This week's paper</option><option value="perm"${m==='perm'?' selected':''}>Permanent</option><option value="until"${m==='until'?' selected':''}>Until a date</option></select></label>
+    ${m==='until'?`<label>Last day<input type="date" data-k="${k}" data-f="until" value="${esc(a.until||'')}"></label>`:''}</div>
     <div class="tools"><button type="button" data-mv="${k}" data-d="-1" aria-label="Move up">↑</button><button type="button" data-mv="${k}" data-d="1" aria-label="Move down">↓</button><button type="button" data-rm="${k}">Remove</button></div>
-  </div>`).join('')||'<p class="hint">No sponsors yet.</p>';
-  $('sp-ads').querySelectorAll('[data-f]').forEach(i=>i.oninput=()=>SP[i.dataset.k][i.dataset.f]=i.value);
+    <p class="hint" style="margin:0">${live?'Showing on the website':m==='until'?'Hidden: its last day passed':'Hidden: not in the newest issue'}${a.issue?` · last seen in #${a.issue}`:''}</p>
+  </div>`}).join('')||'<p class="hint">No sponsors yet.</p>';
+  $('sp-ads').querySelectorAll('[data-f]').forEach(i=>{const set=()=>{const a=SP[i.dataset.k];a[i.dataset.f]=i.value;
+      if(i.dataset.f==='mode'){if(i.value==='until'&&!a.until){const d=new Date(Date.now()+7*864e5);a.until=d.toISOString().slice(0,10)}drawSp()}
+      if(i.dataset.f==='until')drawSp()};
+    i.tagName==='SELECT'||i.type==='date'?i.onchange=set:i.oninput=set});
   $('sp-ads').querySelectorAll('[data-pic]').forEach(p=>p.onclick=()=>{spSlot=+p.dataset.pic;$('sp-file').click()});
-  $('sp-ads').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{SP.splice(+b.dataset.rm,1);drawSp()});
+  // a removed ad is remembered, so it does not come back by itself next week
+  $('sp-ads').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const [a]=SP.splice(+b.dataset.rm,1);if(a&&a.sig)SP_HIDE.push(a.sig);drawSp()});
   $('sp-ads').querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{const k=+b.dataset.mv,j=k+ +b.dataset.d;if(j<0||j>=SP.length)return;[SP[k],SP[j]]=[SP[j],SP[k]];drawSp()});
 }
-$('sp-file').onchange=e=>{const f=e.target.files[0];if(f&&spSlot!==null){SP[spSlot].file=f;drawSp()}e.target.value=''};
-$('sp-add').onclick=()=>{SP.push({name:'',info:''});drawSp()};
+$('sp-file').onchange=e=>{const f=e.target.files[0];if(f&&spSlot!==null){SP[spSlot].file=f;SP[spSlot].sig='';drawSp()}e.target.value=''};
+$('sp-add').onclick=()=>{SP.push({name:'',info:'',mode:'perm'});drawSp()};
+// fold the ads found in an issue's PDF into a sponsor list: known ads keep their name and info, new ones are added
+async function spMerge(list,hide,num,found){
+  for(const a of list)if(!a.sig&&a.img&&!a.file)a.sig=await adSigOfImage(a.img);
+  const seen=[];let added=0;
+  for(const f of found){
+    if(hide.some(h=>adSigDiff(h,f.sig)<1))continue;
+    let best=null,bd=.7;
+    for(const a of list){const d=adSigDiff(a.sig,f.sig);if(d<bd&&!seen.includes(a)){bd=d;best=a}}
+    if(best){best.issue=num;best.sig=f.sig;if(!best.mode)best.mode='week'}
+    else{best={name:'',info:'',sig:f.sig,mode:'week',issue:num,file:f.blob};list.push(best);added++}
+    seen.push(best);
+  }
+  // this week's ads first, in the paper's order
+  const rest=list.filter(a=>!seen.includes(a));list.length=0;list.push(...seen,...rest);
+  return {inPaper:seen.length,added};
+}
+async function spUpload(list,tell){
+  const ads=[];
+  for(const a of list){
+    if(!a.name&&!a.file&&!a.img)continue;
+    let img=a.img,sig=a.sig||'';
+    if(a.file){tell&&tell(`Uploading: ${a.name||'ad'}…`);const ext=((a.file.name||'ad.jpg').split('.').pop()||'jpg').toLowerCase();const path=`sp/${Date.now()}-${Math.random().toString(36).slice(2,7)}.${ext}`;await up(path,a.file,a.file.type||'image/jpeg');img=pub(path);if(!sig)sig=await adSigOfImage(img)}
+    if(!img)throw new Error(`"${a.name}" needs a picture`);
+    ads.push({img,name:a.name||'',info:a.info||'',sig,mode:a.mode||'week',...(a.until?{until:a.until}:{}),...(a.issue?{issue:a.issue}:{})});
+  }
+  return ads;
+}
 async function loadSpons(){
   show('spons');SP_OK=false;$('sp-save').disabled=true;say('sp-msg','Loading…');
   const r=await sb.from('settings').select('value').eq('key','sponsors').maybeSingle();
@@ -646,27 +691,49 @@ async function loadSpons(){
     }catch(e){v={ads:[]}}
     note='These are the sponsors on the website now. Click Save once to move them here.';
   }
-  SP=(v.ads||[]).map(a=>({...a}));$('sp-pname').value=v.print?.name||'';$('sp-pinfo').value=v.print?.info||'';
+  SP=(v.ads||[]).map(a=>({...a}));SP_ISSUE=v.issue??null;SP_HIDE=(v.hide||[]).slice();
+  $('sp-pname').value=v.print?.name||'';$('sp-pinfo').value=v.print?.info||'';
   drawSp();SP_OK=true;$('sp-save').disabled=false;say('sp-msg',note);
 }
+$('sp-scan').onclick=async()=>{
+  if(!SP_OK)return;const btn=$('sp-scan'),top=ISSUES.filter(i=>i.published).sort((a,b)=>b.num-a.num)[0];
+  if(!top){say('sp-msg','There is no published issue yet.','err');return}
+  btn.disabled=true;
+  try{
+    say('sp-msg',`Opening issue #${top.num}…`);
+    const res=await fetch(pub(top.num+'/issue.pdf')+'?t='+Date.now());if(!res.ok)throw new Error('That issue has no PDF saved');
+    const found=await findAds(await pdfjsLib.getDocument({data:await res.arrayBuffer()}).promise);
+    if(!found.length){say('sp-msg',`I could not find the sponsor section in #${top.num}.`,'err');return}
+    const r=await spMerge(SP,SP_HIDE,top.num,found);SP_ISSUE=top.num;drawSp();
+    say('sp-msg',`Found ${found.length} ads in #${top.num}: ${r.inPaper-r.added} I already knew, ${r.added} new. Type a name for the new ones, then click Save.`,'ok');
+  }catch(err){say('sp-msg',(err.message||'Could not read the PDF')+'.','err')}
+  finally{btn.disabled=false}
+};
 $('sp-save').onclick=async()=>{
   if(!SP_OK)return;$('sp-save').disabled=true;
   try{
-    const ads=[];
-    for(const a of SP){
-      if(!a.name&&!a.file&&!a.img)continue;
-      let img=a.img;
-      if(a.file){say('sp-msg',`Uploading: ${a.name||'sponsor'}…`);const ext=(a.file.name.split('.').pop()||'jpg').toLowerCase();const path=`sp/${Date.now()}-${Math.random().toString(36).slice(2,7)}.${ext}`;await up(path,a.file,a.file.type||'image/jpeg');img=pub(path)}
-      if(!img){say('sp-msg',`"${a.name}" needs a picture.`,'err');$('sp-save').disabled=false;return}
-      ads.push({img,name:a.name||'',info:a.info||''});
-    }
+    const ads=await spUpload(SP,t=>say('sp-msg',t));
     const pn=$('sp-pname').value.trim();
-    const {error}=await sb.from('settings').upsert({key:'sponsors',value:{ads,...(pn?{print:{name:pn,info:$('sp-pinfo').value.trim()}}:{})}});
+    const {error}=await sb.from('settings').upsert({key:'sponsors',value:{ads,hide:SP_HIDE.slice(-60),...(SP_ISSUE!=null?{issue:SP_ISSUE}:{}),...(pn?{print:{name:pn,info:$('sp-pinfo').value.trim()}}:{})}});
     if(error)throw error;
     SP=ads.map(a=>({...a}));drawSp();say('sp-msg','Saved! The Sponsors page is updated.','ok');
   }catch(err){say('sp-msg',(err.message||'Something went wrong')+'. Nothing is lost; try Save again.','err')}
   finally{$('sp-save').disabled=false}
 };
+// after a new newest issue is uploaded: update the sponsor list from its ads without anyone opening the tab
+async function autoSponsors(num,found){
+  if(!found||!found.length)return '';
+  try{
+    const r=await sb.from('settings').select('value').eq('key','sponsors').maybeSingle();
+    if(r.error||!r.data)return '';                       // never write over a list we could not read
+    const v=r.data.value||{},list=(v.ads||[]).map(a=>({...a}));
+    if(v.issue!=null&&num<v.issue)return '';
+    const m=await spMerge(list,v.hide||[],num,found),ads=await spUpload(list);
+    const {error}=await sb.from('settings').upsert({key:'sponsors',value:{...v,ads,issue:num}});
+    if(error)return '';
+    return ` Sponsors updated from this issue (${m.inPaper} ads${m.added?`, ${m.added} new: add their names in the Sponsors tab`:''}).`;
+  }catch(e){return ''}
+}
 
 /* save */
 async function up(path,body,type){
@@ -722,13 +789,15 @@ $('v-edit').onsubmit=async e=>{
     if(newCols)row.columns=newCols;
     say('save-msg','Saving…');
     await saveIssueRow(row);
-    say('save-msg',row.published?'Saved! It is live on the website.':'Saved as a draft. Publish it when you are ready.','ok');
     const top=Math.max(0,...ISSUES.map(i=>i.num));
+    // the newest issue's ads become this week's sponsors
+    const adNote=row.published&&num>=top&&PAGES&&PAGES.ads?await autoSponsors(num,PAGES.ads):'';
+    say('save-msg',(row.published?'Saved! It is live on the website.':'Saved as a draft. Publish it when you are ready.')+adNote,'ok');
     const prev=ISSUES.find(i=>i.num===num);
     if(row.published&&num>=top&&!prev?.emailed_at&&(isNew||!prev?.published)){
       say('save-msg','Saved and live. Emailing subscribers…','ok');
       const ok=await mailIssue(num,false,null,true);
-      say('save-msg',ok?'Saved, live, and emailed to subscribers. 📬':'Saved and live, but the email did not go out. Use "Email subscribers" on the list.',ok?'ok':'err');
+      say('save-msg',(ok?'Saved, live, and emailed to subscribers.':'Saved and live, but the email did not go out. Use "Email subscribers" on the list.')+adNote,ok?'ok':'err');
     }
     setTimeout(loadList,1800);
   }catch(err){say('save-msg',(err.message||'Something went wrong')+'. Nothing is lost; try Save again.','err')}
@@ -858,12 +927,15 @@ $('bgo').onclick=async()=>{
       const brow={num:b.num,date:b.date,pages:r.pages.length,published:true};
       if(r.fun&&r.fun.fun)brow.fun=r.fun.fun;
       if(r.columns&&r.columns.length)brow.columns=await upColumns(b.num,r.columns,t=>{b.status=t;drawBulk()});
-      await saveIssueRow(brow);
+      await saveIssueRow(brow);b.ads=r.ads;
       b.status='Done ✓';b.state='done';ok++;
     }catch(err){b.status='Failed: '+(err.message||'error');b.state='bad'}
     drawBulk();say('bmsg',`${k+1} of ${todo.length} finished…`);
   }
-  say('bmsg',`Added ${ok} of ${todo.length} issues.`+(ok<todo.length?' Fix the failed ones and click Upload all again.':''),ok===todo.length?'ok':'err');
+  let bulkAds='';
+  {const newest=todo.filter(b=>b.state==='done'&&b.ads&&b.ads.length).sort((a,b)=>b.num-a.num)[0];
+    if(newest&&newest.num>=Math.max(0,...ISSUES.map(i=>i.num)))bulkAds=await autoSponsors(newest.num,newest.ads)}
+  say('bmsg',`Added ${ok} of ${todo.length} issues.`+bulkAds+(ok<todo.length?' Fix the failed ones and click Upload all again.':''),ok===todo.length?'ok':'err');
   $('bcancel').disabled=false;
   const r=await sb.from('issues').select('num,title,date,published,pages,fun,sponsors').order('num',{ascending:false});if(r.data)ISSUES=r.data;
   checkBulk();
