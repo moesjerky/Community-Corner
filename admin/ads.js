@@ -34,7 +34,11 @@ async function findAds(doc){
     const m=pdfjsLib.Util.transform(vp.transform,ban.transform),bx=m[4]+ban.width*vp.scale/2,by=m[5];
     // the ads are on the same half of the sheet as the banner, below it
     const spread=W>H*1.2,half=spread&&bx>W/2?1:0;
-    let X0=Math.round((spread?half*W/2:0)+W*.012),X1=Math.round((spread?(half+1)*W/2:W)-W*.004);const Y0=Math.round(by+H*.008),Y1=Math.round(H*.958);
+    let X0=Math.round((spread?half*W/2:0)+W*.012),X1=Math.round((spread?(half+1)*W/2:W)-W*.004);const Y0=Math.round(by+H*.008);let Y1=Math.round(H*.958);
+    // stop above the small print at the bottom of the page ("...is an imprint of..."), so it can't glue the last row together
+    for(const t of tc.items){if(!/imprint of|all rights reserved/i.test(t.str))continue;
+      const q=pdfjsLib.Util.transform(vp.transform,t.transform),fh=Math.hypot(q[2],q[3]),cx=q[4]+t.width*vp.scale/2;
+      if(cx>X0&&cx<X1&&q[5]>H*.6)Y1=Math.min(Y1,Math.round(q[5]-fh*1.15))}
     // the banner is a red bar exactly as wide as the ad grid: use its ends as the left and right edges
     {const yb=Math.max(0,Math.round(by-H*.004)),red=x=>{const o=(yb*W+x)*4;return px[o]>150&&px[o+1]<110&&px[o+2]<110&&px[o]-px[o+1]>70};
       let l=Math.round(m[4])-6,r=Math.round(m[4]+ban.width*vp.scale)+6;
