@@ -352,6 +352,20 @@ footer .applink{margin-left:16px;margin-bottom:46px}
 .words{columns:2;padding:0;margin:0;list-style:none;font:700 17px/1.5 "Courier Prime",monospace}
 .words li.done{text-decoration:line-through;color:var(--schach)}
 .msg{font-weight:700;color:var(--red);min-height:1.5em;margin-top:10px}
+.boardwrap{position:relative}
+.win{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(36,25,46,.45)}
+.win[hidden]{display:none}
+.stampbox{background:var(--gold);color:var(--ink);border:4px solid var(--ink);box-shadow:8px 8px 0 var(--red);padding:22px 28px;text-align:center;transform:rotate(-4deg);animation:stampin .45s cubic-bezier(.2,1.6,.4,1) both;max-width:86%}
+.stampbox b{display:block;font:400 clamp(26px,5vw,46px)/1.05 var(--display);color:var(--plum)}
+.stampbox span{display:block;font-weight:700;margin-top:8px}
+.stampbox button{margin-top:14px;font:700 16px var(--body);background:var(--ink);color:var(--paper);border:0;padding:10px 20px;cursor:pointer}
+.stampbox button:hover,.stampbox button:focus-visible{background:var(--red);outline:none}
+@keyframes stampin{from{transform:rotate(8deg) scale(2.2);opacity:0}to{transform:rotate(-4deg) scale(1);opacity:1}}
+.board button.hop{animation:hop .5s ease both}
+@keyframes hop{40%{transform:scale(1.35) rotate(-6deg)}}
+.confetti{position:fixed;top:-20px;width:12px;height:12px;z-index:60;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translate(var(--dx),108vh) rotate(var(--rot))}}
+@media (prefers-reduced-motion:reduce){.stampbox,.board button.hop{animation:none}.confetti{display:none}}
 details summary{cursor:pointer;font-weight:700;color:var(--red-dk)}
 
 .cta{background:var(--plum);color:#fff;padding:26px;display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center;margin-block:30px}
@@ -537,7 +551,7 @@ footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
     <div class="row-between"><h2 class="sec-h" id="f-title">Word Search</h2><button class="btn" type="button" id="f-print" style="margin:0">Print this page</button></div>
     <p class="meta">Tap the first letter of a word, then the last letter.</p>
     <div class="fun">
-      <div><div class="board" id="board" role="grid" aria-label="Word search"></div><div class="msg" id="msg"></div></div>
+      <div><div class="boardwrap"><div class="board" id="board" role="grid" aria-label="Word search"></div><div class="win" id="win" hidden role="status"><div class="stampbox"><b>You found them all!</b><span id="win-n"></span><button type="button" id="win-again">Play again</button></div></div></div><div class="msg" id="msg"></div></div>
       <div class="side" id="f-side"><div class="box"><ul class="words" id="words"></ul></div></div>
     </div>
   </section>
@@ -1215,7 +1229,23 @@ function pick(r,c){
   hit.done=true;hit.li.classList.add('done');path.forEach(p=>p.classList.add('found'));
   const left=items.filter(i=>!i.done).length;
   $('msg').textContent=left?`Found ${hit.li.textContent}! ${left} to go.`:'You found them all!';
+  if(!left)celebrate();
 }
+// every word found: the found letters hop in a wave, a stamp slams down, and paper-coloured confetti falls
+function celebrate(){
+  cells.filter(b=>b.classList.contains('found')).forEach((b,k)=>{b.style.animationDelay=(k*12)+'ms';b.classList.remove('hop');void b.offsetWidth;b.classList.add('hop')});
+  $('win-n').textContent=`All ${items.length} words. Nice work!`;
+  setTimeout(()=>{$('win').hidden=false;$('win-again').focus({preventScroll:true})},500);
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  const colors=['#C3262E','#4A2A7B','#F6E58D','#0F4C8A','#3F6B34','#E77A2B'];
+  for(let k=0;k<110;k++){
+    const d=document.createElement('i');d.className='confetti';
+    const sz=6+Math.random()*10;
+    d.style.cssText=`left:${Math.random()*100}vw;width:${sz}px;height:${Math.random()<.4?sz*2.2:sz}px;background:${colors[k%colors.length]};--dx:${(Math.random()*240-120).toFixed(0)}px;--rot:${(Math.random()*1400-700).toFixed(0)}deg;animation-duration:${(2.2+Math.random()*2.2).toFixed(2)}s;animation-delay:${(Math.random()*.9).toFixed(2)}s`;
+    document.body.append(d);d.addEventListener('animationend',()=>d.remove());
+  }
+}
+$('win-again').onclick=()=>{$('win').hidden=true;items.forEach(it=>{it.done=false;it.li.classList.remove('done')});cells.forEach(b=>{b.classList.remove('found','sel','hop');b.style.animationDelay=''});start=null;$('msg').textContent='Fresh board. Go!'};
 renderLists();
 </script>
 </body>
