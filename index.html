@@ -340,16 +340,16 @@ footer .applink{margin-left:16px;margin-bottom:46px}
 @media (max-width:600px){.cform .row{grid-template-columns:1fr}}
 
 /* fun stuff */
-.fun{display:grid;grid-template-columns:auto 1fr;gap:32px;align-items:start;margin-top:18px}
-.board{display:grid;grid-template-columns:repeat(14,1fr);border:3px solid var(--ink);background:var(--card);width:min(540px,100%);user-select:none}
+.fun{display:grid;grid-template-columns:minmax(0,640px) minmax(260px,1fr);gap:32px;align-items:start;margin-top:18px}
+.board{display:grid;grid-template-columns:repeat(14,1fr);border:3px solid var(--ink);background:var(--card);width:100%;user-select:none}
 .board button{aspect-ratio:1;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:none;
-  font:700 clamp(12px,2.6vw,19px) "Courier Prime",monospace;color:var(--ink);cursor:pointer;padding:0}
+  font:700 clamp(13px,3.1vw,28px) "Courier Prime",monospace;color:var(--ink);cursor:pointer;padding:0}
 .board button.sel{background:var(--gold)}
 .board button.found{background:var(--schach);color:#fff}
 .side{display:flex;flex-direction:column;gap:18px}
 .box{background:var(--card);border:2px solid var(--ink);padding:18px}
 .box h3{font-size:22px;margin:8px 0}
-.words{columns:2;padding:0;margin:0;list-style:none;font:700 15px "Courier Prime",monospace}
+.words{columns:2;padding:0;margin:0;list-style:none;font:700 17px/1.5 "Courier Prime",monospace}
 .words li.done{text-decoration:line-through;color:var(--schach)}
 .msg{font-weight:700;color:var(--red);min-height:1.5em;margin-top:10px}
 details summary{cursor:pointer;font-weight:700;color:var(--red-dk)}
