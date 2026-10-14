@@ -530,6 +530,31 @@ body.home .recent-h h3{font-size:clamp(40px,5.4vw,64px);color:var(--plum)}
 .signoff img{height:clamp(110px,14vw,180px);width:auto;display:block;margin:0 auto}
 .signoff b{display:block;font:400 clamp(34px,6vw,76px)/1 var(--display);margin-top:18px}
 footer{border-top:0;margin-top:0;padding-top:16px}
+/* purple leads on every page: the top bar, the ribbon, the buttons and the accents all stay in one family */
+.zchus{background:var(--plum)}
+.head{background:var(--ink)}
+.menu a:hover,.menu a:focus-visible{border-bottom-color:var(--sun)}
+.menu a.subnav{background:var(--sun);color:var(--ink)}
+.ribbon .r1{fill:var(--ink)}.ribbon .r2{fill:var(--plum)}
+.hero h1{text-shadow:3px 3px 0 var(--plum),5px 6px 0 rgba(0,0,0,.25)}
+.hero-kick{color:var(--sun)}
+.ticker{background:var(--ink);color:var(--sun);border:0}
+.nh-cta{background:var(--plum)}
+.nh-fan button.main{box-shadow:0 0 0 6px var(--ink),14px 14px 0 6px var(--violet)}
+.shabbos>div,.shabbos .par{border-top-color:var(--plum)}
+.tile,.tile:hover,.tile:focus-visible{--c:var(--plum)!important}
+.tile:nth-child(2){--c:var(--violet)!important}.tile:nth-child(3){--c:var(--ink)!important}
+.recent-h a{color:var(--plum)}
+.new{background:var(--plum)}
+.sendbox{border-left-color:var(--plum)}
+.eyebrow,.eyebrow.red,.eyebrow.plum{background:var(--plum)}
+.btn.dl{background:var(--plum)}.btn.share{background:var(--ink)}
+.btn:hover,.btn:focus-visible,.btn.dl:hover,.btn.share:hover{background:var(--violet);color:#fff}
+.nh-cta .btn,.nh-cta .btn.dl,.nh-cta .btn.share{background:var(--ink)}.nh-cta .btn.go{background:var(--sun);color:var(--ink)}
+.nh-cta .btn:hover,.nh-cta .btn:focus-visible{background:#fff;color:var(--ink)}
+.cta{background:var(--card);border:5px solid var(--ink);box-shadow:10px 10px 0 var(--plum);border-radius:0}
+.cta h3,.cta h3 span{color:var(--plum)}.cta h3 em{color:var(--ink)}
+.cta .ctab{background:var(--plum);color:#fff}
 @media (max-width:760px){
   .nh-fan button:nth-child(1),.nh-fan button:nth-child(4){display:none}
   .tiles{grid-template-columns:1fr}
