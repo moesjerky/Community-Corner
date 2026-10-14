@@ -11,7 +11,7 @@ const COL_NAMES=[ // [pattern on the lowercased header, the name shown on the we
   [/song of the week/,'Song of the Week'],[/trivia/,'Weekly Trivia'],[/super cool facts/,'Super Cool Facts'],[/intrigue/,'Intrigue'],
   [/pesach dvar torah/,'Pesach Dvar Torah'],[/chol hamoed trips/,'Chol Hamoed Trips'],[/cool by mistake/,'Cool By Mistake Inventions'],
   [/did you know/,'Did You Know'],[/interesting facts about pesach/,'Interesting Facts About Pesach']];
-const COL_WRITERS={'Dr. Shaul Schwalb':'Rabbi Dr. Shaul Schwalb','Chanalee-The Challah Fairy':'Chanalee, The Challah Fairy','Asher Yotzar':''};
+const COL_WRITERS={'Dr. Shaul Schwalb':'Rabbi Dr. Shaul Schwalb','Chanalee-The Challah Fairy':'Chanalee, The Challah Fairy','Chanalee':'Chanalee, The Challah Fairy','The Rabbi details':'The Rabbi','Gabriella & Mikayla':'Gabriella and Mikayla','Gabriella':'Gabriella and Mikayla','Asher Yotzar':''};
 const colSlug=s=>String(s||'').toLowerCase().replace(/['’]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
 function colName(head){
   const l=head.toLowerCase().replace(/’/g,"'");

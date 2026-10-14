@@ -828,9 +828,13 @@ function loadColumns(){
   const fromDb=DB?fetch(`${CFG.supabaseUrl}/rest/v1/issues?select=num,columns&published=eq.true&columns=not.is.null`,{headers:{apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey}})
     .then(r=>r.ok?r.json():[]).catch(()=>[]):Promise.resolve([]);
   return Promise.all([fetch('columns.json').then(r=>r.json()),fromDb]).then(([d,rows])=>{
-    const ent=d.entries.map(e=>({num:e[0],col:d.columns[e[1]],slug:d.slugs[e[1]],by:e[2],ar:e[3],src:`columns/${e[0]}/${d.slugs[e[1]]}.jpg`}));
+    // tidy names: the same column or writer printed a few different ways is shown as one
+    const COLFIX={'eg riddles':'EG Riddles','kaylee’s riddles':"Kaylee's Riddles","kaylee's riddles":"Kaylee's Riddles","what's up? all about":"What's Up?",'what’s up? all about':"What's Up?",'poem of the week':'Poem of the Week'};
+    const BYFIX={'chanalee':'Chanalee, The Challah Fairy','the rabbi details':'The Rabbi','gabriella & mikayla':'Gabriella and Mikayla','gabriella':'Gabriella and Mikayla'};
+    const fixCol=n=>COLFIX[String(n).toLowerCase()]||n,fixBy=n=>BYFIX[String(n||'').toLowerCase()]||n||'';
+    const ent=d.entries.map(e=>({num:e[0],col:d.columns[e[1]],slug:d.slugs[e[1]],by:fixBy(e[2]),ar:e[3],src:`columns/${e[0]}/${d.slugs[e[1]]}.jpg`}));
     const have=new Set(ent.map(e=>e.num+'/'+e.slug));
-    rows.forEach(i=>(i.columns||[]).forEach(c=>{if(!c||!c.name||!c.img)return;const sl=slugify(c.name);if(!have.has(i.num+'/'+sl))ent.push({num:i.num,col:c.name,slug:sl,by:c.by||'',ar:c.ar||1,src:c.img})}));
+    rows.forEach(i=>(i.columns||[]).forEach(c=>{if(!c||!c.name||!c.img)return;const nm=fixCol(c.name),sl=slugify(nm);if(!have.has(i.num+'/'+sl)&&!have.has(i.num+'/'+slugify(c.name)))ent.push({num:i.num,col:nm,slug:sl,by:fixBy(c.by),ar:c.ar||1,src:c.img})}));
     ent.sort((a,b)=>b.num-a.num);COLS=ent;return ent}).catch(()=>{COLS=[];return COLS});
 }
 function showColumns(){
