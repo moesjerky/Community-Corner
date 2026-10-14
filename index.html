@@ -472,6 +472,70 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
 .coverwrap:hover{transform:rotate(-2deg)}
 footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
 @media (max-width:760px){.menu a{padding:8px 8px;font-size:12.5px}}
+
+/* ---------- home page: dark newsstand top, picture tiles, big sign-off ---------- */
+body.home .head{background:var(--ink)}
+body.home .menu a:hover,body.home .menu a:focus-visible{border-bottom-color:var(--sun)}
+body.home .head.attop .logo{visibility:visible;pointer-events:auto}
+body.home .head.attop .logo img{opacity:1;transform:none}
+.nh{background:var(--ink);color:#fff;overflow:hidden}
+.nh>.wrap{text-align:center;padding-top:clamp(22px,4vw,46px)}
+.nh-kick{font:800 clamp(11px,1.2vw,14px) var(--body);letter-spacing:.2em;text-transform:uppercase;color:var(--sun)}
+.nh h1{font:400 clamp(58px,13.4vw,190px)/.82 var(--display);margin:12px 0 0;color:#fff;letter-spacing:.005em;text-transform:none}
+.nh h1 span{color:var(--sun);display:block}
+.nh-fan{position:relative;height:clamp(300px,42vw,560px);margin-top:clamp(20px,3vw,40px)}
+.nh-fan button{position:absolute;left:50%;top:10.5%;width:clamp(150px,21vw,300px);margin-left:calc(clamp(150px,21vw,300px)/-2);padding:0;border:4px solid #fff;background:#fff;cursor:pointer;
+  transform-origin:50% 120%;transform:translateX(var(--x)) rotate(var(--r));transition:transform .28s cubic-bezier(.2,.8,.3,1.2);animation:fanout .7s cubic-bezier(.2,.9,.3,1.15) both}
+.nh-fan button img{display:block;width:100%;height:auto}
+.nh-fan button:hover,.nh-fan button:focus-visible{transform:translateX(var(--x)) rotate(var(--r)) translateY(-26px);outline:none;z-index:4}
+.nh-fan button.main{top:0;width:clamp(200px,28vw,400px);margin-left:calc(clamp(200px,28vw,400px)/-2);z-index:5;border-color:var(--sun);box-shadow:0 0 0 6px var(--ink),14px 14px 0 6px var(--red);
+  transform:none;animation:fanmain .6s cubic-bezier(.2,.9,.3,1.2) both}
+.nh-fan button.main:hover,.nh-fan button.main:focus-visible{transform:translateY(-10px) rotate(-1.5deg);z-index:6}
+@keyframes fanout{from{transform:translateX(0) rotate(0)}}
+@keyframes fanmain{from{transform:translateY(60px) scale(.9);opacity:0}}
+.nh-cta{background:var(--red);border-top:5px solid var(--sun);padding:20px 0}
+.nh-cta .wrap{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center}
+.nh-cta i{font:700 18px var(--body);font-style:normal;color:#fff;margin-right:12px}
+.nh-cta .btn{margin:0;background:var(--ink);color:#fff;font-size:16px;padding:14px 22px}
+.nh-cta .btn.go{background:var(--sun);color:var(--ink)}
+.nh-cta .btn:hover,.nh-cta .btn:focus-visible{background:#fff;color:var(--ink)}
+body.home .ticker{background:var(--ink);color:var(--sun);border:0}
+/* Shabbos times as scoreboard numbers */
+.shabbos{background:none;border:0;gap:22px;margin:38px 0 46px;align-items:flex-start;color:var(--ink)}
+.shabbos>div,.shabbos .par{background:none;border-top:8px solid var(--red);padding:10px 0 0;flex:1 1 150px;display:block}
+.shabbos .lbl,.shabbos .par .lbl{color:var(--ink);font:800 12px var(--body);letter-spacing:.18em}
+.shabbos b{font:400 clamp(34px,4.7vw,62px)/1 var(--display);color:var(--plum);display:block;margin-top:4px;white-space:nowrap}
+.shabbos .par b{font:400 clamp(30px,3.6vw,50px)/1 var(--display);color:var(--plum);text-transform:none;margin-top:10px}
+.shabbos small{color:var(--muted)}
+/* picture tiles */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-bottom:54px}
+.tile{display:block;text-decoration:none;color:var(--ink);border:5px solid var(--ink);background:var(--card);box-shadow:10px 10px 0 var(--c);transition:transform .16s,box-shadow .16s}
+.tile:hover,.tile:focus-visible{transform:translate(-5px,-5px);box-shadow:16px 16px 0 var(--c);outline:none}
+.tile .pic{height:230px;overflow:hidden;border-bottom:5px solid var(--ink);background:var(--paper);position:relative}
+.tile .pic img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+.tile .pic.covers{display:grid;grid-template-columns:repeat(3,1fr)}
+.tile .pic.covers img{border-right:3px solid var(--ink)}.tile .pic.covers img:last-child{border:0}
+.tile .pic.ws{display:grid;align-content:start;background:var(--card);font:700 clamp(13px,1.5vw,19px)/1 "Courier Prime",monospace}
+.tile .pic.ws span{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.tile .pic.ws span.f{background:var(--leaf);color:#fff}
+.tile b{display:block;font:400 clamp(34px,4vw,50px)/1 var(--display);padding:18px 22px 6px;color:var(--ink)}
+.tile p{font:700 16px/1.4 var(--body);margin:0;padding:0 22px 22px}
+body.home .recent-h h3{font-size:clamp(40px,5.4vw,64px);color:var(--plum)}
+/* subscribe band and sign-off */
+.subpromo{border-radius:0;background:var(--plum);color:#fff;padding:clamp(26px,4vw,48px)}
+.subpromo h3{color:var(--sun);font-size:clamp(34px,5.6vw,72px);line-height:.9;text-shadow:none;text-transform:none}
+.subpromo .btn{background:var(--sun);color:var(--ink);font-size:20px;padding:18px 30px}
+.subpromo .btn:hover,.subpromo .btn:focus-visible{background:#fff;color:var(--ink)}
+.signoff{background:var(--ink);color:var(--sun);text-align:center;padding:clamp(40px,6vw,70px) 16px;margin-top:40px}
+.signoff img{height:clamp(110px,14vw,180px);width:auto;display:block;margin:0 auto}
+.signoff b{display:block;font:400 clamp(34px,6vw,76px)/1 var(--display);margin-top:18px}
+footer{border-top:0;margin-top:0;padding-top:16px}
+@media (max-width:760px){
+  .nh-fan button:nth-child(1),.nh-fan button:nth-child(4){display:none}
+  .tiles{grid-template-columns:1fr}
+  .nh-cta i{width:100%;text-align:center;margin:0}
+}
+@media (prefers-reduced-motion:reduce){.nh-fan button,.nh-fan button.main{animation:none;transition:none}.tile{transition:none}}
 </style>
 <script>try{const c=JSON.parse(localStorage.getItem('cc_colors')||'{}');for(const k in c)document.documentElement.style.setProperty('--'+k,c[k])}catch{}</script>
 </head>
@@ -488,6 +552,14 @@ footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
 </div></header>
 <a class="subbar" id="subbar" href="#subscribe" hidden><span>Get the Community Corner in your inbox every week</span><b>Subscribe</b></a>
 
+<div class="nh" id="nh" hidden>
+  <div class="wrap">
+    <div class="nh-kick" id="nh-kick"></div>
+    <h1 id="nh-title"></h1>
+    <div class="nh-fan" id="nh-fan"></div>
+  </div>
+  <div class="nh-cta"><div class="wrap"><i>This week's paper is here.</i><span id="nh-btns"></span></div></div>
+</div>
 <div class="hero">
   <svg class="ribbon" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
     <path class="r2" d="M0,0H1200V150C1040,235 820,105 610,172C400,238 190,118 0,186Z"/>
@@ -504,7 +576,8 @@ footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
 <main class="wrap">
   <section class="view" id="v-home">
     <div class="shabbos" id="shabbos" hidden></div>
-    <div class="latest" id="latest"></div>
+    <div class="latest" id="latest" hidden></div>
+    <div class="tiles" id="tiles"></div>
     <div class="sendbox">
       <div><h3 data-t="sendBoxTitle">Want to write a column?</h3><p data-t="sendBoxText">Send it in with a picture of yourself to be featured in next week's issue!</p></div>
       <a class="btn" href="#submit">Send it in</a>
@@ -708,6 +781,7 @@ footer{border-top:2px solid var(--line);margin-top:10px;padding-top:14px}
   <figure><img id="lb-img" alt=""><figcaption><b id="lb-name"></b><span id="lb-info"></span><br><small id="lb-count"></small><a id="lb-go" class="lbgo" hidden>Open the whole issue</a></figcaption></figure>
   <button class="arr" id="lb-next" aria-label="Next sponsor">›</button>
 </div>
+<div class="signoff"><img src="img/cc-logo.png" alt="The Community Corner" width="688" height="286" loading="lazy"><b>Every issue. Every column.</b></div>
 <footer><span class="wrap" data-t="footer" style="display:block;margin:0 auto;padding-right:110px">© 2026 The Community Corner is an imprint of The Community Corner. All rights reserved.</span><button type="button" class="applink" id="applink" hidden><img src="img/icon-192.png" alt="">Add to your home screen</button>
 <div class="credit-mark" title="Admin"><a href="admin/" aria-label="Admin"><img src="img/credit-mark.svg" alt="MB Webs"></a></div></footer>
 
@@ -748,6 +822,21 @@ function card(i,isNew){
   b.innerHTML=`<img loading="lazy" src="${F(i,'cover.jpg')}" alt="Cover of issue ${i.num}"><b>#${i.num}${isNew?'<span class="new">NEW</span>':''}</b><span>${i.title?i.title+' · ':''}${fmt(i.date)}</span>`;
   b.onclick=()=>location.hash=i.num;return b;
 }
+// three picture tiles on the home page, each made from the site's real content
+function drawTiles(){
+  if(!issues.length)return;
+  const covers=issues.slice(0,3).map(i=>`<img loading="lazy" src="${F(i,'cover.jpg')}" alt="">`).join('');
+  let ws='<div class="pic"></div>';
+  const g=FUNDATA&&FUNDATA.f&&FUNDATA.f.wordsearch;
+  if(g&&g.grid&&g.grid.length){const n=g.grid[0].length,rows=g.grid.slice(0,Math.max(4,Math.round(n*.62)));
+    // light up one row and one column so it reads as a game in progress
+    ws=`<div class="pic ws" style="grid-template-columns:repeat(${n},1fr)">`+rows.map((r,y)=>[...r].map((ch,x)=>`<span${(y===1&&x>1&&x<n-3)||(x===n-2&&y>1)?' class="f"':''}>${ch}</span>`).join('')).join('')+'</div>'}
+  const col=(COLS||[]).find(e=>e.slug==='recipe-of-the-week')||(COLS||[])[0];
+  $('tiles').innerHTML=
+    `<a class="tile" href="#columns" style="--c:var(--red)"><div class="pic">${col?`<img loading="lazy" src="${esc(col.src)}" alt="">`:''}</div><b>Columns</b><p>Every recipe, story and Parsha Question ever printed.</p></a>`
+   +`<a class="tile" href="#fun" style="--c:var(--plum)">${ws}<b>Word search</b><p>Play this week's puzzle right on your screen.</p></a>`
+   +`<a class="tile" href="#past" style="--c:var(--blue)"><div class="pic covers">${covers}</div><b>Every issue</b><p>Search by parsha, number, writer or month.</p></a>`;
+}
 function renderHome(){
   const L=issues[0];if(!L)return;
   $('latest').innerHTML=`
@@ -764,6 +853,17 @@ function renderHome(){
       if(name&&issues[0]===L&&!L.title){$('hero-title').textContent=name;$('hero-kick').hidden=false}
     }).catch(()=>{});
   }
+  // dark top: big title, this week's cover with the last four fanned out behind it
+  const title=L.title||`Issue #${L.num}`,sp=title.indexOf(' ');
+  $('nh-kick').textContent=`Issue #${L.num} · ${fmt(L.date)}${L.hebrew?' · '+L.hebrew:''}`;
+  $('nh-title').innerHTML=sp>0?`${esc(title.slice(0,sp))}<span>${esc(title.slice(sp+1))}</span>`:`<span>${esc(title)}</span>`;
+  const fanPos=[['-110%','-16deg',1],['-60%','-8deg',2],['60%','8deg',2],['110%','16deg',1]];
+  $('nh-fan').innerHTML=issues.slice(1,5).map((i,k)=>`<button type="button" data-n="${i.num}" style="--x:${fanPos[k][0]};--r:${fanPos[k][1]};z-index:${fanPos[k][2]};animation-delay:${.12+k*.05}s" aria-label="Read issue ${i.num}"><img src="${F(i,'cover.jpg')}" alt="Cover of issue ${i.num}"></button>`).join('')
+    +`<button type="button" class="main" data-n="${L.num}" aria-label="Read this week's issue, number ${L.num}"><img src="${F(L,'cover.jpg')}" alt="Cover of issue ${L.num}"></button>`;
+  $('nh-fan').querySelectorAll('button').forEach(b=>b.onclick=()=>location.hash=b.dataset.n);
+  $('nh-btns').innerHTML=`<button class="btn go" type="button" id="nh-read">Read this issue</button> ${dl(L)} ${shareBtn(L)}`;
+  $('nh-read').onclick=()=>location.hash=L.num;
+  drawTiles();loadColumns().then(drawTiles);
   const rec=issues.slice(1,5),rg=$('recent-grid');rg.innerHTML='';rec.forEach(i=>rg.append(card(i,false)));
   $('recent').hidden=!rec.length;$('recent-all').textContent=`See all ${issues.length} issues`;
   saveIssueForLater(L);
@@ -804,6 +904,10 @@ function route(){
   ['home','past','issue','fun','sponsors','contact','subscribe','about','advertise','submit','columns','col'].forEach(x=>$('v-'+x).hidden=x!==v);
   if(v==='columns')showColumns();if(v==='col')showColumn(h);
   $('subpromo').hidden=v==='subscribe';$('subbar').hidden=v==='subscribe'||v==='home';
+  // the home page has its own dark top with this week's cover; every other page keeps the red ribbon
+  const newTop=v==='home'&&issues.length>0;
+  document.body.classList.toggle('home',newTop);$('nh').hidden=!newTop;
+  document.querySelector('.hero').hidden=newTop;document.querySelector('.tagline').hidden=newTop;
   i?track('read',String(i.num)):track('view',v==='col'?'columns':v);
   if(!i&&$('pager').classList.contains('full'))setFull(false);
   document.querySelectorAll('.menu a').forEach(a=>a.classList.toggle('on',a.dataset.v===(v==='issue'?'past':v==='col'?'columns':v)));
@@ -1206,7 +1310,7 @@ const esc=t=>String(t).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 function renderFun(L){
   $('f-from').textContent=`From Issue #${L.num}`;
   (typeof L.fun==='object'?Promise.resolve(L.fun):fetch(F(L,'fun.json')).then(r=>r.json())).then(f=>{
-    FUNDATA={f,num:L.num};
+    FUNDATA={f,num:L.num};drawTiles();
     const ws=f.wordsearch;
     if(ws){
       $('f-title').textContent=ws.title||'Word Search';
