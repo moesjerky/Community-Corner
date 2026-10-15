@@ -515,8 +515,10 @@ body.home .ticker{background:var(--ink);color:var(--sun);border:0}
 .tile .pic img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
 .tile .pic.covers{display:grid;grid-template-columns:repeat(3,1fr)}
 .tile .pic.covers img{border-right:3px solid var(--ink)}.tile .pic.covers img:last-child{border:0}
-.tile .pic.ws{display:grid;align-content:start;background:var(--card);font:700 clamp(13px,1.5vw,19px)/1 "Courier Prime",monospace}
-.tile .pic.ws span{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.tile .pic.ws{display:grid;align-content:center;background:var(--card);font:700 clamp(9px,.95vw,13px)/1 "Courier Prime",monospace;padding:6px 10px}
+.tile .pic.cols4{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,113px);gap:3px;background:var(--ink)}
+.tile .pic.cols4 img{object-position:top left;height:113px;min-height:0}
+.tile .pic.ws span{display:flex;height:calc((230px - 12px)/14);align-items:center;justify-content:center;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
 .tile .pic.ws span.f{background:var(--leaf);color:#fff}
 .tile b{display:block;font:400 clamp(34px,4vw,50px)/1 var(--display);padding:18px 22px 6px;color:var(--ink)}
 .tile p{font:700 16px/1.4 var(--body);margin:0;padding:0 22px 22px}
@@ -853,14 +855,22 @@ function card(i,isNew){
 function drawTiles(){
   if(!issues.length)return;
   const covers=issues.slice(0,3).map(i=>`<img loading="lazy" src="${F(i,'cover.jpg')}" alt="">`).join('');
+  // the whole puzzle, small, with a few of this week's real words lit up so it reads as a word search
   let ws='<div class="pic"></div>';
   const g=FUNDATA&&FUNDATA.f&&FUNDATA.f.wordsearch;
-  if(g&&g.grid&&g.grid.length){const n=g.grid[0].length,rows=g.grid.slice(0,Math.max(4,Math.round(n*.62)));
-    // light up one row and one column so it reads as a game in progress
-    ws=`<div class="pic ws" style="grid-template-columns:repeat(${n},1fr)">`+rows.map((r,y)=>[...r].map((ch,x)=>`<span${(y===1&&x>1&&x<n-3)||(x===n-2&&y>1)?' class="f"':''}>${ch}</span>`).join('')).join('')+'</div>'}
-  const col=(COLS||[]).find(e=>e.slug==='recipe-of-the-week')||(COLS||[])[0];
+  if(g&&g.grid&&g.grid.length){
+    const G2=g.grid,R=G2.length,C2=G2[0].length,lit=new Set();let found=0;
+    for(const w0 of g.words||[]){if(found>=3)break;const w=w0.toUpperCase().replace(/[^A-Z]/g,'');if(w.length<4)continue;
+      search:for(let r=0;r<R;r++)for(let c=0;c<C2;c++)for(const [dr,dc] of [[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[1,-1],[-1,-1]]){
+        const er=r+dr*(w.length-1),ec=c+dc*(w.length-1);if(er<0||ec<0||er>=R||ec>=C2)continue;
+        let k=0;for(;k<w.length;k++)if(G2[r+dr*k][c+dc*k]!==w[k])break;
+        if(k===w.length){for(k=0;k<w.length;k++)lit.add((r+dr*k)*C2+c+dc*k);found++;break search}}}
+    ws=`<div class="pic ws" style="grid-template-columns:repeat(${C2},1fr)">`+G2.map((row,y)=>[...row].map((ch,x)=>`<span${lit.has(y*C2+x)?' class="f"':''}>${ch}</span>`).join('')).join('')+'</div>'}
+  // columns: the newest of four favourite columns, side by side
+  const pickCol=sl=>(COLS||[]).find(e=>e.slug===sl);
+  const four=['story-of-the-week','parsha-question','mega-vort','crazy-animal-corner'].map(pickCol).filter(Boolean);
   $('tiles').innerHTML=
-    `<a class="tile" href="#columns" style="--c:var(--red)"><div class="pic">${col?`<img loading="lazy" src="${esc(col.src)}" alt="">`:''}</div><b>Columns</b><p>Every recipe, story and Parsha Question ever printed.</p></a>`
+    `<a class="tile" href="#columns" style="--c:var(--red)"><div class="pic cols4">${four.map(e=>`<img loading="lazy" src="${esc(e.src)}" alt="">`).join('')}</div><b>Columns</b><p>Every story, vort and Parsha Question ever printed.</p></a>`
    +`<a class="tile" href="#fun" style="--c:var(--plum)">${ws}<b>Word search</b><p>Play this week's puzzle right on your screen.</p></a>`
    +`<a class="tile" href="#past" style="--c:var(--blue)"><div class="pic covers">${covers}</div><b>Every issue</b><p>Search by parsha, number, writer or month.</p></a>`;
 }
