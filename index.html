@@ -659,6 +659,32 @@ body.paged .rtop{justify-content:flex-start;gap:12px}body.paged .rtop>div:first-
 .cform .btn,.subgrid .btn{font-size:18px;padding:15px 28px}
 .years button{border-width:3px!important}
 .pager,.pg-wrap{border:4px solid var(--ink)}
+/* ---------- subscribe pop-up: once per visitor, loud but easy to close ---------- */
+.sp{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(8,16,32,.72);animation:spfade .3s ease both}
+.sp-card{position:relative;width:min(560px,100%);background:var(--ink);color:#fff;border:5px solid var(--sun);box-shadow:16px 16px 0 var(--red);padding:clamp(26px,5vw,44px);overflow:visible;animation:spslam .55s cubic-bezier(.2,1.5,.35,1) both}
+.sp-kick{font:800 13px var(--body);letter-spacing:.2em;text-transform:uppercase;color:var(--sun)}
+.sp-card h2{font:400 clamp(46px,9vw,78px)/.88 var(--display);margin:12px 0 14px;color:#fff;max-width:9ch}
+.sp-card h2 span{color:var(--sun)}
+.sp-sub{font:700 16px/1.45 var(--body);margin:0 0 20px;max-width:30ch;color:#dbe4f2}
+#sp-form{display:flex;gap:0;border:4px solid var(--sun)}
+#sp-email{flex:1;min-width:0;font:700 18px var(--body);padding:16px;border:0;background:#fff;color:var(--ink);border-radius:0}
+#sp-email:focus{outline:none;background:#FFFBE6}
+#sp-form button{font:400 26px var(--display);background:var(--red);color:#fff;border:0;padding:0 26px;cursor:pointer;transition:background .15s,transform .15s}
+#sp-form button:hover,#sp-form button:focus-visible{background:var(--sun);color:var(--ink);outline:none}
+.sp-msg{font:800 15px var(--body);color:var(--sun);min-height:1.3em;margin:12px 0 0}
+.sp-no{background:none;border:0;color:#9fb0c8;font:700 14px var(--body);text-decoration:underline;cursor:pointer;margin-top:6px;padding:4px 0}
+.sp-no:hover,.sp-no:focus-visible{color:#fff;outline:none}
+.sp-x{position:absolute;top:10px;right:12px;background:none;border:0;color:#fff;font:700 24px var(--body);cursor:pointer;width:40px;height:40px}
+.sp-x:hover,.sp-x:focus-visible{color:var(--sun);outline:none}
+.sp-stamp{position:absolute;top:-26px;left:-22px;background:var(--red);color:#fff;font:400 34px var(--display);padding:6px 18px 8px;border:4px solid #fff;transform:rotate(-12deg);box-shadow:6px 6px 0 var(--ink);animation:spstamp .45s .45s cubic-bezier(.2,1.6,.4,1) both;z-index:2}
+.sp-cover{position:absolute;right:-30px;top:-38px;width:150px;border:4px solid #fff;transform:rotate(9deg);box-shadow:8px 8px 0 rgba(0,0,0,.35);animation:spcover .6s .2s cubic-bezier(.2,1.4,.4,1) both}
+.sp-done h2{max-width:none}
+@keyframes spfade{from{opacity:0}}
+@keyframes spslam{from{transform:scale(1.5) rotate(-6deg);opacity:0}}
+@keyframes spstamp{from{transform:rotate(-12deg) scale(3);opacity:0}}
+@keyframes spcover{from{transform:rotate(30deg) translate(60px,-40px);opacity:0}}
+@media (max-width:560px){.sp-cover{width:96px;right:-10px;top:-30px}.sp-card h2{max-width:7ch}#sp-form{flex-direction:column}#sp-form button{padding:14px}}
+@media (prefers-reduced-motion:reduce){.sp,.sp-card,.sp-stamp,.sp-cover{animation:none}}
 @media (max-width:760px){
   .nh-fan button:nth-child(1),.nh-fan button:nth-child(4){display:none}
   .tiles{grid-template-columns:1fr}
@@ -910,6 +936,19 @@ body.paged .rtop{justify-content:flex-start;gap:12px}body.paged .rtop>div:first-
   <button class="arr" id="lb-prev" aria-label="Previous sponsor">‹</button>
   <figure><img id="lb-img" alt=""><figcaption><b id="lb-name"></b><span id="lb-info"></span><br><small id="lb-count"></small><a id="lb-go" class="lbgo" hidden>Open the whole issue</a></figcaption></figure>
   <button class="arr" id="lb-next" aria-label="Next sponsor">›</button>
+</div>
+<div class="sp" id="sp" hidden role="dialog" aria-modal="true" aria-labelledby="sp-h">
+  <div class="sp-card">
+    <button type="button" class="sp-x" id="sp-x" aria-label="Close">✕</button>
+    <span class="sp-stamp">Free</span>
+    <img class="sp-cover" id="sp-cover" alt="">
+    <div class="sp-kick">Every Friday · In your inbox</div>
+    <h2 id="sp-h">Never miss<br><span>an issue.</span></h2>
+    <p class="sp-sub">The new Community Corner, sent to you the second it's out. One tap to stop anytime.</p>
+    <form id="sp-form" novalidate><input id="sp-email" type="email" inputmode="email" autocomplete="email" placeholder="Your email" aria-label="Your email"><button type="submit">I'm in</button></form>
+    <p class="sp-msg" id="sp-msg" role="status"></p>
+    <button type="button" class="sp-no" id="sp-no">No thanks</button>
+  </div>
 </div>
 <div class="signoff"><img src="img/cc-logo.png" alt="The Community Corner" width="688" height="286" loading="lazy"><b>Every issue. Every column.</b></div>
 <footer><span class="wrap" data-t="footer" style="display:block;margin:0 auto;padding-right:110px">© 2026 The Community Corner is an imprint of The Community Corner. All rights reserved.</span><button type="button" class="applink" id="applink" hidden><img src="img/icon-192.png" alt="">Add to your home screen</button>
@@ -1323,12 +1362,57 @@ $('subform').addEventListener('submit',async e=>{
     const send=body=>fetch(`${CFG.supabaseUrl}/rest/v1/subscribers`,{method:'POST',headers:{apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(body)});
     let r=await send(row);
     if(r.status===400){const {heard,...rest}=row;r=await send(rest)}
-    if(r.ok){m.textContent="You're in! Look for the paper in your inbox every week.";e.target.reset();track('subscribe','')}
+    if(r.ok){m.textContent="You're in! Look for the paper in your inbox every week.";e.target.reset();track('subscribe','');spMark('subscribed')}
     else if(r.status===409){m.textContent="You're already subscribed. 👍"}
     else throw 0;
   }catch{m.textContent="That didn't go through. Try again in a minute."}
   finally{btn.disabled=false}
 });
+/* ---------- subscribe pop-up ----------
+   Shows once per visitor: after 15 seconds or once they've scrolled halfway, never on the Subscribe page,
+   never again after it's closed or they've signed up. */
+const SP_KEY='cc-subpop';
+const spSeen=()=>{try{return !!localStorage.getItem(SP_KEY)}catch(e){return true}};
+const spMark=v=>{try{localStorage.setItem(SP_KEY,v)}catch(e){}};
+function showSubPop(force){
+  if(!force&&(spSeen()||location.hash==='#subscribe'||!$('lb').hidden||!DB))return;
+  const L=issues[0];if(L){$('sp-cover').src=F(L,'cover.jpg');$('sp-cover').hidden=false}else $('sp-cover').hidden=true;
+  $('sp').hidden=false;spMark('shown');track('view','popup');
+  setTimeout(()=>$('sp-email').focus({preventScroll:true}),400);
+}
+function closeSubPop(){$('sp').hidden=true}
+$('sp-x').onclick=$('sp-no').onclick=closeSubPop;
+$('sp').onclick=e=>{if(e.target.id==='sp')closeSubPop()};
+addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('sp').hidden)closeSubPop()});
+{const t0=Date.now();let armed=!spSeen();
+  const go=()=>{if(armed&&Date.now()-t0>4000){armed=false;showSubPop()}};
+  setTimeout(go,15000);
+  addEventListener('scroll',()=>{if(armed&&scrollY>(document.documentElement.scrollHeight-innerHeight)*.5)go()},{passive:true})}
+$('sp-form').onsubmit=async e=>{
+  e.preventDefault();const em=$('sp-email'),m=$('sp-msg'),btn=e.target.querySelector('button');
+  if(!em.checkValidity()||!em.value.trim()){m.textContent='Type a real email, like name@gmail.com';em.focus();return}
+  btn.disabled=true;m.textContent='Signing you up…';
+  try{
+    const r=await fetch(`${CFG.supabaseUrl}/rest/v1/subscribers`,{method:'POST',headers:{apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({email:em.value.trim().toLowerCase(),heard:'Pop-up'})});
+    let ok=r.ok||r.status===409;
+    if(r.status===400){const r2=await fetch(`${CFG.supabaseUrl}/rest/v1/subscribers`,{method:'POST',headers:{apikey:CFG.supabaseKey,Authorization:'Bearer '+CFG.supabaseKey,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({email:em.value.trim().toLowerCase()})});ok=r2.ok||r2.status===409}
+    if(!ok)throw 0;
+    spMark('subscribed');track('subscribe','popup');
+    const card=document.querySelector('.sp-card');card.classList.add('sp-done');
+    $('sp-h').innerHTML="You're <span>in!</span>";
+    document.querySelector('.sp-sub').textContent='Look for the Community Corner in your inbox every Friday morning.';
+    e.target.hidden=true;$('sp-no').textContent='Back to the paper';m.textContent='';
+    confettiBurst();
+  }catch{m.textContent="That didn't go through. Try again in a minute."}
+  finally{btn.disabled=false}
+};
+function confettiBurst(){
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  const colors=['#C3262E','#F6E58D','#0E4C8A','#FFFFFF','#2E6FB5'];
+  for(let k=0;k<120;k++){const d=document.createElement('i');d.className='confetti';const sz=6+Math.random()*10;
+    d.style.cssText=`left:${Math.random()*100}vw;width:${sz}px;height:${Math.random()<.4?sz*2.2:sz}px;background:${colors[k%colors.length]};--dx:${(Math.random()*240-120).toFixed(0)}px;--rot:${(Math.random()*1400-700).toFixed(0)}deg;animation-duration:${(2.2+Math.random()*2.2).toFixed(2)}s;animation-delay:${(Math.random()*.6).toFixed(2)}s;z-index:80`;
+    document.body.append(d);d.addEventListener('animationend',()=>d.remove())}
+}
 /* Contact form. Set FORM_ENDPOINT to the Formspree URL to turn on sending. */
 const FORM_ENDPOINT='https://formsubmit.co/ajax/submissions@ourcommunitycorner.com';
 $('cform').addEventListener('submit',async e=>{
