@@ -630,6 +630,34 @@ footer{border-top:0;margin-top:0;padding-top:16px}
 .cta{background:var(--card);border:5px solid var(--ink);box-shadow:10px 10px 0 var(--plum);border-radius:0}
 .cta h3,.cta h3 span{color:var(--plum)}.cta h3 em{color:var(--ink)}
 .cta .ctab{background:var(--plum);color:#fff}
+/* ---------- every page: navy title band and chunky cards, same family as the home page ---------- */
+.ph{background:var(--ink);color:#fff;border-bottom:6px solid var(--sun)}
+.ph .wrap{padding-block:clamp(26px,4.5vw,58px) clamp(24px,4vw,50px)}
+.ph-kick{font:800 clamp(11px,1.2vw,14px) var(--body);letter-spacing:.2em;text-transform:uppercase;color:var(--sun);margin-bottom:10px}
+.ph-kick:empty{display:none}
+.ph h1{font:400 clamp(40px,7.4vw,108px)/.9 var(--display);margin:0;color:#fff;text-transform:none;letter-spacing:.005em}
+.ph h1 span{color:var(--sun)}
+.inband{display:none!important}
+body.paged .ticker{background:var(--ink);color:var(--sun);border:0}
+body.paged main.wrap{padding-top:34px}
+.issue img{border:4px solid var(--ink);box-shadow:8px 8px 0 var(--plum);transition:transform .15s,box-shadow .15s}
+.issue:hover img,.issue:focus-visible img{transform:translate(-4px,-4px);box-shadow:12px 12px 0 var(--plum)}
+.issue b{font-size:26px;color:var(--plum);margin-top:12px}
+.coltile{border:4px solid var(--ink)!important;box-shadow:8px 8px 0 var(--ink);transition:transform .15s,box-shadow .15s}
+.coltile b{font-size:21px;padding:11px 14px}
+.coltile:hover,.coltile:focus-visible{transform:translate(-4px,-4px);box-shadow:12px 12px 0 var(--ink)}
+.coltabs button{border-width:3px;font-size:15px;padding:9px 18px}
+.colitem .pic{border:4px solid var(--ink);box-shadow:8px 8px 0 var(--plum)}
+.ad{border:4px solid var(--ink)!important;box-shadow:8px 8px 0 var(--plum);transition:transform .15s,box-shadow .15s}
+.ad:hover,.ad:focus-visible{transform:translate(-4px,-4px);box-shadow:12px 12px 0 var(--plum)}
+.ad img{border-bottom:4px solid var(--ink)!important}
+.box{border:4px solid var(--ink)!important;box-shadow:8px 8px 0 var(--plum)}
+.board{border:4px solid var(--ink)!important;box-shadow:10px 10px 0 var(--plum)}
+.cform input,.cform select,.cform textarea,.subgrid input,.subgrid select,.finder input{border:3px solid var(--ink)!important;border-radius:0}
+.cform input:focus,.cform select:focus,.cform textarea:focus,.subgrid input:focus,.subgrid select:focus{outline:none;box-shadow:6px 6px 0 var(--sun)}
+.cform .btn,.subgrid .btn{font-size:18px;padding:15px 28px}
+.years button{border-width:3px!important}
+.pager,.pg-wrap{border:4px solid var(--ink)}
 @media (max-width:760px){
   .nh-fan button:nth-child(1),.nh-fan button:nth-child(4){display:none}
   .tiles{grid-template-columns:1fr}
@@ -660,6 +688,7 @@ footer{border-top:0;margin-top:0;padding-top:16px}
   </div>
   <div class="nh-cta"><div class="wrap"><i>This week's paper is here.</i><span id="nh-btns"></span></div></div>
 </div>
+<div class="ph" id="ph" hidden><div class="wrap"><div class="ph-kick" id="ph-kick"></div><h1 id="ph-title"></h1></div></div>
 <div class="hero">
   <svg class="ribbon" viewBox="0 0 1200 220" preserveAspectRatio="none" aria-hidden="true">
     <path class="r2" d="M0,0H1200V150C1040,235 820,105 610,172C400,238 190,118 0,186Z"/>
@@ -1000,6 +1029,18 @@ function renderPast(){
   $('past-count').textContent=list.length?`${list.length} issue${list.length===1?'':'s'}`:'';
   if(!list.length)g.innerHTML=`<p class="meta">No issues match that search.${YEAR!=='all'?' Try "All years".':''}</p>`;
 }
+// the navy band at the top of every page (except home) shows that page's label and title
+function syncBand(){
+  const v=[...document.querySelectorAll('main .view')].find(x=>!x.hidden);
+  if(!v||v.id==='v-home'){$('ph').hidden=true;return}
+  const kick=v.querySelector('.eyebrow')||v.querySelector('#r-meta'),h=v.querySelector('.sec-h');
+  const t=h?h.textContent.trim():'';
+  $('ph-kick').textContent=kick?kick.textContent.trim():(v.id==='v-col'?'Columns':'');
+  const sp=t.lastIndexOf(' ');
+  $('ph-title').innerHTML=sp>0&&t.length>12?`${esc(t.slice(0,sp))} <span>${esc(t.slice(sp+1))}</span>`:esc(t);
+  [kick,h].forEach(e=>e&&e.classList.add('inband'));
+  $('ph').hidden=!t;
+}
 function route(){
   const h=location.hash.slice(1)||'home',n=+h,i=issues.find(x=>x.num===n);
   const colHash=/^(c|w)-[a-z0-9-]+$/.test(h);
@@ -1010,14 +1051,16 @@ function route(){
   // the home page has its own dark top with this week's cover; every other page keeps the red ribbon
   const newTop=v==='home'&&issues.length>0;
   document.body.classList.toggle('home',newTop);$('nh').hidden=!newTop;
-  document.querySelector('.hero').hidden=newTop;document.querySelector('.tagline').hidden=newTop;
+  const banded=v!=='home';document.body.classList.toggle('paged',banded);
+  document.querySelector('.hero').hidden=newTop||banded;document.querySelector('.tagline').hidden=newTop||banded;
+  syncBand();
   i?track('read',String(i.num)):track('view',v==='col'?'columns':v);
   if(!i&&$('pager').classList.contains('full'))setFull(false);
   document.querySelectorAll('.menu a').forEach(a=>a.classList.toggle('on',a.dataset.v===(v==='issue'?'past':v==='col'?'columns':v)));
   if(i){
     $('r-title').textContent=`Issue #${i.num}${i.title?': '+i.title:''}`;
     $('r-dl').innerHTML=dl(i);$('r-share').innerHTML=shareBtn(i);$('r-meta').textContent=fmt(i.date)+(i.hebrew?' · '+i.hebrew:'');
-    openPager(i);
+    openPager(i);syncBand();
   }
   if(i)$('v-issue').scrollIntoView();else if(location.hash)scrollTo({top:0});
 }
@@ -1080,7 +1123,7 @@ function showColumn(hash){
     const count=m=>[...m].sort((a,b)=>b[1]-a[1]);
     const bys=new Map(),cols=new Map();list.forEach(e=>{if(e.by)bys.set(e.by,(bys.get(e.by)||0)+1);cols.set(e.col,(cols.get(e.col)||0)+1)});
     const mainBy=count(bys)[0]?count(bys)[0][0]:'';
-    $('cd-title').textContent=byWriter?mainBy:list[0].col;
+    $('cd-title').textContent=byWriter?mainBy:list[0].col;syncBand();
     $('cd-meta').textContent=(byWriter?count(cols).map(x=>x[0]).join(', '):(mainBy?'By '+mainBy:''))+` · ${list.length} ${list.length===1?'issue':'issues'}, newest first`;
     CD={list,shown:0,byWriter,mainBy};$('cd-feed').innerHTML='';drawColumnItems();
   });
@@ -1428,7 +1471,7 @@ function renderFun(L){
     FUNDATA={f,num:L.num};drawTiles();
     const ws=f.wordsearch;
     if(ws){
-      $('f-title').textContent=ws.title||'Word Search';
+      $('f-title').textContent=ws.title||'Word Search';syncBand();
       G=ws.grid;C=G[0].length;cells=[];$('board').innerHTML='';$('words').innerHTML='';
       $('board').style.gridTemplateColumns=`repeat(${C},1fr)`;
       G.forEach((row,r)=>[...row].forEach((ch,c)=>{const b=document.createElement('button');b.textContent=ch;b.setAttribute('aria-label',`${ch}, row ${r+1}, column ${c+1}`);b.onclick=()=>pick(r,c);$('board').append(b);cells.push(b)}));
