@@ -106,11 +106,86 @@ td img{width:48px;height:64px;object-fit:cover;object-position:top;border:1px so
 @media (max-width:700px){.tiles{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (max-width:700px){.grid,.grid2{grid-template-columns:1fr}.ad,#sp-ads .ad{grid-template-columns:70px 1fr}.ad img,.ad .ph{width:70px;height:80px}.ad .tools{flex-direction:row;grid-column:1/-1}}
+
+/* ---------- fresh look: dark sidebar, light canvas, white cards (same family as the Moe's Jerky backend) ---------- */
+:root{--bk-side:#1B2330;--bk-side-hover:#273140;--bk-side-text:#A8B3C2;--bk-canvas:#F5F6F8;--bk-surface:#fff;--bk-border:#E2E6EB;--bk-border-strong:#CBD2DA;
+  --bk-text:#1B2027;--bk-muted:#667180;--bk-accent:#C3262E;--bk-accent-hover:#A81A20;--bk-radius:8px;
+  --ink:#1B2027;--muted:#667180;--line:#E2E6EB;--card:#fff;--paper:#F5F6F8}
+body{background:var(--bk-canvas);color:var(--bk-text);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-weight:600;letter-spacing:-.01em}
+.msg:empty{min-height:0;margin:0}
+.ad .tools button,.pill,th,label,.hint{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+/* sidebar */
+.head{position:fixed;left:0;top:0;bottom:0;width:232px;background:var(--bk-side);color:#fff;z-index:40;overflow-y:auto}
+.head .wrap{display:flex;flex-direction:column;align-items:stretch;gap:0;padding:0;max-width:none;height:100%}
+.logo{display:flex;align-items:center;gap:10px;padding:18px 18px 16px;border-bottom:1px solid rgba(255,255,255,.08);text-shadow:none;text-decoration:none}
+.logo .lg-img{width:38px;height:38px;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex:none}
+.logo .lg-img img{width:34px;height:auto;display:block}
+.logo strong{display:block;color:#fff;font:600 14px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+.logo small{display:block;color:var(--bk-side-text);font:600 11px/1.3 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;letter-spacing:.06em;margin-top:2px}
+.head nav{display:flex;flex-direction:column;gap:2px;padding:12px 10px;flex:1;flex-wrap:nowrap}
+.head nav[hidden]{display:none!important}
+.head a.lnk,.head button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;font:500 13.5px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--bk-side-text);background:none;border:0;border-radius:6px;padding:9px 12px;cursor:pointer;text-decoration:none;transition:background .12s,color .12s}
+.head a.lnk:hover,.head button:hover{background:var(--bk-side-hover);color:#fff}
+.head button.on,.head button.on:hover{background:var(--bk-accent);color:#fff}
+.head [data-go]::before,.head .lnk::before,#logout::before{width:16px;text-align:center;font-size:13px;opacity:.9}
+.head [data-go="list"]::before{content:"▤"}.head [data-go="inbox"]::before{content:"✉"}.head [data-go="spons"]::before{content:"◈"}
+.head [data-go="stats"]::before{content:"◭"}.head [data-go="subs"]::before{content:"◎"}.head [data-go="settings"]::before{content:"◑"}
+.head .lnk::before{content:"↗"}#logout::before{content:"⏻"}
+.head .lnk{margin-top:auto;border-top:1px solid rgba(255,255,255,.08);border-radius:0;padding-top:14px}
+#inbox-n{background:var(--bk-accent);color:#fff;border-radius:999px;padding:0 7px;font-size:11px;font-weight:600;margin-left:auto}
+.head button.on #inbox-n{background:#fff;color:var(--bk-accent)}
+/* main */
+main.wrap{margin-left:232px;max-width:none;padding:28px 32px 64px}
+main.wrap>*{max-width:1080px}
+.card{background:var(--bk-surface);border:1px solid var(--bk-border);border-radius:var(--bk-radius);padding:22px;margin-bottom:18px;box-shadow:none}
+.card h2{font-size:19px;font-weight:600;margin-bottom:4px}
+.card h3{font-size:14.5px;font-weight:600}
+.hint{color:var(--bk-muted);font-size:13px}
+label{font-weight:600;font-size:12.5px;color:var(--bk-text)}
+input,textarea,select{font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;padding:9px 11px;border:1px solid var(--bk-border-strong);border-radius:6px;background:#fff;color:var(--bk-text)}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--bk-accent);box-shadow:0 0 0 3px rgba(195,38,46,.14)}
+input::placeholder,textarea::placeholder{color:#A0A8B3;font-style:normal}
+.btn{display:inline-flex;align-items:center;gap:6px;font:500 13.5px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;border-radius:6px;padding:9px 15px;background:var(--bk-accent);color:#fff;border:1px solid var(--bk-accent);transition:background .12s,border-color .12s}
+.btn:hover,.btn:focus-visible{background:var(--bk-accent-hover);border-color:var(--bk-accent-hover)}
+.btn.alt{background:#fff;color:var(--bk-text);border:1px solid var(--bk-border-strong);padding:9px 15px}
+.btn.alt:hover,.btn.alt:focus-visible{background:#F3F5F7;color:var(--bk-text)}
+.btn.small{padding:5px 10px;font-size:12.5px}
+.msg.ok{color:#1B6E3C}.msg.err{color:#A81A20}
+table{font-size:13.5px;background:#fff;border:1px solid var(--bk-border);border-radius:var(--bk-radius);border-collapse:separate;border-spacing:0;overflow:hidden}
+th{background:#FAFBFC;font-size:11.5px;letter-spacing:.05em;font-weight:600;color:var(--bk-muted);padding:11px 14px;border-bottom:1px solid var(--bk-border)}
+td{padding:12px 14px;border-bottom:1px solid var(--bk-border)}
+tr:last-child td{border-bottom:0}tbody tr:hover td{background:#FAFBFC}
+td img{border:1px solid var(--bk-border);border-radius:4px}
+.pill{border-radius:999px;font-weight:600;font-size:11px;padding:3px 9px;letter-spacing:.02em}
+.pill.live{background:#E7F4EC;color:#1B6E3C}.pill.draft{background:#EEF0F3;color:var(--bk-muted)}
+.drop{border:1.5px dashed var(--bk-border-strong);border-radius:var(--bk-radius);background:#FAFBFC}
+.drop:hover,.drop.over{background:#FDF0F0;border-color:var(--bk-accent)}
+.ad{border:1px solid var(--bk-border);border-radius:var(--bk-radius);background:#fff}
+.ad img{border-radius:4px;border:1px solid var(--bk-border);background:#FAFBFC}
+.ad .tools button{border:1px solid var(--bk-border-strong);border-radius:5px;background:#fff;font-weight:500}
+.sticky{background:rgba(255,255,255,.96);border-top:1px solid var(--bk-border);backdrop-filter:blur(4px);padding:12px 16px;margin-inline:-16px;border-radius:0 0 var(--bk-radius) var(--bk-radius)}
+.tile{background:#fff;border:1px solid var(--bk-border);border-radius:var(--bk-radius);padding:16px 18px}
+.tile b{font:600 26px/1.15 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--bk-text);letter-spacing:-.02em}
+.tile span{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--bk-muted);font-weight:600}
+.chart{border-bottom:1px solid var(--bk-border)}.chart div{background:#2F6FBA;border-radius:3px 3px 0 0}.chart div:hover{background:var(--bk-accent)}
+.bars .r i{background:#2F6FBA;border-radius:3px}
+.sub img{border:1px solid var(--bk-border);border-radius:6px}
+.login{max-width:380px;margin:60px auto}
+.colors label{border:1px solid var(--bk-border);border-radius:6px}
+@media (max-width:860px){
+  .head{position:static;width:auto;height:auto}
+  .head .wrap{flex-direction:column}
+  .head nav{flex-direction:row;flex-wrap:wrap;padding:8px}
+  .head a.lnk,.head button{width:auto}
+  .head .lnk{margin-top:0;border-top:0;border-radius:6px;padding-top:9px}
+  main.wrap{margin-left:0;padding:18px 14px 50px}
+}
 </style>
 </head>
 <body>
 <header class="head"><div class="wrap">
-  <a class="logo" href="../"><img src="../img/cc-logo.png" alt="Community Corner" style="height:48px;width:auto;display:block"><small>ADMIN · v25</small></a>
+  <a class="logo" href="../"><span class="lg-img"><img src="../img/cc-logo.png" alt=""></span><span class="lg-txt"><strong>Community Corner</strong><small>ADMIN · v26</small></span></a>
   <nav id="nav" hidden>
     <button data-go="list" class="on">Issues</button>
     <button data-go="inbox">Inbox <span id="inbox-n"></span></button>
