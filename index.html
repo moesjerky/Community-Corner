@@ -585,6 +585,7 @@ body.home .ticker{background:var(--ink);color:var(--sun);border:0}
 .tile .pic.covers{display:grid;grid-template-columns:repeat(3,1fr)}
 .tile .pic.covers img{border-right:3px solid var(--ink)}.tile .pic.covers img:last-child{border:0}
 .tile .pic.ws{display:grid;align-content:center;background:var(--card);font:700 clamp(9px,.95vw,13px)/1 "Courier Prime",monospace;padding:6px 10px}
+.tile .pic.wsp{background-color:var(--card);background-repeat:no-repeat}
 .tile .pic.cols4{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(2,113px);gap:3px;background:var(--ink)}
 .tile .pic.cols4 img{object-position:top left;height:113px;min-height:0}
 .tile .pic.ws span{display:flex;height:calc((230px - 12px)/14);align-items:center;justify-content:center;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
@@ -604,7 +605,7 @@ footer{border-top:0;margin-top:0;padding-top:16px}
 /* one colour family on every page: navy and gold (these names are reused, so the whole site follows) */
 :root{--ink:#0B1F3A;--plum:#0E4C8A;--violet:#2E6FB5;--sun:#F6E58D}
 /* navy leads on every page: the top bar, the ribbon, the buttons and the accents all stay in one family */
-.zchus{background:var(--plum)}
+.zchus{background:var(--red)}
 .head{background:var(--ink)}
 .menu a:hover,.menu a:focus-visible{border-bottom-color:var(--sun)}
 .menu a.subnav{background:var(--sun);color:var(--ink)}
@@ -614,7 +615,8 @@ footer{border-top:0;margin-top:0;padding-top:16px}
 .ticker{background:var(--ink);color:var(--sun);border:0}
 .nh-cta{background:var(--plum)}
 .nh-fan button.main{box-shadow:0 0 0 6px var(--ink),14px 14px 0 6px var(--violet)}
-.shabbos>div,.shabbos .par{border-top-color:var(--plum)}
+.shabbos>div,.shabbos .par{border-top-color:var(--red)}
+.shabbos b,.shabbos .par b{color:var(--red)}
 .tile,.tile:hover,.tile:focus-visible{--c:var(--plum)!important}
 .tile:nth-child(2){--c:var(--violet)!important}.tile:nth-child(3){--c:var(--ink)!important}
 .recent-h a{color:var(--plum)}
@@ -924,22 +926,17 @@ function card(i,isNew){
 function drawTiles(){
   if(!issues.length)return;
   const covers=issues.slice(0,3).map(i=>`<img loading="lazy" src="${F(i,'cover.jpg')}" alt="">`).join('');
-  // the whole puzzle, small, with a few of this week's real words lit up so it reads as a word search
+  // the word search as it was printed: a cut-out of the page picture (the spot is saved when the issue is uploaded;
+  // older uploads fall back to where the Games section usually sits)
   let ws='<div class="pic"></div>';
-  const g=FUNDATA&&FUNDATA.f&&FUNDATA.f.wordsearch;
-  if(g&&g.grid&&g.grid.length){
-    const G2=g.grid,R=G2.length,C2=G2[0].length,lit=new Set();let found=0;
-    for(const w0 of g.words||[]){if(found>=3)break;const w=w0.toUpperCase().replace(/[^A-Z]/g,'');if(w.length<4)continue;
-      search:for(let r=0;r<R;r++)for(let c=0;c<C2;c++)for(const [dr,dc] of [[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[1,-1],[-1,-1]]){
-        const er=r+dr*(w.length-1),ec=c+dc*(w.length-1);if(er<0||ec<0||er>=R||ec>=C2)continue;
-        let k=0;for(;k<w.length;k++)if(G2[r+dr*k][c+dc*k]!==w[k])break;
-        if(k===w.length){for(k=0;k<w.length;k++)lit.add((r+dr*k)*C2+c+dc*k);found++;break search}}}
-    ws=`<div class="pic ws" style="grid-template-columns:repeat(${C2},1fr)">`+G2.map((row,y)=>[...row].map((ch,x)=>`<span${lit.has(y*C2+x)?' class="f"':''}>${ch}</span>`).join('')).join('')+'</div>'}
+  const wi=FUNDATA&&issues.find(i=>i.num===FUNDATA.num),wsd=FUNDATA&&FUNDATA.f&&FUNDATA.f.wordsearch;
+  if(wi&&wsd){const pic=wsd.pic||{page:2,box:[.53,.075,.43,.53]},[bx,by,bw,bh]=pic.box;
+    ws=`<div class="pic wsp" style="background-image:url('${F(wi,'p'+pic.page+'.jpg')}');background-size:${(100/bw).toFixed(1)}% auto;background-position:${(bx/(1-bw)*100).toFixed(2)}% ${(by/(1-bh)*100).toFixed(2)}%;--ar:${(bw/bh).toFixed(3)}"></div>`}
   // columns: the newest of four favourite columns, side by side
   const pickCol=sl=>(COLS||[]).find(e=>e.slug===sl);
-  const four=['story-of-the-week','parsha-question','mega-vort','crazy-animal-corner'].map(pickCol).filter(Boolean);
+  const mv=pickCol('mega-vort');
   $('tiles').innerHTML=
-    `<a class="tile" href="#columns" style="--c:var(--red)"><div class="pic cols4">${four.map(e=>`<img loading="lazy" src="${esc(e.src)}" alt="">`).join('')}</div><b>Columns</b><p>Every story, vort and Parsha Question ever printed.</p></a>`
+    `<a class="tile" href="#columns" style="--c:var(--red)"><div class="pic">${mv?`<img loading="lazy" src="${esc(mv.src)}" alt="">`:''}</div><b>Columns</b><p>Every story, vort and Parsha Question ever printed.</p></a>`
    +`<a class="tile" href="#fun" style="--c:var(--plum)">${ws}<b>Word search</b><p>Play this week's puzzle right on your screen.</p></a>`
    +`<a class="tile" href="#past" style="--c:var(--blue)"><div class="pic covers">${covers}</div><b>Every issue</b><p>Search by parsha, number, writer or month.</p></a>`;
 }

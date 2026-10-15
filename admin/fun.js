@@ -205,7 +205,10 @@ async function funWordSearch(pg,say){
       if(spots.length===1){const [r,c1,ch]=spots[0];rows[r]=rows[r].slice(0,c1)+ch+rows[r].slice(c1+1);fixed++}
     }
     const missing=words.filter(w=>!funWordInGrid(rows,w));
-    return {wordsearch:{title:/search/i.test(title)?title:'Word Search',grid:rows,words},unsure,missing};
+    // where the printed puzzle sits on the page (title, grid and word list), so the website can show a cut-out of it
+    const W2=c.width,H2=c.height,bx=Math.max(0,gx0-12),by=Math.max(0,gy0-th-6);
+    const box=[bx/W2,by/H2,Math.min(W2-bx,gx1+lw+16-bx)/W2,Math.min(H2-by,gy1+14-by)/H2].map(v=>+v.toFixed(4));
+    return {wordsearch:{title:/search/i.test(title)?title:'Word Search',grid:rows,words,pic:{box}},unsure,missing};
   }finally{await worker.terminate();c.width=c.height=0}
 }
 async function readFunFromPdf(doc,say){
@@ -222,7 +225,7 @@ async function readFunFromPdf(doc,say){
     for(let n=1;n<=doc.numPages&&!fun.wordsearch;n++){
       const r=await funWordSearch(await doc.getPage(n),say);
       if(!r)continue;
-      fun.wordsearch=r.wordsearch;
+      fun.wordsearch=r.wordsearch;fun.wordsearch.pic.page=n;
       if(r.missing.length)notes.push(`Check the word search: I could not find ${r.missing.join(', ')} in the grid, so a letter may be read wrong.`);
       else if(r.wordsearch.words.length)notes.push(`Word search: all ${r.wordsearch.words.length} words were found in the grid.`);
       else notes.push('Word search: I read the grid but not the word list. Type the words in.');
