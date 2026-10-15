@@ -1472,7 +1472,7 @@ async function loadIssues(){
     // settings load on their own, each separately: some web filters block these replies, and that must never cost us the issue list
     const getSetting=k=>fetch(`${CFG.supabaseUrl}/rest/v1/settings?key=eq.${k}&select=value`,{headers:h}).then(r=>r.ok?r.json():[]).then(x=>x[0]&&x[0].value).catch(()=>null);
     getSetting('zchus').then(v=>{if(v)renderZchus(v)});
-    getSetting('site').then(v=>{if(v){applySite(v);ticker()}});
+    getSetting('site').then(v=>{try{if(v&&v.z)v=JSON.parse(decodeURIComponent(escape(atob(v.z))))}catch(e){v=null}if(v){applySite(v);ticker()}});
     // sponsors set in admin's Sponsors tab stay up every week (falls back to the newest issue's own list)
     getSetting('sponsors').then(v=>{
       // stored scrambled (base64) so web filters don't drop it
@@ -1503,7 +1503,7 @@ function applySite(v){
   if(SITE.topics&&SITE.topics.length)$('c-topic').innerHTML=SITE.topics.map(t=>`<option>${esc(t)}</option>`).join('');
   if(SITE.bannerTitle)document.title=SITE.bannerTitle;
   const c=SITE.colors||{},root=document.documentElement.style;
-  ['red','red-dk','plum','blue','schach','gold','paper','card','ink'].forEach(k=>root.removeProperty('--'+k));
+  ['red','red-dk','plum','blue','schach','gold','paper','card','ink','violet','sun'].forEach(k=>root.removeProperty('--'+k));
   for(const k in c)if(/^#[0-9a-f]{6}$/i.test(c[k]))root.setProperty('--'+k,c[k]);
   try{localStorage.setItem('cc_colors',JSON.stringify(c))}catch{}
 }

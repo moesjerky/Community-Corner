@@ -185,7 +185,7 @@ td img{border:1px solid var(--bk-border);border-radius:4px}
 </head>
 <body>
 <header class="head"><div class="wrap">
-  <a class="logo" href="../"><span class="lg-img"><img src="../img/cc-logo.png" alt=""></span><span class="lg-txt"><strong>Community Corner</strong><small>ADMIN · v27</small></span></a>
+  <a class="logo" href="../"><span class="lg-img"><img src="../img/cc-logo.png" alt=""></span><span class="lg-txt"><strong>Community Corner</strong><small>ADMIN · v28</small></span></a>
   <nav id="nav" hidden>
     <button data-go="list" class="on">Issues</button>
     <button data-go="inbox">Inbox <span id="inbox-n"></span></button>
@@ -925,7 +925,7 @@ async function openSettings(){
   const st=await loadSetting('site',[...SITE_FIELDS.map(f=>f[0]),'colors']);
   SET_OK={zchus:z.ok,site:st.ok};
   const v=spDec(z.value)||{};$('z-text').value=v.text||'';$('z-names').value=(v.names||[]).join('\n');
-  SITE_SAVED=st.value||{};drawSiteFields(SITE_SAVED);drawColors(SITE_SAVED.colors||{});
+  SITE_SAVED=spDec(st.value)||{};drawSiteFields(SITE_SAVED);drawColors(SITE_SAVED.colors||{});
   $('z-text').disabled=$('z-names').disabled=!z.ok;
   document.querySelectorAll('#site-fields input,#site-fields textarea,#colors input').forEach(e=>e.disabled=!st.ok);
   const bad=[!z.ok&&'the dedication bar',!st.ok&&'the website text and colors'].filter(Boolean);
@@ -936,7 +936,7 @@ $('v-settings').onsubmit=async e=>{
   const rows=[];
   if(SET_OK.zchus)rows.push({key:'zchus',value:spEnc({text:$('z-text').value.trim(),names:$('z-names').value.split('\n').map(s=>s.trim()).filter(Boolean)})});
   let site=null;
-  if(SET_OK.site){site={...readSiteFields(),colors:readColors()};rows.push({key:'site',value:site})}
+  if(SET_OK.site){site={...readSiteFields(),colors:readColors()};rows.push({key:'site',value:spEnc(site)})}
   if(!rows.length){say('z-msg','Nothing was saved, because the settings could not be loaded first.','err');return}
   const {error}=await sb.from('settings').upsert(rows);
   if(!error&&site)SITE_SAVED=site;
@@ -1184,7 +1184,8 @@ function readSiteFields(){
 $('site-reset').onclick=()=>{drawSiteFields(SITE_SAVED);drawColors(SITE_SAVED.colors||{})};
 
 /* ---------- colors ---------- */
-const COLOR_FIELDS=[['red','Main red (header, title)','#C3262E'],['red-dk','Dark red (shadows, hover)','#8E1B22'],['plum','Purple (title shadow, boxes)','#4A2770'],['blue','Blue (z\'chus bar, ticker)','#0E4C8A'],['schach','Green (labels)','#3F6B34'],['gold','Gold (highlights)','#FFE7B8'],['paper','Page background','#F5EEDC'],['card','Card background','#FFFDF7'],['ink','Text and borders','#24192E']];
+// the colours the current design is built from (each one is used all over the site)
+const COLOR_FIELDS=[['ink','Dark bars (top, menu, bands) and text','#0B1F3A'],['plum','Main color (headings, buttons)','#0E4C8A'],['violet','Accent (shadows, hover)','#2E6FB5'],['sun','Highlight (gold words, Subscribe)','#F6E58D'],['red',"Red (z'chus bar, Shabbos times, stamps)",'#C3262E'],['paper','Page background','#F5EEDC'],['card','Card background','#FFFDF7']];
 function drawColors(c){
   $('colors').innerHTML=COLOR_FIELDS.map(([k,l,d])=>`<label for="col-${k}"><input type="color" id="col-${k}" value="${(c&&c[k])||d}">${esc(l)}</label>`).join('');
   $('colors').querySelectorAll('input').forEach(i=>i.oninput=previewColors);previewColors();
@@ -1192,12 +1193,12 @@ function drawColors(c){
 function readColors(){const o={};COLOR_FIELDS.forEach(([k,,d])=>{const v=$('col-'+k).value.toUpperCase();if(v!==d.toUpperCase())o[k]=v});return o}
 function previewColors(){
   const g=k=>$('col-'+k).value,q=x=>$('cprev').querySelector(x);
-  q('.cp-bar').style.cssText=`background:${g('blue')};color:#fff`;
-  q('.cp-head').style.cssText=`background:${g('red')};color:#fff`;q('.cp-head b').style.cssText=`background:${g('gold')};color:${g('red-dk')}`;
+  q('.cp-bar').style.cssText=`background:${g('red')};color:#fff`;
+  q('.cp-head').style.cssText=`background:${g('ink')};color:#fff`;q('.cp-head b').style.cssText=`background:${g('sun')};color:${g('ink')}`;
   q('.cp-body').style.cssText=`background:${g('paper')};color:${g('ink')}`;
-  q('.cp-title').style.cssText=`color:${g('red')};text-shadow:2px 2px 0 ${g('plum')}`;
-  q('.cp-tag').style.background=g('schach');q('.cp-btn').style.background=g('ink');q('.cp-btn2').style.background=g('red');
-  q('.cp-cta').style.cssText=`background:${g('plum')};color:${g('gold')}`;
+  q('.cp-title').style.cssText=`color:${g('plum')};text-shadow:2px 2px 0 ${g('violet')}`;
+  q('.cp-tag').style.background=g('violet');q('.cp-btn').style.background=g('ink');q('.cp-btn2').style.background=g('plum');
+  q('.cp-cta').style.cssText=`background:${g('plum')};color:${g('sun')}`;
 }
 $('colors-reset').onclick=()=>drawColors({});
 
