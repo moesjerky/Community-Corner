@@ -12,7 +12,7 @@ function funLoadOcr(){
 function funLines(items){
   const rows=[];
   items.slice().sort((a,b)=>a.y-b.y||a.x-b.x).forEach(t=>{
-    const r=rows.find(r=>Math.abs(r.y-t.y)<.004&&Math.abs(r.h-t.h)<.002&&t.x<r.x1+.015&&t.x>r.x0-.3);
+    const r=rows.find(r=>Math.abs(r.y-t.y)<.004&&Math.abs(r.h-t.h)<.002&&t.x<r.x1+.015&&t.x+t.w>r.x0-.015);   // only glue pieces that touch, not text from the next column
     if(r){r.parts.push(t);r.x1=Math.max(r.x1,t.x+t.w);r.x0=Math.min(r.x0,t.x);r.h=Math.max(r.h,t.h)}else rows.push({y:t.y,x0:t.x,x1:t.x+t.w,h:t.h,parts:[t]});
   });
   return rows.map(r=>({y:r.y,x:r.x0,h:r.h,str:r.parts.sort((a,b)=>a.x-b.x).map(p=>p.str).join(' ').replace(/\s+/g,' ').trim()}));
@@ -24,6 +24,7 @@ function funUnder(lines,head,maxDown){
     if(l===head||l.y<=head.y+.002||l.y>head.y+maxDown)continue;
     if(l.x<head.x-.06||l.x>head.x+.2)continue;
     if(/^By\s*:/.test(l.str))continue;
+    if(/imprint of|all rights reserved/i.test(l.str))continue;   // page footer
     if(l.h>=.0165)break;                       // next heading
     if(l.y-last>.05)break;
     out.push(l);last=l.y;
@@ -49,8 +50,8 @@ function funText(pagesItems){
       const u=funUnder(lines,wh,.09),all=u.map(l=>l.str).join(' \n ');
       const first=(wh.str.replace(/^word of the week:?\s*/i,'')||(u[0]?u[0].str:'')).trim();
       const word=(first.match(/^[A-Za-z'’-]+/)||[''])[0];
-      const say=(first.match(/\(([^)]*[-·][^)]*)\)/)||[])[1]||'';
-      const mean=(all.match(/(?:Definition|Meaning)\s*:\s*([\s\S]*?)(?=\n\s*Example|$)/i)||[])[1]||'';
+      const say=(first.match(/\(([^)]*[-·][^)]*)\)/)||first.match(/^[A-Za-z'’-]+\s*:\s*([A-Za-z]+(?:-[A-Za-z]+)+)/)||[])[1]||'';   // (yoo-BIK-wih-tus) or Word: tuh-NAY-shus
+      const mean=(all.match(/(?:Definition|Meaning)\s*:\s*([\s\S]*?)(?=\s*Example\s*:|$)/i)||[])[1]||'';
       const ex=(all.match(/Example\s*:\s*([\s\S]*)$/i)||[])[1]||'';
       const tidy=s=>s.replace(/\s*\n\s*/g,' ').replace(/^[“"]|[”"]$/g,'').trim();
       if(word)fun.word={word,say:say.trim(),meaning:tidy(mean),example:tidy(ex)};
