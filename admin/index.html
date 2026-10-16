@@ -1096,8 +1096,10 @@ async function loadStatsInner(){
   show('stats');say('st-msg','Loading…');
   const days=+$('st-range').value,since=new Date(Date.now()-days*864e5);
   // read through a plain-named helper (ad blockers and filters block addresses containing "visits")
-  let {data,error}=await sb.rpc('site_numbers',{since:since.toISOString()});
-  if(error&&/site_numbers|schema cache|404/i.test(error.message||''))({data,error}=await sb.from('visits').select('at,event,path,ref,vid,mobile').gte('at',since.toISOString()).order('at',{ascending:false}).limit(50000));
+  // the database hands back at most 1,000 rows per ask, so keep asking for the next 1,000 until it runs out
+  const allRows=async q=>{let rows=[];for(let i=0;i<50;i++){const {data,error}=await q().range(i*1000,i*1000+999);if(error)return{data:null,error};rows=rows.concat(data);if(data.length<1000)break}return{data:rows,error:null}};
+  let {data,error}=await allRows(()=>sb.rpc('site_numbers',{since:since.toISOString()}));
+  if(error&&/site_numbers|schema cache|404/i.test(error.message||''))({data,error}=await allRows(()=>sb.from('visits').select('at,event,path,ref,vid,mobile').gte('at',since.toISOString()).order('at',{ascending:false})));
   if(error&&/Failed to fetch/i.test(error.message||'')){
     // self-test: figure out what exactly is being stopped, and show it
     const t=[];
