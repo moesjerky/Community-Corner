@@ -11,16 +11,28 @@ const SITE = "https://community-corner.org";
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } });
 
-function shell(title: string, body: string) {
-  return `<!doctype html><html><body style="margin:0;background:#F5EEDC;font:15px/1.5 Arial,sans-serif;color:#0B1F3A">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:20px 12px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border:3px solid #0B1F3A">
-<tr><td style="background:#0B1F3A;padding:14px 20px;font:bold 13px Arial;letter-spacing:2px;color:#F6E58D;text-transform:uppercase">Community Corner · ${esc(title)}</td></tr>
-<tr><td style="padding:20px 22px">${body}</td></tr>
-<tr><td style="padding:12px 22px;border-top:1px solid #E2E6EB;font:12px Arial;color:#667180"><a href="${SITE}/admin/" style="color:#0E4C8A">Open admin</a></td></tr>
+// every alert uses the same frame: navy banner with the logo, white card, gold label, and a button to the admin
+function shell(label: string, body: string, button = { text: "Open admin", href: `${SITE}/admin/` }) {
+  return `<!doctype html><html><head><meta name="color-scheme" content="light"></head>
+<body style="margin:0;padding:0;background:#EDE5D0">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EDE5D0"><tr><td align="center" style="padding:28px 12px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px">
+<tr><td style="background:#0B1F3A;padding:22px 26px;border-bottom:5px solid #F6E58D">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+    <td><img src="${SITE}/img/cc-logo.png" width="150" alt="The Community Corner" style="display:block;height:auto;border:0"></td>
+    <td align="right" style="font:bold 11px Arial,sans-serif;letter-spacing:2px;text-transform:uppercase;color:#F6E58D">${esc(label)}</td>
+  </tr></table></td></tr>
+<tr><td style="background:#ffffff;padding:30px 28px 26px;font:15px/1.55 Arial,sans-serif;color:#0B1F3A">${body}
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:26px"><tr>
+    <td style="background:#0E4C8A"><a href="${button.href}" style="display:inline-block;padding:13px 24px;font:bold 15px Arial,sans-serif;color:#ffffff;text-decoration:none">${esc(button.text)} &rarr;</a></td>
+  </tr></table></td></tr>
+<tr><td style="padding:16px 6px;font:12px/1.5 Arial,sans-serif;color:#6A5D70;text-align:center">Sent by the community-corner.org alert robot</td></tr>
 </table></td></tr></table></body></html>`;
 }
-const row = (k: string, v: unknown) => v ? `<tr><td style="padding:4px 12px 4px 0;color:#667180;white-space:nowrap;vertical-align:top">${esc(k)}</td><td style="padding:4px 0"><b>${esc(v)}</b></td></tr>` : "";
+const head = (kick: string, big: string) =>
+  `<div style="font:bold 12px Arial,sans-serif;letter-spacing:2px;text-transform:uppercase;color:#C3262E">${esc(kick)}</div><div style="font:bold 28px/1.15 Arial,sans-serif;color:#0B1F3A;margin:6px 0 18px">${big}</div>`;
+const row = (k: string, v: unknown) => v ? `<tr><td style="padding:9px 14px 9px 0;border-top:1px solid #EEF0F3;color:#667180;font:13px Arial,sans-serif;white-space:nowrap;vertical-align:top;width:110px">${esc(k)}</td><td style="padding:9px 0;border-top:1px solid #EEF0F3;font:bold 15px Arial,sans-serif;color:#0B1F3A">${esc(v)}</td></tr>` : "";
+const facts = (rows: string) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-bottom:1px solid #EEF0F3">${rows}</table>`;
 
 async function send(key: string, subject: string, html: string, replyTo?: string) {
   const r = await fetch("https://api.resend.com/emails", {
@@ -42,8 +54,11 @@ Deno.serve(async (req) => {
     // 1) new subscribers
     const subs = (await db.from("subscribers").select("*").is("notified_at", null).order("created_at").limit(20)).data ?? [];
     for (const s of subs) {
-      await send(key, `New subscriber: ${s.name || s.email}`, shell("New subscriber", `<h2 style="margin:0 0 12px;font-size:22px">Someone just subscribed</h2>
-<table>${row("Name", s.name)}${row("Email", s.email)}${row("Phone", s.phone)}${row("Address", s.address)}${row("Shul", s.shul)}${row("Heard from", s.heard)}</table>`), s.email);
+      await send(key, `New subscriber: ${s.name || s.email}`, shell("New subscriber",
+        head("New subscriber", `${esc(s.name || s.email)} just signed up`) +
+        facts(`${row("Name", s.name)}${row("Email", s.email)}${row("Phone", s.phone)}${row("Address", s.address)}${row("Shul", s.shul)}${row("Heard from", s.heard)}`) +
+        `<p style="margin:16px 0 0;font:14px Arial,sans-serif;color:#667180">Hit Reply to write back to them.</p>`,
+        { text: "See all subscribers", href: `${SITE}/admin/` }), s.email);
       await db.from("subscribers").update({ notified_at: new Date().toISOString() }).eq("email", s.email);
       out.subscribers++;
     }
@@ -52,10 +67,11 @@ Deno.serve(async (req) => {
     const msgs = (await db.from("submissions").select("*").is("notified_at", null).order("created_at").limit(20)).data ?? [];
     for (const m of msgs) {
       let photo = "";
-      if (m.photo) { const u = await db.storage.from("submissions").createSignedUrl(m.photo, 60 * 60 * 24 * 7); if (u.data) photo = `<p><a href="${u.data.signedUrl}" style="color:#0E4C8A">See the photo they sent</a> (link works for 7 days)</p>`; }
-      await send(key, `New message: ${m.kind} from ${m.name}`, shell("New message", `<h2 style="margin:0 0 12px;font-size:22px">${esc(m.kind)}</h2>
-<table>${row("From", m.name)}${row("Contact", m.contact)}</table>
-<div style="white-space:pre-wrap;margin:14px 0;padding:12px 14px;background:#F5F6F8;border-left:4px solid #0E4C8A">${esc(m.message)}</div>${photo}`), m.contact);
+      if (m.photo) { const u = await db.storage.from("submissions").createSignedUrl(m.photo, 60 * 60 * 24 * 7); if (u.data) photo = `<p style="margin:16px 0 0"><a href="${u.data.signedUrl}"><img src="${u.data.signedUrl}" width="220" alt="Photo they sent" style="display:block;border:3px solid #0B1F3A;max-width:100%;height:auto"></a><span style="font:12px Arial,sans-serif;color:#667180">Photo link works for 7 days</span></p>`; }
+      await send(key, `New message: ${m.kind} from ${m.name}`, shell("New message",
+        head(m.kind, `From ${esc(m.name)}`) + facts(`${row("Contact", m.contact)}`) +
+        `<div style="white-space:pre-wrap;margin:18px 0 0;padding:16px 18px;background:#F5F6F8;border-left:5px solid #F6E58D;font:15px/1.6 Arial,sans-serif;color:#0B1F3A">${esc(m.message)}</div>${photo}`,
+        { text: "Open the Inbox", href: `${SITE}/admin/` }), m.contact);
       await db.from("submissions").update({ notified_at: new Date().toISOString() }).eq("id", m.id);
       out.messages++;
     }
@@ -71,16 +87,20 @@ Deno.serve(async (req) => {
       const phones = visits.filter((v) => v.mobile).length;
       const reads = new Map<string, number>();
       visits.filter((v) => v.event === "read").forEach((v) => reads.set(v.path, (reads.get(v.path) || 0) + 1));
-      const top = [...reads].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([p, n]) => `<li>Issue #${esc(p)}: ${n} read${n === 1 ? "" : "s"}</li>`).join("") || "<li>No issues opened</li>";
+      const top = [...reads].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([p, n]) => `<li><b>Issue #${esc(p)}</b> <span style="color:#667180">· ${n} read${n === 1 ? "" : "s"}</span></li>`).join("") || "<li>No issues opened</li>";
       const pdfs = visits.filter((v) => v.event === "pdf").length;
       const newSubs = (await db.from("subscribers").select("email", { count: "exact", head: true }).gte("created_at", since)).count ?? 0;
       const allSubs = (await db.from("subscribers").select("email", { count: "exact", head: true }).eq("unsubscribed", false)).count ?? 0;
       const newMsgs = (await db.from("submissions").select("id", { count: "exact", head: true }).gte("created_at", since)).count ?? 0;
-      const big = (n: number, l: string) => `<td style="padding:10px 8px;text-align:center;border:2px solid #0B1F3A"><div style="font:bold 30px Arial;color:#0E4C8A">${n}</div><div style="font:bold 11px Arial;letter-spacing:1px;text-transform:uppercase;color:#667180">${l}</div></td>`;
-      await send(key, `Yesterday on the site: ${people} visitor${people === 1 ? "" : "s"}, ${newSubs} new subscriber${newSubs === 1 ? "" : "s"}`, shell("Daily summary", `<h2 style="margin:0 0 14px;font-size:22px">The last 24 hours</h2>
-<table width="100%" cellspacing="6"><tr>${big(people, "Visitors")}${big(visits.length, "Page views")}${big(newSubs, "New subs")}${big(newMsgs, "Messages")}</tr></table>
-<p style="margin:16px 0 6px"><b>Most read</b></p><ul style="margin:0;padding-left:20px">${top}</ul>
-<table style="margin-top:14px">${row("PDF downloads", pdfs)}${row("Views on phones", phones)}${row("Total subscribers", allSubs)}</table>`));
+      const big = (n: number, l: string, bg: string, fg: string) => `<td width="25%" style="padding:4px"><div style="background:${bg};padding:16px 6px 12px;text-align:center"><div style="font:bold 34px/1 Arial,sans-serif;color:${fg}">${n}</div><div style="font:bold 10px Arial,sans-serif;letter-spacing:1.5px;text-transform:uppercase;color:${fg};margin-top:6px">${l}</div></div></td>`;
+      const dateTxt = ny.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+      await send(key, `Yesterday on the site: ${people} visitor${people === 1 ? "" : "s"}, ${newSubs} new subscriber${newSubs === 1 ? "" : "s"}`, shell("Daily summary",
+        head(dateTxt, "The last 24 hours") +
+        `<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>${big(people, "Visitors", "#0B1F3A", "#F6E58D")}${big(visits.length, "Page views", "#0E4C8A", "#ffffff")}${big(newSubs, "New subs", "#C3262E", "#ffffff")}${big(newMsgs, "Messages", "#F6E58D", "#0B1F3A")}</tr></table>
+        <div style="font:bold 12px Arial,sans-serif;letter-spacing:2px;text-transform:uppercase;color:#C3262E;margin:24px 0 8px">Most read</div>
+        <ol style="margin:0 0 14px;padding-left:22px;font:15px/1.8 Arial,sans-serif">${top}</ol>` +
+        facts(`${row("PDF downloads", pdfs)}${row("On phones", phones ? `${phones} views` : "")}${row("Subscribers", allSubs)}`),
+        { text: "Open Analytics", href: `${SITE}/admin/` }));
       await db.from("settings").upsert({ key: "notify_state", value: { ...st, summary: today } });
       out.summary = true;
     }
