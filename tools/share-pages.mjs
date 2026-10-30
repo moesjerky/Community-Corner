@@ -22,19 +22,20 @@ function page(i) {
   const url = `${SITE}/i/${i.num}/`;
   const cols = (i.columns || []).map((c) => c.name).filter(Boolean);
   const q = i.fun?.parsha?.question;
-  const desc = [`The weekly paper for Pomona, Monsey, Wesley Hills and Montebello${i.hebrew ? ", " + i.hebrew : ""}.`,
-    cols.length ? `Inside: ${cols.slice(0, 6).join(", ")}.` : "", q ? `Parsha Question: ${q}` : ""].filter(Boolean).join(" ").slice(0, 300);
+  let desc = [`The weekly paper for Pomona, Monsey, Wesley Hills and Montebello${i.hebrew ? ", " + i.hebrew : ""}.`,
+    cols.length ? `Inside: ${cols.slice(0, 6).join(", ")}.` : "", q ? `Parsha Question: ${q}` : ""].filter(Boolean).join(" ");
+  const short = desc.length > 300 ? desc.slice(0, 297).replace(/\s+\S*$/, "") + "..." : desc;
   return `<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(name)}</title>
-<meta name="description" content="${esc(desc)}">
+<meta name="description" content="${esc(short)}">
 <link rel="canonical" href="${url}">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="The Community Corner">
 <meta property="og:title" content="${esc(name)}">
-<meta property="og:description" content="${esc(desc)}">
+<meta property="og:description" content="${esc(short)}">
 <meta property="og:url" content="${url}">
 <meta property="og:image" content="${cover}">
 <meta property="og:image:width" content="720">
