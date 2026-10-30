@@ -686,6 +686,18 @@ body.paged .rtop{justify-content:flex-start;gap:12px}body.paged .rtop>div:first-
   .nh-cta i{width:100%;text-align:center;margin:0}
 }
 @media (prefers-reduced-motion:reduce){.nh-fan button,.nh-fan button.main{animation:none;transition:none}.tile{transition:none}}
+/* movement: boxes and headlines slam in as you scroll, papers (issue covers, sponsor ads) drop in and land a little crooked */
+.fx [data-fx]:not(.fx-in){opacity:0}
+.fx [data-fx].fx-in{animation:fxslam .6s cubic-bezier(.2,1.6,.35,1) var(--d,0s) backwards}
+@keyframes fxslam{from{opacity:0;transform:translateY(80px) scale(.88)}to{opacity:1;transform:none}}
+.fx .shabbos>div.fx-in b{display:inline-block;animation:fxflip .7s cubic-bezier(.3,1.4,.5,1) calc(var(--d,0s) + .15s) backwards;transform-origin:50% 0}
+@keyframes fxflip{from{transform:perspective(400px) rotateX(-95deg);opacity:0}to{transform:none;opacity:1}}
+.fx .sec-h.fx-in,.fx .recent-h.fx-in{animation:fxpunch .55s cubic-bezier(.2,1.8,.4,1) backwards}
+@keyframes fxpunch{from{opacity:0;transform:scale(1.6)}to{opacity:1;transform:none}}
+.fx [data-fx=paper].fx-in{animation:fxdrop .8s cubic-bezier(.25,1.25,.5,1) var(--d,0s) backwards;transform:rotate(var(--er,0deg));transition:transform .25s cubic-bezier(.3,1.5,.5,1)}
+@keyframes fxdrop{from{opacity:0;transform:translate(var(--sx,0),-160px) rotate(var(--sr,8deg)) scale(1.12)}55%{opacity:1}to{opacity:1;transform:rotate(var(--er,0deg))}}
+.fx [data-fx=paper].fx-in:hover,.fx [data-fx=paper].fx-in:focus-visible{transform:none}
+@media (prefers-reduced-motion:reduce){.fx [data-fx],.fx [data-fx] b{animation:none!important;opacity:1!important;transform:none!important}}
 </style>
 <script>try{const c=JSON.parse(localStorage.getItem('cc_colors')||'{}');for(const k in c)document.documentElement.style.setProperty('--'+k,c[k])}catch{}</script>
 </head>
@@ -1592,6 +1604,22 @@ function celebrate(){
 }
 $('win-again').onclick=()=>{$('win').hidden=true;items.forEach(it=>{it.done=false;it.li.classList.remove('done')});cells.forEach(b=>{b.classList.remove('found','sel','hop');b.style.animationDelay=''});start=null;$('msg').textContent='Fresh board. Go!'};
 renderLists();
+
+// movement: boxes and headlines slam in as you scroll, papers drop in like they were tossed on a table
+(function(){
+  if(!('IntersectionObserver' in window)||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  document.body.classList.add('fx');
+  const SEL='.shabbos>div,.tile,.sendbox,.finder.home,.recent-h,.sec-h,.subpromo,.adpromo,.colgrid>*,#recent-grid>.issue,#grid>.issue,.ads>.ad',PAPER='.issue,.ad';
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('fx-in');io.unobserve(e.target)}}),{rootMargin:'0px 0px -8% 0px'});
+  const scan=()=>document.querySelectorAll(SEL).forEach(el=>{
+    if(el.dataset.fx)return;const k=[...el.parentNode.children].indexOf(el);
+    el.style.setProperty('--d',(k%4)*.09+'s');
+    if(el.matches(PAPER)){const side=k%2?1:-1;el.dataset.fx='paper';
+      el.style.setProperty('--sx',side*60+'px');el.style.setProperty('--sr',side*(6+k%3*3)+'deg');el.style.setProperty('--er',(((k*37)%5)-2)*.8+'deg')}
+    else el.dataset.fx='box';
+    io.observe(el)});
+  scan();let t;new MutationObserver(()=>{clearTimeout(t);t=setTimeout(scan,60)}).observe(document.body,{childList:true,subtree:true});
+})();
 </script>
 </body>
 </html>
