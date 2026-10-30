@@ -678,10 +678,10 @@ async function renderPdf(file,onPage,want=true){
     const a=mastheadRed(keep[0]),b=mastheadRed(keep[1]);
     if(b>.08&&a<.03){[pages[0],pages[1]]=[pages[1],pages[0]];first=keep[1];swapped=true}
   }
-  const land=first.width>first.height,sw=land?first.width/2:first.width,scale=Math.min(1,800/sw);
+  const land=first.width>first.height,sw=land?first.width/2:first.width,scale=Math.min(1,720/sw);   // 720 wide is plenty: covers show at about 250-400px
   const cc=document.createElement('canvas');cc.width=Math.round(sw*scale);cc.height=Math.round(first.height*scale);
   cc.getContext('2d').drawImage(first,land?first.width/2:0,0,sw,first.height,0,0,cc.width,cc.height);
-  const cover=await toBlob(cc,.82);keep.forEach(c=>{c.width=c.height=0});
+  const cover=await toBlob(cc,.7);keep.forEach(c=>{c.width=c.height=0});
   // cut out every column (Story of the Week, Recipe of the Week, ...) for the Columns archive; never blocks an upload
   let columns=null;
   if(wantCols){try{onPage&&onPage(doc.numPages,doc.numPages,'Finding the columns…');columns=await findColumns(doc)}catch(e){columns=null}}
