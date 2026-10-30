@@ -316,9 +316,6 @@ footer .applink{margin-left:16px;margin-bottom:46px}
 .print{margin-top:24px;padding:14px 16px;background:var(--card);border:2px dashed var(--line)}
 
 /* subscribe */
-.subbar{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;background:var(--gold);color:var(--ink);text-decoration:none;font:700 14px var(--body);padding:8px 16px;border-bottom:2px solid var(--ink)}
-.subbar b{background:var(--ink);color:var(--gold);padding:4px 12px;border-radius:999px;font-weight:700}
-.subbar:hover b,.subbar:focus-visible b{background:var(--red);color:#fff}
 .subpromo{margin-block:10px 24px;background:var(--blue);color:#fff;padding:24px;display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center;border:3px solid var(--ink);box-shadow:6px 6px 0 var(--gold)}
 .subpromo h3{font-size:28px;color:var(--gold)}
 .subpromo p{margin:6px 0 0;max-width:56ch}
@@ -462,8 +459,6 @@ footer{position:relative;padding-block:4px 40px;font-size:13px;color:var(--muted
 .menu a.subnav:hover,.menu a.subnav:focus-visible{background:#fff}
 .head{box-shadow:none}
 
-.subbar{background:var(--sun);border-bottom:0;font-weight:700;color:var(--plum)}
-.subbar b{border-radius:0;background:var(--plum);color:#fff;padding:4px 12px}
 
 .btn{border-radius:0;font:700 15px var(--body);letter-spacing:.02em}
 .eyebrow{font-size:14px;letter-spacing:.08em;text-transform:uppercase;padding:5px 12px}
@@ -683,7 +678,7 @@ body.paged .rtop{justify-content:flex-start;gap:12px}body.paged .rtop>div:first-
 @keyframes spslam{from{transform:scale(1.5) rotate(-6deg);opacity:0}}
 @keyframes spstamp{from{transform:rotate(-12deg) scale(3);opacity:0}}
 @keyframes spcover{from{transform:rotate(30deg) translate(60px,-40px);opacity:0}}
-@media (max-width:560px){.sp-cover{width:96px;right:-10px;top:-30px}.sp-card h2{max-width:7ch}#sp-form{flex-direction:column}#sp-form button{padding:14px}}
+@media (max-width:560px){.sp-cover{display:none}.sp-kick{margin-top:26px;padding-right:34px;letter-spacing:.14em}.sp-card h2{max-width:7ch}#sp-form{flex-direction:column}#sp-form button{padding:14px}}
 @media (prefers-reduced-motion:reduce){.sp,.sp-card,.sp-stamp,.sp-cover{animation:none}}
 @media (max-width:760px){
   .nh-fan button:nth-child(1),.nh-fan button:nth-child(4){display:none}
@@ -705,7 +700,6 @@ body.paged .rtop{justify-content:flex-start;gap:12px}body.paged .rtop>div:first-
     <a href="#home" data-v="home">Home</a><a href="#past" data-v="past">Past Issues</a><a href="#columns" data-v="columns">Columns</a><a href="#fun" data-v="fun">Fun Stuff</a><a href="#sponsors" data-v="sponsors">Sponsors</a><a href="#about" data-v="about">About</a><a href="#contact" data-v="contact">Contact</a><a href="#subscribe" class="subnav" data-v="subscribe">Subscribe</a>
   </nav>
 </div></header>
-<a class="subbar" id="subbar" href="#subscribe" hidden><span>Get the Community Corner in your inbox every week</span><b>Subscribe</b></a>
 
 <div class="nh" id="nh" hidden>
   <div class="wrap">
@@ -1087,7 +1081,7 @@ function route(){
   const v=i?'issue':colHash?'col':(['home','past','fun','sponsors','contact','subscribe','about','advertise','submit','columns'].includes(h)?h:'home');
   ['home','past','issue','fun','sponsors','contact','subscribe','about','advertise','submit','columns','col'].forEach(x=>$('v-'+x).hidden=x!==v);
   if(v==='columns')showColumns();if(v==='col')showColumn(h);
-  $('subpromo').hidden=v==='subscribe';$('subbar').hidden=v==='subscribe'||v==='home';
+  $('subpromo').hidden=v==='subscribe';
   // the home page has its own dark top with this week's cover; every other page keeps the red ribbon
   const newTop=v==='home'&&issues.length>0;
   document.body.classList.toggle('home',newTop);$('nh').hidden=!newTop;
@@ -1538,7 +1532,7 @@ function openAd(k,list){LB=list||ADS;adAt=k;lastFocus=document.activeElement;sho
 function closeAd(){$('lb').hidden=true;$('lb').classList.remove('tall','zoom');document.body.style.overflow='';lastFocus&&lastFocus.focus()}
 function stepAd(d){$('lb').classList.remove('zoom');adAt=(adAt+d+LB.length)%LB.length;showAd()}
 function renderSponsors(L){
-  $('s-from').textContent=L.num?`Issue #${L.num} sponsors`:'Thank you to our sponsors';$('print').hidden=false;
+  $('s-from').textContent="This week's sponsors";$('print').hidden=false;
   (typeof L.sponsors==='object'?Promise.resolve(L.sponsors):fetch(F(L,'sponsors.json')).then(r=>r.json())).then(d=>{
     ADS=d.ads.map(a=>({...a,src:/^https?:/.test(a.img)?a.img:F(L,'ads/'+a.img)}));
     $('ads').innerHTML=ADS.map((a,k)=>`<button class="ad" data-ad="${k}" aria-label="View ${esc(a.name||'sponsor')} ad bigger"><img loading="lazy" src="${esc(a.src)}" alt="${esc(a.name)}">${a.name||a.info?`<div><b>${esc(a.name)}</b><span>${esc(a.info||'')}</span></div>`:''}</button>`).join('');

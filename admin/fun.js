@@ -48,9 +48,12 @@ function funText(pagesItems){
     const wh=lines.find(l=>/^word of the week/i.test(l.str));
     if(wh&&!fun.word){
       const u=funUnder(lines,wh,.09),all=u.map(l=>l.str).join(' \n ');
-      const first=(wh.str.replace(/^word of the week:?\s*/i,'')||(u[0]?u[0].str:'')).trim();
+      // the word can sit on the heading line, just to its right ("Petrichor: Pronunciation: PET-ri-kor"), or be the first line under it
+      const side=lines.filter(l=>l!==wh&&Math.abs(l.y-wh.y)<.012&&l.x>wh.x&&l.x<wh.x+.2&&/^[A-Za-z'’-]+\s*:/.test(l.str)&&!/^(definition|meaning|example)\b/i.test(l.str)).sort((a,b)=>a.x-b.x)[0];
+      const top=u.find(l=>!/^(definition|meaning|example)\s*:/i.test(l.str));
+      const first=(wh.str.replace(/^word of the week:?\s*/i,'')||(side?side.str:'')||(top?top.str:'')).trim();
       const word=(first.match(/^[A-Za-z'’-]+/)||[''])[0];
-      const say=(first.match(/\(([^)]*[-·][^)]*)\)/)||first.match(/^[A-Za-z'’-]+\s*:\s*([A-Za-z]+(?:-[A-Za-z]+)+)/)||[])[1]||'';   // (yoo-BIK-wih-tus) or Word: tuh-NAY-shus
+      const say=(first.match(/\(([^)]*[-·][^)]*)\)/)||first.match(/^[A-Za-z'’-]+\s*:\s*(?:Pronunciation\s*:\s*)?([A-Za-z]+(?:-[A-Za-z]+)+)/i)||[])[1]||'';   // (yoo-BIK-wih-tus) or Word: tuh-NAY-shus
       const mean=(all.match(/(?:Definition|Meaning)\s*:\s*([\s\S]*?)(?=\s*Example\s*:|$)/i)||[])[1]||'';
       const ex=(all.match(/Example\s*:\s*([\s\S]*)$/i)||[])[1]||'';
       const tidy=s=>s.replace(/\s*\n\s*/g,' ').replace(/^[“"]|[”"]$/g,'').trim();
