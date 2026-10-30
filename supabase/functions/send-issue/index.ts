@@ -19,6 +19,7 @@ function emailHtml(issue: any, cover: string, pdf: string, unsub: string) {
     ? `<p style="margin:0 0 18px;font:15px Arial,sans-serif;color:#24192E">Candle lighting <b style="color:#C3262E">${esc(issue.yomtov)}</b>${issue.tzais ? ` &nbsp;·&nbsp; Tzais <b style="color:#C3262E">${esc(issue.tzais)}</b>` : ""}</p>`
     : "";
   return `<!doctype html><html><body style="margin:0;background:#F5EEDC">
+<div style="display:none;max-height:0;overflow:hidden">${esc(intro(issue)[0])}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F5EEDC"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#FFFDF7;border:3px solid #24192E">
 <tr><td style="background:#C3262E;padding:16px 20px"><img src="${SITE}/img/cc-logo.png" alt="Community Corner" width="160" style="display:block;height:auto"></td></tr>
@@ -26,6 +27,7 @@ function emailHtml(issue: any, cover: string, pdf: string, unsub: string) {
 <p style="margin:0 0 6px;font:bold 13px Arial,sans-serif;letter-spacing:1px;color:#3F6B34;text-transform:uppercase">This week's paper is here</p>
 <h1 style="margin:0 0 14px;font:bold 26px Arial,sans-serif;color:#24192E">${esc(title)}</h1>
 ${times}
+${intro(issue).map((t) => `<p style="margin:0 0 14px;font:16px/1.5 Arial,sans-serif;color:#24192E">${esc(t)}</p>`).join("")}
 <a href="${SITE}/?ref=email#${issue.num}"><img src="${cover}" alt="Cover of issue ${issue.num}" width="516" style="display:block;width:100%;max-width:516px;height:auto;border:2px solid #24192E"></a>
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:20px"><tr>
 <td style="background:#24192E;padding:12px 20px"><a href="${SITE}/?ref=email#${issue.num}" style="font:bold 16px Arial,sans-serif;color:#F5EEDC;text-decoration:none">Read online</a></td>
@@ -37,6 +39,24 @@ ${times}
 You're getting this because you subscribed at community-corner.org. <a href="${unsub}" style="color:#6A5D70">Unsubscribe</a>
 </td></tr></table></td></tr></table></body></html>`;
 }
+
+// A few real sentences about this week's paper (spam filters distrust emails that are only pictures)
+function intro(issue: any): string[] {
+  const out = [`The new Community Corner${issue.title ? " for " + issue.title : ""} is out${issue.hebrew ? " (" + issue.hebrew + ")" : ""}. Read it online or download the PDF to print for your Shabbos table.`];
+  const q = issue.fun?.parsha?.question, fact = issue.fun?.fact;
+  if (q) out.push(`This week's Parsha Question: ${q}`);
+  if (fact) out.push(`Fun fact: ${fact.length > 220 ? fact.slice(0, 217).replace(/\s+\S*$/, "") + "..." : fact}`);
+  return out;
+}
+// The same email as plain text, for inboxes (and spam filters) that want it
+function emailText(issue: any, pdf: string, unsub: string) {
+  return [`Community Corner - Issue #${issue.num}${issue.title ? ": " + issue.title : ""}`, "",
+    ...intro(issue).flatMap((t) => [t, ""]),
+    issue.yomtov ? `Candle lighting ${issue.yomtov}${issue.tzais ? ", Tzais " + issue.tzais : ""}\n` : "",
+    `Read online: ${SITE}/?ref=email#${issue.num}`, `Download PDF: ${pdf}`, "",
+    `You're getting this because you subscribed at community-corner.org.`, `Unsubscribe: ${unsub}`].join("\n");
+}
+const unsubHeaders = (unsub: string) => ({ "List-Unsubscribe": `<${unsub}>, <mailto:${REPLY_TO}?subject=Unsubscribe>` });
 
 // When should an automatic send go out?  Friday 8:00 AM New York time.
 // Returns null when it's already Friday morning or later that day (send now), otherwise the upcoming Friday 8 AM.
@@ -96,7 +116,8 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: FROM, to: [s.email], reply_to: REPLY_TO, subject, scheduled_at: sendAt.toISOString(),
             html: emailHtml(issue, `${base}/cover.jpg`, `${base}/issue.pdf`, unsub),
-            headers: { "List-Unsubscribe": `<${unsub}>` },
+            text: emailText(issue, `${base}/issue.pdf`, unsub),
+            headers: unsubHeaders(unsub),
           }),
         });
         if (!r.ok) {
@@ -116,7 +137,8 @@ Deno.serve(async (req) => {
         return {
           from: FROM, to: [s.email], reply_to: REPLY_TO, subject,
           html: emailHtml(issue, `${base}/cover.jpg`, `${base}/issue.pdf`, unsub),
-          headers: { "List-Unsubscribe": `<${unsub}>` },
+          text: emailText(issue, `${base}/issue.pdf`, unsub),
+          headers: unsubHeaders(unsub),
         };
       });
       const r = await fetch("https://api.resend.com/emails/batch", {
