@@ -1,0 +1,25 @@
+# Every hour: make a share page (/i/<num>/) for any new issue so WhatsApp shows its cover, and refresh sitemap.xml.
+name: share pages
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node tools/share-pages.mjs
+      - name: Save any changes
+        run: |
+          git add i sitemap.xml
+          if git diff --cached --quiet; then echo "Nothing new"; exit 0; fi
+          git config user.name "share-pages robot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Share pages for new issues"
+          git push

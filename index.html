@@ -812,6 +812,7 @@ body.paged .rtop{justify-content:flex-start;gap:12px}body.paged .rtop>div:first-
     <p style="margin:0 0 6px"><a href="#columns" class="backlink">← All columns</a></p>
     <h2 class="sec-h" id="cd-title"></h2>
     <p class="meta" id="cd-meta"></p>
+    <button class="btn share" type="button" id="cd-share">Share on WhatsApp</button>
     <div class="colfeed" id="cd-feed"></div>
     <p style="text-align:center"><button type="button" class="btn" id="cd-more" hidden>Show more</button></p>
   </section>
@@ -1348,14 +1349,22 @@ fetch('https://www.hebcal.com/shabbat?cfg=json&zip=10952&M=off&m=50&b=18&lg=a').
     const t=(d2.items||[]).find(x=>x.category==='havdalah');if(!t)return;const el=$('tzais72');el.querySelector('b').textContent=time(t);el.hidden=false}).catch(()=>{});
   $('shabbos').hidden=false;
 }).catch(()=>{});
-document.addEventListener('click',async e=>{
-  const b=e.target.closest('[data-share]');if(!b)return;e.stopPropagation();
-  const i=issues.find(x=>x.num==b.dataset.share);if(!i)return;
-  const url=`https://community-corner.org/#${i.num}`,text=`Community Corner #${i.num}${i.title?': '+i.title:''}`;
-  track('share',String(i.num));
+// phones get their own share sheet, computers go to WhatsApp
+async function shareLink(text,url){
   if(navigator.share&&/Mobi|Android|iPhone/i.test(navigator.userAgent)){try{await navigator.share({title:text,text,url});return}catch(err){if(err&&err.name==='AbortError')return}}
   window.open('https://wa.me/?text='+encodeURIComponent(text+' '+url),'_blank','noopener');
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-share]');if(!b)return;e.stopPropagation();
+  const i=issues.find(x=>x.num==b.dataset.share);if(!i)return;
+  track('share',String(i.num));
+  // /i/253/ is a small page with that issue's cover for the link preview (made by the share-pages robot); it sends people on to #253
+  shareLink(`Community Corner #${i.num}${i.title?': '+i.title:''}`,`https://community-corner.org/i/${i.num}/`);
 },true);
+$('cd-share').onclick=()=>{
+  if(!CD)return;track('share',location.hash.slice(1));
+  shareLink(`Every ${$('cd-title').textContent} from the Community Corner`,'https://community-corner.org/'+location.hash);
+};
 $('subform').addEventListener('submit',async e=>{
   e.preventDefault();const em=$('s-email'),m=$('s-msg'),btn=e.target.querySelector('button');
   if($('s-web').value)return;
