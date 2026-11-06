@@ -40,13 +40,9 @@ You're getting this because you subscribed at community-corner.org. <a href="${u
 </td></tr></table></td></tr></table></body></html>`;
 }
 
-// A few real sentences about this week's paper (spam filters distrust emails that are only pictures)
+// A real sentence about this week's paper (spam filters distrust emails that are only pictures)
 function intro(issue: any): string[] {
-  const out = [`The new Community Corner${issue.title ? " for " + issue.title : ""} is out${issue.hebrew ? " (" + issue.hebrew + ")" : ""}. Read it online or download the PDF to print for your Shabbos table.`];
-  const q = issue.fun?.parsha?.question, fact = issue.fun?.fact;
-  if (q) out.push(`This week's Parsha Question: ${q}`);
-  if (fact) out.push(`Fun fact: ${fact.length > 220 ? fact.slice(0, 217).replace(/\s+\S*$/, "") + "..." : fact}`);
-  return out;
+  return [`The new Community Corner${issue.title ? " for " + issue.title : ""} is out${issue.hebrew ? " (" + issue.hebrew + ")" : ""}. Read it online or download the PDF to print for your Shabbos table.`];
 }
 // The same email as plain text, for inboxes (and spam filters) that want it
 function emailText(issue: any, pdf: string, unsub: string) {
