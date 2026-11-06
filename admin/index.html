@@ -737,7 +737,8 @@ function drawSp(){
     i.tagName==='SELECT'||i.type==='date'?i.onchange=set:i.oninput=set});
   $('sp-ads').querySelectorAll('[data-pic]').forEach(p=>p.onclick=()=>{spSlot=+p.dataset.pic;$('sp-file').click()});
   // a removed ad is remembered, so it does not come back by itself next week
-  $('sp-ads').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const [a]=SP.splice(+b.dataset.rm,1);if(a&&a.sig)SP_HIDE.push(a.sig);drawSp()});
+  // (unless it was a duplicate of an ad still on the list: then remembering it would hide the real one too)
+  $('sp-ads').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const [a]=SP.splice(+b.dataset.rm,1);if(a&&a.sig&&!SP.some(o=>adSigDiff(o.sig,a.sig)<1))SP_HIDE.push(a.sig);drawSp()});
   $('sp-ads').querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{const k=+b.dataset.mv,j=k+ +b.dataset.d;if(j<0||j>=SP.length)return;[SP[k],SP[j]]=[SP[j],SP[k]];drawSp()});
 }
 $('sp-file').onchange=e=>{const f=e.target.files[0];if(f&&spSlot!==null){SP[spSlot].file=f;SP[spSlot].sig='';drawSp()}e.target.value=''};
@@ -747,7 +748,9 @@ async function spMerge(list,hide,num,found){
   for(const a of list)if(!a.sig&&a.img&&!a.file)a.sig=await adSigOfImage(a.img);
   const seen=[];let added=0;
   for(const f of found){
-    if(hide.some(h=>adSigDiff(h,f.sig)<1))continue;
+    // skip an ad someone removed, unless a sponsor still on the list is the closer match
+    const near=Math.min(99,...list.filter(a=>!seen.includes(a)).map(a=>adSigDiff(a.sig,f.sig)));
+    if(hide.some(h=>{const d=adSigDiff(h,f.sig);return d<1&&d<near}))continue;
     let best=null,bd=.7;
     for(const a of list){const d=adSigDiff(a.sig,f.sig);if(d<bd&&!seen.includes(a)){bd=d;best=a}}
     if(best){best.issue=num;best.sig=f.sig;if(!best.mode)best.mode='week'}

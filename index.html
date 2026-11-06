@@ -1534,7 +1534,7 @@ const ISSUE_CACHE='cc-issues-v1';
 function showIssues(list){
   issues=list;ticker(issues[0]);renderHome();renderPast();
   const fi=issues.find(i=>i.fun)||issues[0];
-  if(!FUNDATA||FUNDATA.num!==fi.num){$('f-side').querySelectorAll('.box:not(:first-child)').forEach(b=>b.remove());renderFun(fi)}
+  if(!FUNDATA||FUNDATA.num!==fi.num||(typeof fi.fun==='object'&&JSON.stringify(FUNDATA.f)!==JSON.stringify(fi.fun))){$('f-side').querySelectorAll('.box:not(:first-child)').forEach(b=>b.remove());renderFun(fi)}
   renderSponsors(issues.find(i=>i.sponsors)||issues[0]);route();
 }
 let shownFromCache=false;
@@ -1543,7 +1543,7 @@ loadIssues().then(d=>{
   d.sort((a,b)=>b.num-a.num);
   if(!d.length){if(!shownFromCache)$('latest').innerHTML='<p class="meta">Issues could not load. Refresh the page to try again.</p>';return}
   try{localStorage.setItem(ISSUE_CACHE,JSON.stringify(d))}catch(e){}
-  const sig=l=>JSON.stringify(l.map(i=>[i.num,i.title,i.date,i.pages,i.base,!!i.fun]));
+  const sig=l=>JSON.stringify(l.map(i=>[i.num,i.title,i.date,i.pages,i.base,i.fun,i.sponsors]));   // a fixed Word of the Week or sponsor shows on this visit, not the next
   if(!shownFromCache||sig(d)!==sig(issues))showIssues(d);else issues=d;
 });
 

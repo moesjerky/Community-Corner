@@ -12,7 +12,7 @@ function funLoadOcr(){
 function funLines(items){
   const rows=[];
   items.slice().sort((a,b)=>a.y-b.y||a.x-b.x).forEach(t=>{
-    const r=rows.find(r=>Math.abs(r.y-t.y)<.004&&Math.abs(r.h-t.h)<.002&&t.x<r.x1+.015&&t.x+t.w>r.x0-.015);   // only glue pieces that touch, not text from the next column
+    const r=rows.find(r=>Math.abs(r.y-t.y)<.004&&Math.abs(r.h-t.h)<.002&&t.x<r.x1+.01&&t.x+t.w>r.x0-.01);   // only glue pieces that touch, not text from the next column (gutters can be as thin as .013)
     if(r){r.parts.push(t);r.x1=Math.max(r.x1,t.x+t.w);r.x0=Math.min(r.x0,t.x);r.h=Math.max(r.h,t.h)}else rows.push({y:t.y,x0:t.x,x1:t.x+t.w,h:t.h,parts:[t]});
   });
   return rows.map(r=>({y:r.y,x:r.x0,h:r.h,str:r.parts.sort((a,b)=>a.x-b.x).map(p=>p.str).join(' ').replace(/\s+/g,' ').trim()}));
@@ -48,14 +48,15 @@ function funText(pagesItems){
     const wh=lines.find(l=>/^word of the week/i.test(l.str));
     if(wh&&!fun.word){
       const u=funUnder(lines,wh,.09),all=u.map(l=>l.str).join(' \n ');
-      // the word can sit on the heading line, just to its right ("Petrichor: Pronunciation: PET-ri-kor"), or be the first line under it
-      const side=lines.filter(l=>l!==wh&&Math.abs(l.y-wh.y)<.012&&l.x>wh.x&&l.x<wh.x+.2&&/^[A-Za-z'’-]+\s*:/.test(l.str)&&!/^(definition|meaning|example)\b/i.test(l.str)).sort((a,b)=>a.x-b.x)[0];
+      // the word can sit on the heading line, just to its right ("Petrichor: Pronunciation: PET-ri-kor" or "Ultracrepidarian (UL-tra-...)"), or be the first line under it
+      const side=lines.filter(l=>l!==wh&&Math.abs(l.y-wh.y)<.012&&l.x>wh.x&&l.x<wh.x+.2&&/^[A-Za-z'’-]+\s*[:(]/.test(l.str)&&!/^(definition|meaning|example)\b/i.test(l.str)).sort((a,b)=>a.x-b.x)[0];
       const top=u.find(l=>!/^(definition|meaning|example)\s*:/i.test(l.str));
       const first=(wh.str.replace(/^word of the week:?\s*/i,'')||(side?side.str:'')||(top?top.str:'')).trim();
       const word=(first.match(/^[A-Za-z'’-]+/)||[''])[0];
       const say=(first.match(/\(([^)]*[-·][^)]*)\)/)||first.match(/^[A-Za-z'’-]+\s*:\s*(?:Pronunciation\s*:\s*)?([A-Za-z]+(?:-[A-Za-z]+)+)/i)||[])[1]||'';   // (yoo-BIK-wih-tus) or Word: tuh-NAY-shus
       const mean=(all.match(/(?:Definition|Meaning)\s*:\s*([\s\S]*?)(?=\s*Example\s*:|$)/i)||[])[1]||'';
-      const ex=(all.match(/Example\s*:\s*([\s\S]*)$/i)||[])[1]||'';
+      let ex=(all.match(/Example\s*:\s*([\s\S]*)$/i)||[])[1]||'';
+      ex=(ex.match(/^\s*([“"][\s\S]*?[”"])/)||[])[1]||ex;   // a quoted example ends at its closing quote, not in the next box
       const tidy=s=>s.replace(/\s*\n\s*/g,' ').replace(/^[“"]|[”"]$/g,'').trim();
       if(word)fun.word={word,say:say.trim(),meaning:tidy(mean),example:tidy(ex)};
     }
