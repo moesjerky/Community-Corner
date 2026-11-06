@@ -62,7 +62,7 @@ function funText(pagesItems){
     }
     // cool fact
     const fh=lines.find(l=>/super cool facts|^did you know/i.test(l.str)&&l.h>=.012);
-    if(fh&&!fun.fact){const t=funUnder(lines,fh,.09).map(l=>l.str).join(' ').trim();if(t)fun.fact=t}
+    if(fh&&!fun.fact){const t=funUnder(lines,fh,.15).map(l=>l.str).join(' ').trim();if(t)fun.fact=t}
   }
   return fun;
 }
