@@ -1333,7 +1333,9 @@ $('pg-stage').addEventListener('dblclick',zoomAt);
 addEventListener('keydown',e=>{if($('v-issue').hidden||!$('lb').hidden)return;if(e.key==='ArrowLeft')turn(-1);else if(e.key==='ArrowRight')turn(1);else if(e.key==='Escape'&&$('pager').classList.contains('full'))setFull(false)});
 {let wasNarrow=narrow(),t;addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>{if(!PG.spreads)return;if(narrow()!==wasNarrow){wasNarrow=narrow();buildPages();showPage()}else fitPage()},120)})}
 /* This Shabbos: parsha + Monsey times, from Hebcal (updates by itself) */
-fetch('https://www.hebcal.com/shabbat?cfg=json&zip=10952&M=off&m=50&b=18&lg=a').then(r=>r.json()).then(d=>{
+// today's New York date goes in the address, so a browser or web filter can never answer with last week's saved copy
+const HC=(()=>{const [m,d,y]=new Date().toLocaleDateString('en-US',{timeZone:'America/New_York'}).split('/');return `https://www.hebcal.com/shabbat?cfg=json&zip=10952&M=off&b=18&lg=a&gy=${y}&gm=${m}&gd=${d}`})();
+fetch(HC+'&m=50',{cache:'no-cache'}).then(r=>r.json()).then(d=>{
   const it=d.items||[],by=c=>it.find(x=>x.category===c);
   const par=by('parashat'),hol=it.find(x=>x.category==='holiday'&&x.subcat==='major'),c=by('candles'),h=by('havdalah');
   const time=x=>x?new Date(x.date).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:'America/New_York'}):'';
@@ -1345,7 +1347,7 @@ fetch('https://www.hebcal.com/shabbat?cfg=json&zip=10952&M=off&m=50&b=18&lg=a').
     +(c?`<div><span class="lbl">Shabbos starts</span><b>${time(c)}</b><small>(18 minutes)</small></div>`:'')
     +(h?`<div><span class="lbl">Shabbos ends</span><b>${time(h)}</b><small>(50 minutes)</small></div>`:'')
     +`<div id="tzais72" hidden><span class="lbl">Tzais Hakochavim</span><b></b><small>(72 minutes)</small></div>`;
-  fetch('https://www.hebcal.com/shabbat?cfg=json&zip=10952&M=off&m=72&b=18&lg=a').then(r=>r.json()).then(d2=>{
+  fetch(HC+'&m=72',{cache:'no-cache'}).then(r=>r.json()).then(d2=>{
     const t=(d2.items||[]).find(x=>x.category==='havdalah');if(!t)return;const el=$('tzais72');el.querySelector('b').textContent=time(t);el.hidden=false}).catch(()=>{});
   $('shabbos').hidden=false;
 }).catch(()=>{});
